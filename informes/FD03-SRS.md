@@ -3,7 +3,7 @@
 > **Universidad Privada de Tacna** · Facultad de Ingeniería · Escuela Profesional de Ingeniería de Sistemas
 > **Curso:** Soluciones Móviles I · **Docente:** Mag. Alberto Johnatan Flor Rodríguez
 > **Sistema:** AguardApp: sistema móvil para la gestión de la reserva domiciliaria de agua y la anticipación de cortes durante el racionamiento hídrico en Tacna
-> **Versión:** 2.1 · Tacna – Perú, 2026
+> **Versión:** 2.2 · Tacna – Perú, 2026
 
 **Integrantes**
 
@@ -21,6 +21,7 @@
 | 1.0 | DJ - JL - CM - IS | AFR | AFR | 30/09/2026 | Versión Original |
 | 2.0 | DJ - JL - CM - IS | — | — | 02/10/2026 | Actualización al sistema AguardApp: aplicación Android nativa centrada en el módulo Depósito, con base de datos local |
 | 2.1 | DJ - JL - CM - IS | — | — | 02/10/2026 | Se agrega la pantalla Avisos (RF-09, RN-11, CU-07) |
+| 2.2 | DJ - JL - CM - IS | — | — | 14/10/2026 | Se alinea con el código: validaciones reales de RF-02 y RF-07, consumo aprendido en RN-03 y RN-04, avisos con recortes en RN-11, privacidad (respaldo desactivado y consentimiento explícito) y plan de recortes en los modelos |
 
 ## Índice
 
@@ -174,7 +175,7 @@ flowchart TD
 |---|---|---|
 | RNF-01 | Disponibilidad | La aplicación opera al 100 % sin conexión, con la base de datos local (Room / SQLite) como única fuente de verdad. |
 | RNF-02 | Rendimiento | Las pantallas deben responder en un máximo de 2 segundos en condiciones normales; los cálculos se hacen en el dispositivo sin esperar a la red. |
-| RNF-03 | Privacidad y seguridad | Ningún dato sale del teléfono. La aplicación no solicita permisos del sistema (ni internet, ni ubicación, ni cámara, ni notificaciones). El usuario se identifica con un UUID local. |
+| RNF-03 | Privacidad y seguridad | Ningún dato sale del teléfono: el respaldo automático de Android está desactivado, tanto a la nube como al pasar a otro teléfono. La aplicación no solicita permisos del sistema (ni internet, ni ubicación, ni cámara, ni notificaciones). El usuario se identifica con un UUID local. |
 | RNF-04 | Usabilidad y accesibilidad | Interfaz con textos legibles, una sola fuente tipográfica, colores sólidos, botones a lo ancho de la pantalla y mensajes de error claros debajo de cada campo. |
 | RNF-05 | Compatibilidad | Android 7.0 (API 24) o superior; probado contra la API 36. |
 | RNF-06 | Mantenibilidad | Arquitectura MVVM + DDD: dominio en Kotlin puro, independiente de Android; cada pantalla con un Screen y un ViewModel; sin capas innecesarias. |
@@ -186,13 +187,13 @@ Tras el análisis se mantuvieron los requerimientos iniciales, se precisaron sus
 
 | ID | Requerimiento | Descripción | Prioridad |
 |---|---|---|---|
-| RF-01 | Mostrar bienvenida | Se muestra solo la primera vez; sin aceptar el consentimiento no se puede empezar. | Alta |
-| RF-02 | Configurar el hogar | Capacidad entre 200 y 5000 L; habitantes entre 1 y 12; hábitos (duchas por día, lavadora, riego) y hora del próximo llenado obligatoria, escrita con 4 números en formato de 24 h (el ":" se agrega solo). Los errores de la hora se muestran al tocar Guardar. El botón Guardar se deshabilita mientras haya errores. Se usa al inicio y para editar desde Mi depósito. | Alta |
+| RF-01 | Mostrar bienvenida | Se muestra solo la primera vez. La casilla de consentimiento empieza sin marcar y el botón "Empezar" queda deshabilitado hasta que el usuario la marque. | Alta |
+| RF-02 | Configurar el hogar | Capacidad entre 200 y 5000 L; habitantes entre 1 y 12; hábitos (duchas por día, lavadora, riego) y hora del próximo llenado obligatoria, escrita con 4 números en formato de 24 h (el ":" se agrega solo). Capacidad (en pasos de 50 L), habitantes y duchas por día (0 a 6) se ajustan con controles que no permiten salir del rango. Si al tocar Guardar falta la hora o no es válida, no se guarda y se muestra el error debajo del campo ("Falta la hora del próximo llenado", "Escribe la hora completa" o "La hora no existe: usa de 00:00 a 23:59"). El consumo estimado se recalcula en vivo al cambiar habitantes o hábitos. Se usa al inicio y para editar desde Mi depósito. | Alta |
 | RF-03 | Registrar llenado | Completo: se registran los litros de la capacidad. Parcial: los litros deben ser mayores que 0 y no superar la capacidad. No se pueden registrar llenados en el futuro. | Alta |
 | RF-04 | Consultar el depósito | Nivel actual en litros y porcentaje, último llenado, "Te alcanza hasta", próximo llenado, consumo en L/h y promedio en L/persona/día. Se actualiza solo cada minuto. | Alta |
 | RF-05 | Calcular el déficit | Déficit = consumo por hora × horas hasta el próximo llenado − nivel actual (nunca negativo). | Alta |
 | RF-06 | Recomendar recortes | Solo se sugieren las acciones que corresponden a los hábitos del hogar, con litros calculados para ese hogar; se muestra "Ahorras X L" y "Aún te faltan Y L" o "¡Con esto te alcanza hasta el próximo llenado!". Lo marcado se guarda como plan de recortes hasta el próximo llenado (o hasta registrar un llenado nuevo), se vuelve a mostrar al entrar y se refleja en Mi depósito ("Con tus recortes") y en Avisos. | Media |
-| RF-07 | Declarar que se quedó sin agua | Opciones "Se acabó ahora" o "Se acabó antes, a las HH:mm" (4 números en formato de 24 h; el ":" se agrega solo). Una hora posterior a la actual se toma como del día anterior. La hora debe existir, no ser futura y ser posterior al último llenado; cada caso tiene su propio mensaje. Antes de registrar se muestra lo proyectado frente a lo ocurrido, y la comparación se actualiza con la hora escrita. El botón Registrar no permite registros duplicados. | Media |
+| RF-07 | Declarar que se quedó sin agua | Opciones "Se acabó ahora" o "Se acabó antes, a las HH:mm" (4 números en formato de 24 h; el ":" se agrega solo). Una hora posterior a la actual se toma como del día anterior. La hora debe estar completa, existir (00:00 a 23:59) y quedar después del último llenado; cada caso tiene su propio mensaje, y si la hora escrita aún no llega hoy y tampoco sirve como de ayer, se avisa "Esa hora todavía no llega". Antes de registrar se muestra lo proyectado frente a lo ocurrido, y la comparación se actualiza con la hora escrita. El botón Registrar no permite registros duplicados. | Media |
 | RF-08 | Operar sin conexión | Todas las funciones trabajan con la base local. | Alta |
 | RF-09 | Consultar avisos | Se abre desde "Ver avisos" en Mi depósito. Los avisos se generan según RN-11, cada tipo con su color; al tocar uno se navega a Qué recortar, a Registrar llenado completo o de vuelta a Mi depósito. Sin avisos se indica que el depósito alcanza hasta el próximo llenado. | Media |
 
@@ -202,15 +203,15 @@ Tras el análisis se mantuvieron los requerimientos iniciales, se precisaron sus
 |---|---|
 | RN-01 | El agua llega todos los días a la hora configurada: el próximo llenado es hoy a esa hora si aún no pasó, o mañana si ya pasó. |
 | RN-02 | El nivel del depósito baja de forma lineal desde el último llenado según el consumo por hora; nunca es menor que cero ni mayor que la capacidad. |
-| RN-03 | El consumo se estima en este orden: (1) con el historial del hogar si hay datos suficientes, (2) con los hábitos declarados y (3) si no hay nada, suponiendo que el depósito dura 48 horas. |
-| RN-04 | El historial alcanza para estimar con al menos un intervalo "observado" (terminó con "me quedé sin agua") o con dos intervalos entre llenados. Se usan los 5 más recientes y se toma la mediana. |
+| RN-03 | El consumo se estima en este orden: (1) el consumo aprendido en la última declaración de "me quedé sin agua", mientras no se registre un llenado nuevo ni se edite el hogar; (2) con el historial del hogar si hay datos suficientes; (3) con los hábitos declarados y (4) si no hay nada, suponiendo que el depósito dura 48 horas. |
+| RN-04 | El historial alcanza para estimar con al menos un intervalo "observado" (terminó con "me quedé sin agua") o con dos intervalos entre llenados. Se usan los 5 más recientes; si entre ellos hay intervalos observados, se usan solo esos, porque son datos exactos. El consumo es la mediana de los litros por hora de los intervalos elegidos. |
 | RN-05 | Dos llenados separados por menos de 6 horas se consideran un relleno y no cuentan para el consumo; un intervalo de más del doble de la mediana se descarta como un llenado olvidado. |
 | RN-06 | El consumo por hábitos se calcula con 60 L por persona al día más 30 L por ducha, 100 L si usa lavadora y 150 L si riega el jardín, repartidos en 12 horas de uso al día. |
 | RN-07 | Al declarar que se quedó sin agua, el nuevo consumo no puede variar más de un 30 % respecto del anterior en una sola declaración. |
 | RN-08 | Al registrar un llenado se descarta el consumo aprendido y se vuelve a estimar con todo el historial. |
 | RN-09 | Las recomendaciones de recorte y su ahorro diario son: no lavar ropa hoy (100 L, si usa lavadora), no regar el jardín (150 L, si riega), duchas de 5 minutos (la mitad de 30 L por ducha × duchas por día × habitantes), lavar los platos en un recipiente (8 L por persona) y echar al inodoro agua ya usada (10 L por persona). El ahorro se multiplica por la parte del día de uso (12 h) que falta hasta el próximo llenado, con un máximo de un día; así es coherente con el cálculo del déficit. |
 | RN-10 | El usuario se identifica con un UUID local que se crea una sola vez y no cambia. |
-| RN-11 | Los avisos se generan así: si el hogar no tiene llenados, solo "¿Llegó el agua a tu casa?"; si hay déficit (RF-05), "Tu reserva se agota antes de que vuelva el agua"; y si el nivel actual es menor al 20 % de la capacidad, "Te queda poca agua". Los avisos se calculan al vuelo y no se guardan. |
+| RN-11 | Los avisos se generan así: si el hogar no tiene llenados, solo "¿Llegó el agua a tu casa?"; si queda déficit después de descontar los recortes elegidos (RF-05 y RF-06), "Tu reserva se agota antes de que vuelva el agua" (con "aun con tus recortes" si hay un plan); y si el nivel actual es menor al 20 % de la capacidad, "Te queda poca agua". Los avisos se calculan al vuelo y no se guardan. |
 
 ## 5. Fase de Desarrollo
 
@@ -293,22 +294,22 @@ flowchart LR
 |---|---|
 | **Actor** | Jefe de hogar |
 | **Precondición** | Es la primera vez que se abre la aplicación. |
-| **Flujo principal** | 1) La aplicación muestra qué hace y la casilla de consentimiento. 2) El usuario acepta y toca "Empezar". 3) El sistema guarda que la bienvenida fue completada. 4) Navega a Configurar hogar (o a Mi depósito si el hogar ya estaba configurado). |
+| **Flujo principal** | 1) La aplicación muestra qué hace y la casilla de consentimiento, sin marcar. 2) El usuario marca la casilla (recién entonces se habilita "Empezar") y toca "Empezar". 3) El sistema guarda que la bienvenida fue completada. 4) Navega a Configurar hogar (o a Mi depósito si el hogar ya estaba configurado). |
 | **Postcondición** | La bienvenida no vuelve a mostrarse. |
 
 | CU-02 | Configurar el hogar |
 |---|---|
 | **Actor** | Jefe de hogar |
 | **Precondición** | El usuario pasó la bienvenida. |
-| **Flujo principal** | 1) El usuario elige el tipo de depósito (tanque elevado, cisterna o bidones). 2) Ajusta la capacidad, los habitantes y los hábitos. 3) Elige la hora a la que suele llegar el agua. 4) El sistema valida cada campo y muestra el consumo estimado. 5) El usuario toca "Guardar". 6) El sistema guarda el perfil y calcula el consumo por hábitos. |
-| **Flujo alternativo** | Si falta la hora o un valor está fuera de rango, se muestra el error debajo del campo y Guardar queda deshabilitado. |
+| **Flujo principal** | 1) El usuario elige el tipo de depósito (tanque elevado, cisterna o bidones). 2) Ajusta la capacidad, los habitantes y los hábitos. 3) Escribe la hora a la que suele llegar el agua (4 números, formato 24 h). 4) El sistema muestra en vivo el consumo estimado. 5) El usuario toca "Guardar". 6) El sistema valida la hora, guarda el perfil y calcula el consumo por hábitos. |
+| **Flujo alternativo** | Si al tocar "Guardar" falta la hora o no es válida, no se guarda y se muestra el error debajo del campo. Capacidad, habitantes y duchas no pueden salir de su rango porque sus controles lo impiden. |
 | **Postcondición** | El perfil del hogar queda guardado; al editar, se descarta el consumo aprendido. |
 
 | CU-03 | Registrar llenado |
 |---|---|
 | **Actor** | Jefe de hogar |
 | **Precondición** | El hogar está configurado. |
-| **Flujo principal** | 1) Desde Mi depósito, el usuario elige "llenado completo" o "llenado parcial". 2) Si es completo, confirma. 3) Si es parcial, escribe los litros. 4) El sistema valida y guarda el llenado con la fecha y hora actuales. 5) Vuelve a Mi depósito, que se actualiza solo. |
+| **Flujo principal** | 1) Desde Mi depósito, el usuario elige "llenado completo" o "llenado parcial" (también puede llegar al llenado completo desde el aviso "¿Llegó el agua a tu casa?"). 2) Si es completo, confirma. 3) Si es parcial, escribe los litros. 4) El sistema valida y guarda el llenado con la fecha y hora actuales. 5) Vuelve a Mi depósito, que se actualiza solo. |
 | **Flujo alternativo** | Si los litros son 0 o superan la capacidad, se muestra el error y no se guarda. |
 | **Postcondición** | El depósito parte del nuevo llenado. |
 
@@ -332,7 +333,7 @@ flowchart LR
 | **Actor** | Jefe de hogar |
 | **Precondición** | Existe al menos un llenado. |
 | **Flujo principal** | 1) El sistema muestra lo proyectado frente a lo ocurrido. 2) El usuario elige "Se acabó ahora" o escribe la hora (HH:mm); la comparación se actualiza con esa hora. 3) El sistema valida la hora (si es posterior a la actual, se toma como de ayer). 4) Registra el agotamiento y ajusta el consumo (RN-07). 5) Vuelve a Mi depósito. |
-| **Flujo alternativo** | Si la hora tiene formato inválido, es futura o es anterior al último llenado, se muestra el error debajo del campo. |
+| **Flujo alternativo** | Si la hora está incompleta, no existe o no queda después del último llenado (aun tomándola como de ayer), se muestra el error debajo del campo y no se registra. |
 | **Postcondición** | El depósito queda en cero desde ese momento y el consumo aprendido se usa en las siguientes proyecciones. |
 
 | CU-07 | Consultar avisos |
@@ -363,13 +364,14 @@ flowchart LR
     PH[("Perfil del hogar")]
     LL[("Evento de llenado")]
     NV[("Novedad: sin agua")]
+    PR[("Plan de recortes")]
 
     U --> PANT
     PANT --> VM
     VM --> REP
     VM --> EST
     REP --> EST
-    REP --> PH & LL & NV
+    REP --> PH & LL & NV & PR
     VM --> US
 ```
 
@@ -417,26 +419,33 @@ sequenceDiagram
     actor U as Jefe de hogar
     participant S as DepositoScreen
     participant VM as DepositoViewModel
+    participant SL as RegistrarLlenadoScreen
     participant RL as RegistrarLlenadoViewModel
     participant R as DepositoRepository
     participant DB as Room (SQLite)
     participant D as CalcularDeficit
+    participant CR as CalcularRecortes
 
     U->>S: Abre Mi depósito
     S->>VM: Observa uiState
-    VM->>R: observarPerfil() + observarDeposito()
-    R->>DB: Perfil, llenados y novedades
+    VM->>R: observarPerfil() + observarDeposito() + observarPlanRecortes()
+    R->>DB: Perfil, llenados, novedades y plan
     DB-->>R: Datos locales
-    R-->>VM: Perfil y Deposito (con consumo estimado)
-    VM->>D: proximoLlenado() y litrosQueFaltan()
-    D-->>VM: Próximo llenado y déficit
+    R-->>VM: Perfil, Deposito (con consumo estimado) y plan
+    VM->>D: proximoLlenado()
+    VM->>CR: evaluar(perfil, deposito, plan, ahora)
+    CR->>D: litrosQueFaltan()
+    CR-->>VM: Déficit y lo que falta con los recortes
     VM-->>S: DepositoVista
     S-->>U: Nivel, "Te alcanza hasta" y déficit
     opt Registra un llenado
-        U->>S: "Registrar llenado parcial" y escribe los litros
-        S->>RL: onGuardar()
+        U->>S: Toca "Registrar llenado parcial"
+        S->>SL: Navega a registrar_llenado/parcial
+        U->>SL: Escribe los litros y toca "Guardar llenado"
+        SL->>RL: onGuardar()
         RL->>R: registrarLlenado(ahora, litros)
         R->>DB: INSERT evento_llenado
+        R->>DB: UPSERT perfil_hogar (borra el consumo aprendido)
         DB-->>R: OK
         R-->>RL: Resultado exitoso
         DB-->>R: Flow con el nuevo llenado
@@ -472,7 +481,9 @@ classDiagram
     class Deposito {
         capacidad
         consumo
+        llenado
         agotadoEn
+        nivelTrasLlenado
         nivelEn(momento)
         agotamientoProyectado()
     }
@@ -482,6 +493,7 @@ classDiagram
     }
     class NivelDeposito {
         litros
+        capacidad
         porcentaje
     }
     class IntervaloConsumo {
@@ -491,8 +503,18 @@ classDiagram
         clase
     }
     class Recomendacion {
+        <<enumeration>>
         descripcion
-        litrosQueAhorra
+    }
+    class RecorteSugerido {
+        recomendacion
+        litros
+    }
+    class PlanRecortes {
+        llenado
+        hasta
+        elegidas
+        vigentePara(deposito, ahora)
     }
     class AvisoVista {
         tipo
@@ -512,13 +534,15 @@ classDiagram
     PerfilHogar "1" -- "0..1" Deposito : se calcula con
     Deposito "1" --> "1" EventoLlenado : último llenado
     Deposito ..> NivelDeposito : calcula
-    Deposito ..> IntervaloConsumo : aprende de
-    Recomendacion ..> HabitosDelHogar : corresponde a
+    EventoLlenado ..> IntervaloConsumo : dos llenados seguidos forman
+    RecorteSugerido --> Recomendacion
+    PlanRecortes --> "0..*" Recomendacion : elegidas
+    PlanRecortes ..> Deposito : vale para su llenado
     AvisoVista --> TipoDeAviso
     AvisoVista ..> Deposito : se arma con
 ```
 
-> `AvisoVista` y `TipoDeAviso` pertenecen a la capa de presentación (`AvisosViewModel`): los avisos se derivan del `Deposito` y no se guardan en la base de datos.
+> `AvisoVista` y `TipoDeAviso` pertenecen a la capa de presentación (`AvisosViewModel`): los avisos se derivan del `Deposito` y no se guardan en la base de datos. Los litros de cada `RecorteSugerido` los calcula el caso de uso `CalcularRecortes` según los hábitos y habitantes del hogar (RN-09); `PlanRecortes` sí se guarda (tabla `plan_recortes`) y solo vale para el llenado en que se creó y hasta el próximo llenado.
 
 ## 6. Conclusiones
 

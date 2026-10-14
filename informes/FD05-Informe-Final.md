@@ -3,7 +3,7 @@
 > **Universidad Privada de Tacna** · Facultad de Ingeniería · Escuela Profesional de Ingeniería de Sistemas
 > **Curso:** Soluciones Móviles I · **Docente:** Mag. Alberto Johnatan Flor Rodríguez
 > **Proyecto:** AguardApp
-> **Versión:** 2.1 · Tacna – Perú, 2026
+> **Versión:** 2.2 · Tacna – Perú, 2026
 
 **Integrantes**
 
@@ -21,6 +21,7 @@
 | 1.0 | DJ - JL - CM - IS | AFR | AFR | 30/09/2026 | Versión Original |
 | 2.0 | DJ - JL - CM - IS | — | — | 02/10/2026 | Actualización al sistema AguardApp: aplicación Android nativa, módulo Depósito y base de datos local |
 | 2.1 | DJ - JL - CM - IS | — | — | 02/10/2026 | Se agrega la pantalla Avisos a las funcionalidades implementadas |
+| 2.2 | DJ - JL - CM - IS | — | — | 14/10/2026 | Se alinea con el código: plan de recortes, base de datos versión 3, Koin y privacidad (respaldo desactivado y consentimiento explícito) |
 
 ## Índice
 
@@ -136,7 +137,8 @@ La solución se construye con un conjunto de tecnologías gratuitas y de código
 | Interfaz | Jetpack Compose + Material 3 | Interfaz declarativa, con el tema propio de la app (colores sólidos y una sola fuente). |
 | Navegación | Navigation Compose | Rutas declaradas en un solo NavHost. |
 | Base de datos local | Room (SQLite) | Operación sin conexión; única fuente de verdad. |
-| Inyección de dependencias | Koin | Un único módulo simple para la base de datos, el reloj y el repositorio. |
+| Inyección de dependencias | Koin | Un único módulo simple que registra el reloj, el DAO del usuario y el repositorio del depósito; cada ViewModel los pide al crearse. |
+| Estado y asincronía | Corrutinas, Flow y Lifecycle (ViewModel) | Las pantallas observan un `StateFlow` y Room avisa de cada cambio con `Flow`. |
 | Fechas y horas | kotlinx-datetime | Cálculo del nivel, del agotamiento y del próximo llenado. |
 
 La arquitectura general de la solución se muestra a continuación:
@@ -165,14 +167,9 @@ Las pantallas implementadas y sus rutas de navegación son:
 | `configurar_hogar` | Configurar hogar | Formulario del hogar con validaciones y hora del próximo llenado escrita en formato 24 h. |
 | `mi_deposito` | Mi depósito | Nivel, "Te alcanza hasta", próximo llenado, déficit y consumo. |
 | `registrar_llenado/{tipo}` | Registrar llenado | Llenado completo (confirmar) o parcial (con litros). |
-<<<<<<< HEAD
 | `que_recortar` | Qué recortar | Recomendaciones con litros según el hogar; lo marcado se guarda hasta el próximo llenado y se refleja en Mi depósito y Avisos. |
 | `me_quede_sin_agua` | Me quedé sin agua | "Se acabó ahora" o "Se acabó antes, a las HH:mm" (hora escrita; si es posterior a la actual, se toma como de ayer). |
-=======
-| `que_recortar/{deficit}` | Qué recortar | Recomendaciones con casillas y cálculo en vivo. |
-| `me_quede_sin_agua` | Me quedé sin agua | "Se acabó ahora" o "Se acabó antes, a las HH:mm". |
-| `avisos` | Avisos | Alertas de déficit, nivel bajo (menos del 20 %) o sin llenado; cada aviso lleva a la pantalla que lo resuelve. |
->>>>>>> 8e708ca9b09819baaa17a6ebe4c00186960a411c
+| `avisos` | Avisos | Alertas de déficit (descontando los recortes elegidos), nivel bajo (menos del 20 %) o sin llenado; cada aviso lleva a la pantalla que lo resuelve. |
 
 ### 5.3. Metodología de implementación (Documento de VISIÓN, SRS, SAD)
 
@@ -195,7 +192,8 @@ Durante la implementación se tomaron estas decisiones:
 4. **Simplificación de la arquitectura:** cada pantalla quedó con un Screen y un ViewModel; los modelos y casos de uso del dominio se agruparon por tema; la inyección de dependencias se concentró en un único módulo.
 5. **Diseño:** colores sólidos sin degradados ni sombras, y una sola fuente tipográfica en toda la app.
 6. **Avisos dentro de la aplicación:** en lugar de notificaciones push, que requieren permisos, se agregó una pantalla de avisos que se calcula a partir del depósito y no necesita tablas nuevas.
-7. **Base de datos versión 2:** el esquema de Room se exporta en `app/schemas/`; al no haber migraciones, cada cambio de versión recrea la base local.
+7. **Base de datos versión 3:** se agregó la tabla `plan_recortes` para guardar los recortes elegidos hasta el próximo llenado. El paso de la versión 2 a la 3 usa una migración automática de Room (`AutoMigration`) que conserva los datos; solo si falta una migración, Room recrea la base. Los esquemas de cada versión se exportan en `app/schemas/`.
+8. **Privacidad reforzada:** el respaldo automático de Android está desactivado (`allowBackup="false"` y reglas que excluyen todos los datos), de modo que la base local no se copia a la nube ni a otro teléfono; además, la casilla de consentimiento de la bienvenida empieza sin marcar.
 
 Al cierre de esta versión se cuenta con una aplicación funcional que permite configurar el hogar, registrar llenados, consultar el depósito y el déficit, ver qué recortar, declarar que se quedó sin agua y consultar los avisos del depósito, todo sin conexión.
 

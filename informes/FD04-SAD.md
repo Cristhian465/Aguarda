@@ -5,8 +5,8 @@
 **Sistema:** AguardApp — sistema móvil para la gestión de la reserva domiciliaria de agua y la anticipación de cortes durante el racionamiento hídrico en Tacna.  
 **Curso:** Soluciones Móviles I  
 **Docente:** Mag. Alberto Johnatan Flor Rodríguez  
-**Versión:** 2.1  
-**Fecha:** 02/10/2026  
+**Versión:** 2.2  
+**Fecha:** 14/10/2026  
 **Lugar:** Tacna — Perú, 2026
 
 ### Integrantes
@@ -25,6 +25,7 @@
 | 1.0 | DJ - JL - CM - IS | AFR | AFR | 30/09/2026 | Versión original |
 | 2.0 | DJ - JL - CM - IS | — | — | 02/10/2026 | Actualización a la arquitectura de AguardApp: Android nativo, MVVM + DDD, módulo Depósito y base de datos local |
 | 2.1 | DJ - JL - CM - IS | — | — | 02/10/2026 | Se agrega la pantalla Avisos (RF-09) y se actualiza la base de datos a la versión 2 |
+| 2.2 | DJ - JL - CM - IS | — | — | 14/10/2026 | Se alinea con el código: plan de recortes (tabla `plan_recortes`, base de datos versión 3 con `AutoMigration`), secuencias y clases corregidas, inyección con Koin y respaldo automático desactivado |
 
 ---
 
@@ -164,6 +165,7 @@ flowchart TB
     MAIN --> DI
     NAV --> BIEN
     NAV --> PRES
+    NAV --> DOM
     PRES --> DOM
     DAT -. implementa .-> DOM
     DI --> DB
@@ -184,7 +186,9 @@ sequenceDiagram
     participant APP as AguardApplication
     participant DI as AppModule
     participant DB as AguardAppDatabase
+    participant MA as MainActivity / App
     participant IVM as InicioViewModel
+    participant R as DepositoRepository
     participant NAV as AppNavHost
     U->>APP: Abre la aplicación
     APP->>DI: iniciarAplicacion(context)
@@ -194,9 +198,10 @@ sequenceDiagram
         DI->>DB: guardar(UsuarioEntity(nuevoUuid()))
     end
     DI-->>APP: Koin iniciado con el usuarioId
-    APP->>IVM: (App) observa uiState
-    IVM->>DB: observarBienvenidaCompletada()
-    IVM->>DB: observarPerfil()
+    APP->>MA: onCreate() → setContent { App() }
+    MA->>IVM: crea y observa uiState
+    IVM->>DB: usuarioDao().observarBienvenidaCompletada().first()
+    IVM->>R: observarPerfil().first()
     alt Bienvenida pendiente
         IVM-->>NAV: rutaInicial = bienvenida
     else Hogar sin configurar
@@ -204,6 +209,7 @@ sequenceDiagram
     else Todo listo
         IVM-->>NAV: rutaInicial = mi_deposito
     end
+    MA->>NAV: AppNavHost(rutaInicial, hayConfiguracion)
 ```
 
 ##### 1.2. Aceptar y empezar
@@ -215,7 +221,11 @@ sequenceDiagram
     participant VM as BienvenidaViewModel
     participant DAO as UsuarioDao
     participant NAV as AppNavHost
-    U->>S: Marca el consentimiento y toca "Empezar"
+    Note over S: La casilla empieza sin marcar y "Empezar" está deshabilitado
+    U->>S: Marca el consentimiento
+    S->>VM: onAlternarConsentimiento()
+    VM-->>S: consentimiento = true ("Empezar" se habilita)
+    U->>S: Toca "Empezar"
     S->>VM: onEmpezar()
     VM->>DAO: completarBienvenida()
     DAO-->>VM: OK
@@ -236,13 +246,18 @@ sequenceDiagram
     participant EC as EstimarConsumo
     participant R as DepositoRepositoryImpl
     participant DAO as DepositoDao
-    U->>S: Ajusta capacidad, habitantes, hábitos y hora
-    S->>VM: onCapacidadChange() / onHabitantesChange() / onHoraChange()
+    U->>S: Elige tipo, capacidad y hora (4 números, 24 h)
+    S->>VM: onTipoChange() / onCapacidadChange() / onHoraChange()
+    U->>S: Ajusta habitantes y hábitos
+    S->>VM: onHabitantesChange() / onDuchasChange() / onLavadoraChange() / onRiegoChange()
     VM->>EC: porHabitos(habitos, habitantes)
     EC-->>VM: Consumo estimado (L/h)
-    VM-->>S: uiState con errores por campo y puedeGuardar
+    VM-->>S: uiState con el consumo estimado
     U->>S: Toca "Guardar"
     S->>VM: onGuardar()
+    alt Falta la hora o no es válida
+        VM-->>S: errorHora debajo del campo (no se guarda)
+    end
     VM->>R: guardarPerfil(configuracion)
     R->>EC: porHabitos(...)
     R->>DAO: guardarPerfil(PerfilHogarEntity)
@@ -286,17 +301,20 @@ sequenceDiagram
     participant DAO as DepositoDao
     participant AD as ArmarDeposito
     participant CD as CalcularDeficit
+    participant CR as CalcularRecortes
     S->>VM: collectAsStateWithLifecycle()
     loop Cada cambio en Room o cada minuto
-        VM->>R: observarPerfil() + observarDeposito()
-        R->>DAO: perfil, llenados y novedades (Flow)
+        VM->>R: observarPerfil() + observarDeposito() + observarPlanRecortes()
+        R->>DAO: perfil, llenados, novedades y plan (Flow)
         DAO-->>R: Datos locales
         R->>AD: invoke(perfil, historial, ahora)
         AD-->>R: Deposito (consumo estimado)
-        R-->>VM: PerfilHogar y Deposito
+        R-->>VM: PerfilHogar, Deposito y PlanRecortes
         VM->>CD: proximoLlenado(hora, ahora)
-        VM->>CD: litrosQueFaltan(deposito, proximo, ahora)
-        CD-->>VM: Déficit en litros
+        VM->>CR: evaluar(perfil, deposito, plan, ahora)
+        CR->>CD: litrosQueFaltan(deposito, proximo, ahora)
+        CR-->>VM: Déficit y lo que falta con los recortes
+        VM->>R: litrosPorHabitanteDia()
         VM-->>S: DepositoUiState(vista)
     end
 ```
@@ -309,17 +327,25 @@ sequenceDiagram
     participant S as SinAguaScreen
     participant VM as SinAguaViewModel
     participant R as DepositoRepositoryImpl
+    participant AD as ArmarDeposito
     participant DSA as DeclararSinAgua
     participant DAO as DepositoDao
     S->>VM: init → previsualizarSinAgua(ahora)
     VM->>R: previsualizarSinAgua(ahora)
+    R->>AD: invoke(perfil, historial, ahora)
+    AD-->>R: Deposito vigente
     R->>DSA: invoke(deposito, intervalos, ahora)
     DSA-->>R: Consumo nuevo (tope ±30 %)
     R-->>VM: PrevisualizacionSinAgua
     VM-->>S: Comparación proyectado vs. ocurrido
-    U->>S: Elige "Se acabó ahora" o escribe HH:mm
+    U->>S: Elige "Se acabó ahora" o escribe la hora (4 números, 24 h)
+    S->>VM: onOpcionChange() / onHoraChange()
+    VM->>VM: si la hora es posterior a la actual, se toma como de ayer
+    VM->>R: previsualizarSinAgua(momento escrito)
+    R-->>VM: Comparación actualizada
+    U->>S: Toca "Registrar"
     S->>VM: onRegistrar()
-    VM->>VM: valida formato, no futura, posterior al último llenado
+    VM->>VM: valida: hora completa, que exista y posterior al último llenado
     VM->>R: declararSinAgua(momento)
     R->>DAO: guardarNovedad(intervalo observado)
     R->>DAO: guardarPerfil(consumoVigente = nuevo)
@@ -347,10 +373,12 @@ sequenceDiagram
     VM-->>S: Lista con casillas
     U->>S: Marca una recomendación
     S->>VM: onAlternar(recomendacion)
-    VM->>R: guardarPlanRecortes(plan hasta el próximo llenado)
-    VM->>CR: SituacionRecortes(litrosGanados, litrosQueFaltan)
-    CR-->>VM: Ahorras X L / Aún te faltan Y L
-    VM-->>S: uiState actualizado en vivo
+    VM->>VM: SituacionRecortes(deficit, sugeridos, elegidas)
+    VM-->>S: Ahorras X L / Aún te faltan Y L (en vivo)
+    VM->>CR: nuevoPlan(perfil, deposito, elegidas, ahora)
+    CR-->>VM: PlanRecortes (vigente hasta el próximo llenado)
+    VM->>R: guardarPlanRecortes(plan)
+    R-->>VM: Result.success
 ```
 
 ##### 2.6. Avisos
@@ -363,23 +391,27 @@ sequenceDiagram
     participant VM as AvisosViewModel
     participant R as DepositoRepository
     participant CD as CalcularDeficit
+    participant CR as CalcularRecortes
     participant NAV as AppNavHost
     U->>DS: Toca "Ver avisos"
     DS->>NAV: navigate(avisos)
     S->>VM: collectAsStateWithLifecycle()
-    VM->>R: observarPerfil() + observarDeposito()
-    R-->>VM: PerfilHogar y Deposito
-    alt Sin llenados
+    VM->>R: observarPerfil() + observarDeposito() + observarPlanRecortes()
+    R-->>VM: PerfilHogar, Deposito y PlanRecortes
+    alt Sin perfil
+        VM-->>S: Lista vacía
+    else Sin llenados
         VM-->>S: Aviso SIN_LLENADO
     else Con depósito
-        VM->>CD: proximoLlenado() y litrosQueFaltan()
-        CD-->>VM: Déficit en litros
+        VM->>CD: proximoLlenado(hora, ahora)
+        VM->>CR: evaluar(perfil, deposito, plan, ahora)
+        CR-->>VM: Déficit que queda con los recortes elegidos
         VM->>VM: nivelEn(ahora): ¿menos del 20 %?
         VM-->>S: Avisos DEFICIT y/o NIVEL_BAJO (o lista vacía)
     end
     U->>S: Toca un aviso
     alt DEFICIT
-        S->>NAV: que_recortar/{deficit}
+        S->>NAV: que_recortar
     else SIN_LLENADO
         S->>NAV: registrar_llenado/completo
     else NIVEL_BAJO
@@ -396,14 +428,17 @@ flowchart TB
     R[DepositoRepositoryImpl]
     AD[ArmarDeposito / EstimarConsumo]
     CD[CalcularDeficit]
+    CR[CalcularRecortes]
     ROOM[(Room / SQLite)]
 
     S -- observa uiState --> VM
-    VM -- observarPerfil / observarDeposito --> R
+    VM -- observarPerfil / observarDeposito / observarPlanRecortes --> R
     R -- consulta Flow --> ROOM
-    ROOM -- perfil, llenados, novedades --> R
+    ROOM -- perfil, llenados, novedades, plan --> R
     R -- arma el depósito --> AD
-    VM -- próximo llenado y déficit --> CD
+    VM -- próximo llenado --> CD
+    VM -- déficit con recortes --> CR
+    CR -- litrosQueFaltan --> CD
     VM -- DepositoUiState --> S
 ```
 
@@ -452,6 +487,8 @@ classDiagram
       +registrarLlenado(momento, litros) Result
       +declararSinAgua(momento) Result
       +previsualizarSinAgua(momento) Result
+      +observarPlanRecortes() Flow~PlanRecortes?~
+      +guardarPlanRecortes(plan) Result
     }
     class DepositoRepositoryImpl
     class DepositoDao {
@@ -485,6 +522,7 @@ classDiagram
     DepositoRepositoryImpl --> DepositoDao
     DepositoRepositoryImpl --> ArmarDeposito
     DepositoRepositoryImpl --> DeclararSinAgua
+    DepositoRepositoryImpl --> EstimarConsumo
     ArmarDeposito --> EstimarConsumo
     DeclararSinAgua --> EstimarConsumo
     DepositoViewModel --> DepositoRepository
@@ -494,20 +532,20 @@ classDiagram
     RegistrarLlenadoViewModel --> DepositoRepository
     QueRecortarViewModel --> CalcularRecortes
     QueRecortarViewModel --> DepositoRepository
+    QueRecortarViewModel --> CalcularDeficit
     DepositoViewModel --> CalcularRecortes
     CalcularRecortes --> CalcularDeficit
     SinAguaViewModel --> DepositoRepository
     AvisosViewModel --> DepositoRepository
     AvisosViewModel --> CalcularDeficit
+    AvisosViewModel --> CalcularRecortes
 ```
 
 ### 3.2.6. Diagrama de base de datos
 
-<<<<<<< HEAD
-Base de datos local `aguardapp.db` (Room, versión 3). De la versión 2 a la 3 se agregó la tabla `plan_recortes` con una migración automática (`AutoMigration`), que conserva los datos existentes.
-=======
-Base de datos local `aguardapp.db` (Room, versión 2). Los esquemas de cada versión se exportan en `app/schemas/`. No hay migraciones: al subir la versión, Room borra la base anterior y crea la nueva (`fallbackToDestructiveMigration`). Los avisos no tienen tabla, porque se calculan a partir del depósito.
->>>>>>> 8e708ca9b09819baaa17a6ebe4c00186960a411c
+Base de datos local `aguardapp.db` (Room, versión 3). De la versión 2 a la 3 se agregó la tabla `plan_recortes` con una migración automática (`AutoMigration`), que conserva los datos existentes. Si falta la migración de alguna versión (por ejemplo, de la 1 a la 2), Room borra la base anterior y crea la nueva (`fallbackToDestructiveMigration`). Los esquemas de cada versión se exportan en `app/schemas/`.
+
+Las relaciones del diagrama son lógicas: todas las tablas guardan el `usuarioId`, pero no se declaran claves foráneas. Las fechas y horas se guardan como texto ISO; `plan_recortes.recortes` guarda los nombres de las recomendaciones elegidas separados por comas, y los dos consumos de `perfil_hogar` admiten nulo. Los avisos no tienen tabla, porque se calculan a partir del depósito.
 
 ```mermaid
 erDiagram
@@ -594,15 +632,17 @@ app/src/main/java/com/example/aguardapp/
 │   ├── db/AguardAppDatabase.kt    (Room)
 │   ├── di/AppModule.kt            (Koin)
 │   ├── navigation/                (Rutas, AppNavHost, InicioViewModel)
-│   ├── ui/theme/                  (colores, tema, tipografía)
+│   ├── ui/theme/                  (colores, tema, tipografía, barra de estado)
 │   └── util/Reloj.kt              (hora actual y UUID)
 └── feature/
     ├── bienvenida/presentation/   (BienvenidaScreen, BienvenidaViewModel)
     └── deposito/
         ├── domain/   model/ · repository/ · usecase/
         ├── data/     DepositoRepositoryImpl · local/ · mapper/
-        └── presentation/  *Screen + *ViewModel · FormatoDeposito · componentes/
+        └── presentation/  *Screen + *ViewModel · FormatoDeposito · componentes/ (Comunes, ControlesConfiguracion, Tanque)
 ```
+
+Los casos de uso se agrupan por tema: `CalcularDeposito.kt` contiene `ArmarDeposito`, `DeclararSinAgua` e `HistorialDeposito`; `EstimarConsumo.kt` contiene también `ParametrosConsumo`, con todas las constantes del cálculo; y `CalcularRecortes.kt` contiene `SituacionRecortes` y `RecorteSugerido`.
 
 ### 3.3.2. Diagrama de arquitectura del sistema / componentes
 
@@ -628,6 +668,8 @@ flowchart LR
 
 > La aplicación no se conecta a ningún servicio externo.
 
+**Inyección de dependencias:** el módulo de Koin (`core/di/AppModule.kt`) registra solo tres piezas: el `Reloj`, el `UsuarioDao` y el `DepositoRepository`. Antes de iniciar Koin, `iniciarAplicacion` crea la base de datos y el usuario local. Cada ViewModel se crea con su función `desdeInyeccion()`, que pide sus dependencias a Koin; los casos de uso no tienen estado y cada ViewModel o el repositorio los crea directamente.
+
 ## 3.4. Vista de procesos
 
 ### 3.4.1. Diagrama de actividad del sistema
@@ -642,18 +684,19 @@ flowchart TD
     E -- No --> F[Configurar hogar]
     F --> G
     E -- Sí --> G[Mostrar Mi depósito]
-    G --> H[Leer perfil, llenados y novedades desde Room]
+    G --> H[Leer perfil, llenados, novedades y plan de recortes desde Room]
     H --> I[Estimar consumo y calcular nivel, agotamiento y déficit]
     I --> J[Actualizar la interfaz]
     J --> K{¿Acción del usuario?}
     K -- Registrar llenado --> L[Guardar llenado]
     K -- Sin agua --> M[Guardar novedad y nuevo consumo]
-    K -- Qué recortar --> N[Mostrar recomendaciones]
+    K -- Qué recortar --> N[Mostrar recomendaciones y guardar el plan marcado]
     K -- Ver avisos --> O[Mostrar avisos: déficit, nivel bajo o sin llenado]
+    K -- Editar hogar --> F
     K -- Ninguna, pasa un minuto --> H
     L --> H
     M --> H
-    N --> G
+    N --> H
     O --> G
 ```
 
@@ -686,7 +729,7 @@ Los atributos de calidad (QA) son propiedades medibles que indican en qué grado
 
 ## 4.2. Escenario de usabilidad
 
-Un usuario sin experiencia configura su hogar y registra un llenado en menos de un minuto: los controles son botones grandes, el formulario muestra el error exacto debajo de cada campo y el botón Guardar solo se habilita cuando todo es válido. El diseño usa colores sólidos y una sola fuente para facilitar la lectura.
+Un usuario sin experiencia configura su hogar y registra un llenado en menos de un minuto: los controles son botones grandes, la capacidad, los habitantes y las duchas se ajustan con controles que no permiten salir del rango, la hora se escribe con 4 números (el ":" se agrega solo) y, si falta un dato al tocar Guardar, el formulario no se guarda y muestra el error exacto debajo del campo. El diseño usa colores sólidos y una sola fuente para facilitar la lectura.
 
 ## 4.3. Escenario de confiabilidad
 
@@ -702,4 +745,4 @@ El dominio es Kotlin puro y no depende de Android, por lo que puede probarse con
 
 ## 4.6. Otros escenarios
 
-**Privacidad:** la aplicación no declara permisos en el `AndroidManifest.xml` y ningún dato sale del dispositivo, en línea con la privacidad por diseño de la Ley N.° 29733.
+**Privacidad:** la aplicación no declara permisos en el `AndroidManifest.xml` y ningún dato sale del dispositivo, en línea con la privacidad por diseño de la Ley N.° 29733. El respaldo automático de Android está desactivado (`allowBackup="false"`, y `backup_rules.xml` y `data_extraction_rules.xml` excluyen todos los datos), de modo que la base local no se copia a la nube ni a otro teléfono. El consentimiento de la bienvenida empieza sin marcar: el usuario debe aceptarlo de forma explícita.
