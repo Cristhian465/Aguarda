@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Plataforma-Android_8.0+-34A853?style=flat-square&logo=android&logoColor=white" alt="Android 8.0+"/>
+  <img src="https://img.shields.io/badge/Plataforma-Android_7.0+-34A853?style=flat-square&logo=android&logoColor=white" alt="Android 7.0+"/>
   <img src="https://img.shields.io/badge/Min_SDK-24-blue?style=flat-square" alt="Min SDK 24"/>
   <img src="https://img.shields.io/badge/Target_SDK-36-blue?style=flat-square" alt="Target SDK 36"/>
   <img src="https://img.shields.io/badge/Arquitectura-MVVM_+_DDD-purple?style=flat-square" alt="MVVM + DDD"/>
@@ -77,7 +77,8 @@ flowchart TD
 | 💧 **Registrar llenados** | Un toque cuando llega el agua (completo o a la mitad) |
 | 📉 **Aprender el consumo** | Ajusta la proyección cuando el agua se acaba antes de lo previsto |
 | ✂️ **Qué recortar** | Sugerencias de ahorro cuando el agua no alcanza hasta el próximo llenado |
-| 📡 **100 % local** | Funciona sin internet: todo se guarda en el teléfono (SQLite) |
+| 🔔 **Avisos** | Alerta dentro de la app si el agua no alcanza, si queda menos del 20 % o si falta registrar un llenado |
+| 📡 **100 % local** | Funciona sin internet: todo se guarda en el teléfono (SQLite) y no se copia a la nube |
 
 ---
 
@@ -196,7 +197,7 @@ C4Container
         Container(ui, "Presentation Layer", "Jetpack Compose", "Screens, ViewModels y UiStates con MVVM")
         Container(domain, "Domain Layer", "Kotlin puro", "Models, UseCases y Repositories (interfaces)")
         Container(data, "Data Layer", "Room", "Implementación de repositorios, DAOs y Entities")
-        ContainerDb(roomdb, "Room Database", "SQLite", "Fuente de verdad local: perfil del hogar y llenados")
+        ContainerDb(roomdb, "Room Database", "SQLite", "Fuente de verdad local: perfil del hogar, llenados, novedades y plan de recortes (versión 3)")
     }
 
 
@@ -269,7 +270,7 @@ classDiagram
 | Android Studio | Ladybug o superior |
 | JDK | 11+ |
 | Android SDK | API 24 (mínimo) — API 36 (target) |
-| Dispositivo/Emulador | Android 8.0+ |
+| Dispositivo/Emulador | Android 7.0+ (API 24) |
 
 ## 🚀 Cómo Ejecutar
 
@@ -291,9 +292,10 @@ git clone https://github.com/tu-usuario/AguardApp.git
 
 | ID | Requerimiento | Prioridad |
 |---|---|:-:|
-| RF-04 | Configurar perfil del hogar | 🔴 Alta |
-| RF-06 | Calcular depósito y agotamiento | 🔴 Alta |
-| RF-11 | Operar sin conexión | 🔴 Alta |
+| RF-02 | Configurar el hogar | 🔴 Alta |
+| RF-04 | Consultar el depósito (nivel y hasta cuándo alcanza) | 🔴 Alta |
+| RF-05 | Calcular el déficit hasta el próximo llenado | 🔴 Alta |
+| RF-08 | Operar sin conexión | 🔴 Alta |
 
 > 📄 Ver documentación completa en [`informes/FD03-SRS.md`](./informes/FD03-SRS.md)
 
@@ -308,6 +310,17 @@ git clone https://github.com/tu-usuario/AguardApp.git
 | [`FD03-SRS.md`](./informes/FD03-SRS.md) | Especificación de Requerimientos de Software |
 | [`FD04-SAD.md`](./informes/FD04-SAD.md) | Documento de Arquitectura de Software |
 | [`FD05-Informe-Final.md`](./informes/FD05-Informe-Final.md) | Informe final del proyecto |
+
+---
+
+## 📝 Changelog
+
+### 2026-10-14
+- [Cambiado] El consentimiento de la bienvenida empieza sin marcar: "Empezar" se habilita solo al aceptarlo, y el texto ahora explica que los datos se borran desinstalando la app.
+- [Cambiado] Respaldo automático de Android desactivado (`allowBackup="false"` y reglas que excluyen todos los datos): la base local no se copia a la nube ni a otro teléfono.
+- [Eliminado] Constante sin uso `AGUA_WATER` de `ParametrosConsumo` y comentario huérfano de la ruta `que_recortar/{deficit}` en `Rutas.kt`.
+- [Corregido] Comentario de `AguardAppDatabase` sobre migraciones: la versión 3 usa `AutoMigration`.
+- [Corregido] Informes FD03, FD04 y FD05 alineados con el código (versión 2.2): conflictos de merge resueltos, base de datos versión 3 y plan de recortes en los diagramas.
 
 ---
 

@@ -15,6 +15,4 @@ object Rutas {
 
     /** "registrar_llenado/completo" o "registrar_llenado/parcial". */
     fun registrarLlenado(tipo: String): String = "registrar_llenado/$tipo"
-
-    /** "que_recortar/120": el déficit va en litros. */
 }

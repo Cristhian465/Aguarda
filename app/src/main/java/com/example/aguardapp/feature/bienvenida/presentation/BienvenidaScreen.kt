@@ -126,7 +126,7 @@ private fun Consentimiento(marcado: Boolean, onAlternar: () -> Unit) {
             if (marcado) Icon(painterResource(R.drawable.ic_check), contentDescription = null, modifier = Modifier.size(15.dp), tint = AguaMedia)
         }
         Text(
-            "Acepto que la app guarde en mi teléfono los datos de mi hogar y mi consumo. Puedo borrarlos cuando quiera.",
+            "Acepto que la app guarde en mi teléfono los datos de mi hogar y mi consumo. Puedo borrarlos cuando quiera desinstalando la app.",
             fontFamily = FuenteTexto, fontSize = 11.5.sp, lineHeight = 17.sp, fontWeight = FontWeight.Medium, color = Blanco
         )
     }

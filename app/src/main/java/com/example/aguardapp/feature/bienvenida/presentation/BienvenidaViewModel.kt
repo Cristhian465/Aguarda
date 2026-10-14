@@ -11,7 +11,8 @@ import org.koin.mp.KoinPlatform
 import com.example.aguardapp.core.data.UsuarioDao
 
 data class BienvenidaUiState(
-    val consentimiento: Boolean = true,
+    // Empieza sin marcar: el consentimiento tiene que ser un acto explícito de la persona.
+    val consentimiento: Boolean = false,
     val listo: Boolean = false
 )
 

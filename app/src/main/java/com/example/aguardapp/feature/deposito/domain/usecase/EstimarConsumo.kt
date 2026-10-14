@@ -23,7 +23,6 @@ internal object ParametrosConsumo {
     const val LITROS_LAVADORA = 100.0
     const val LITROS_RIEGO = 150.0
 
-    const val AGUA_WATER = 50.0
     const val HORAS_DE_USO_AL_DIA = 12.0
 
     const val AHORRO_DUCHA_CORTA = 0.5
