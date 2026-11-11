@@ -77,8 +77,9 @@ flowchart TD
 | 💧 **Registrar llenados** | Un toque cuando llega el agua (completo o a la mitad) |
 | 📉 **Aprender el consumo** | Ajusta la proyección cuando el agua se acaba antes de lo previsto |
 | ✂️ **Qué recortar** | Sugerencias de ahorro cuando el agua no alcanza hasta el próximo llenado |
+| 🗺️ **Mapa de cisternas** | Puntos de reparto de agua en Tacna sobre Google Maps, con su horario y estado |
 | 🔔 **Avisos** | Alerta dentro de la app si el agua no alcanza, si queda menos del 20 % o si falta registrar un llenado |
-| 📡 **100 % local** | Funciona sin internet: todo se guarda en el teléfono (SQLite) y no se copia a la nube |
+| 📡 **100 % local** | Los datos del hogar se guardan solo en el teléfono (SQLite) y no se copian a la nube; el mapa necesita internet para cargar |
 
 ---
 
@@ -113,6 +114,7 @@ Según el Informe de Factibilidad **(FD01, Versión 1.0)**, el proyecto es viabl
 | **Lenguaje** | ![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?style=flat-square&logo=kotlin&logoColor=white) |
 | **UI** | ![Jetpack Compose](https://img.shields.io/badge/Jetpack_Compose-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white) ![Material 3](https://img.shields.io/badge/Material_3-757575?style=flat-square&logo=materialdesign&logoColor=white) |
 | **Base de datos** | ![Room](https://img.shields.io/badge/Room_(SQLite)-003B57?style=flat-square&logo=sqlite&logoColor=white) |
+| **Mapas** | ![Google Maps](https://img.shields.io/badge/Google_Maps_Compose-4285F4?style=flat-square&logo=googlemaps&logoColor=white) |
 | **DI** | ![Koin](https://img.shields.io/badge/Koin-F5A623?style=flat-square) |
 | **Fechas** | ![kotlinx.datetime](https://img.shields.io/badge/kotlinx.datetime-7F52FF?style=flat-square) |
 | **Arquitectura** | ![MVVM](https://img.shields.io/badge/MVVM-purple?style=flat-square) ![DDD](https://img.shields.io/badge/DDD-darkblue?style=flat-square) ![Clean Architecture](https://img.shields.io/badge/Clean_Architecture-teal?style=flat-square) |
@@ -141,14 +143,15 @@ AguardApp/
 │           ├── 📁 core/                   🔧 Infraestructura transversal
 │           │   ├── 📁 data/               Usuario local (UUID) y DAO
 │           │   ├── 📁 db/                 AguardAppDatabase (Room)
-│           │   ├── 📁 di/                 Koin: base de datos, usuario y repositorio
-│           │   ├── 📁 navigation/         Rutas, NavHost y pantalla inicial
+│           │   ├── 📁 di/                 Koin: base de datos, usuario y repositorios
+│           │   ├── 📁 navigation/         Rutas, NavHost, barra inferior y pantalla inicial
 │           │   ├── 📁 ui/theme/           Colores, tipografías y tema
 │           │   └── 📁 util/               Reloj y UUID
 │           │
 │           └── 📁 feature/
 │               ├── 📁 bienvenida/         Pantalla de entrada (solo el primer uso)
-│               └── 📁 deposito/           Depósito de agua del hogar (MVVM + DDD)
+│               ├── 📁 deposito/           Depósito de agua del hogar (MVVM + DDD)
+│               └── 📁 mapa/               Mapa de puntos de cisterna (Google Maps)
 │
 └── 📁 informes/                           📋 Documentación académica
     ├── 📄 FD01-Factibilidad.md
@@ -160,7 +163,7 @@ AguardApp/
 
 ### Capas internas de cada Feature
 
-La feature `deposito` sigue el patrón **MVVM + DDD** con estas capas (`bienvenida` solo tiene `presentation/`):
+Las features `deposito` y `mapa` siguen el patrón **MVVM + DDD** con estas capas (`bienvenida` solo tiene `presentation/`; `mapa` no tiene `usecase/` ni Room):
 
 | Capa | Contenido | Depende de |
 |---|---|---|
@@ -268,7 +271,7 @@ classDiagram
 | Requisito | Versión |
 |---|---|
 | Android Studio | Ladybug o superior |
-| JDK | 11+ |
+| JDK | 17+ |
 | Android SDK | API 24 (mínimo) — API 36 (target) |
 | Dispositivo/Emulador | Android 7.0+ (API 24) |
 
@@ -280,7 +283,10 @@ git clone https://github.com/tu-usuario/AguardApp.git
 
 # 2. Abrir en Android Studio
 
-# 3. Sincronizar Gradle y ejecutar
+# 3. Poner la API key de Google Maps en local.properties
+#    MAPS_API_KEY=tu_api_key
+
+# 4. Sincronizar Gradle y ejecutar
 ./gradlew :app:assembleDebug
 
 # O simplemente presionar ▶️ Run en Android Studio
@@ -314,6 +320,12 @@ git clone https://github.com/tu-usuario/AguardApp.git
 ---
 
 ## 📝 Changelog
+
+### 2026-11-11
+- [Agregado] Feature `mapa`: pantalla "Puntos de cisterna" con Google Maps (`maps-compose`), marcadores por estado y "mi ubicación" si se concede el permiso.
+- [Agregado] Barra inferior con dos pestañas: Mi depósito y Mapa (`core/navigation/BarraInferior.kt`).
+- [Agregado] Permisos `INTERNET` y de ubicación; API key leída de `local.properties` (`MAPS_API_KEY`).
+- [Cambiado] El proyecto compila con Java 17 (lo exige `maps-compose`).
 
 ### 2026-10-14
 - [Cambiado] El consentimiento de la bienvenida empieza sin marcar: "Empezar" se habilita solo al aceptarlo, y el texto ahora explica que los datos se borran desinstalando la app.

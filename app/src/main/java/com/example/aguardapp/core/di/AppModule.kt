@@ -13,6 +13,8 @@ import com.example.aguardapp.core.util.RelojDelSistema
 import com.example.aguardapp.core.util.nuevoUuid
 import com.example.aguardapp.feature.deposito.data.DepositoRepositoryImpl
 import com.example.aguardapp.feature.deposito.domain.repository.DepositoRepository
+import com.example.aguardapp.feature.mapa.data.MapaRepositoryImpl
+import com.example.aguardapp.feature.mapa.domain.repository.MapaRepository
 
 /** Se llama una sola vez desde la clase `Application`, antes de mostrar ninguna pantalla. */
 fun iniciarAplicacion(context: Context) {
@@ -33,11 +35,12 @@ private suspend fun obtenerOCrearUsuario(base: AguardAppDatabase): String {
     return nuevo.id
 }
 
-/** Todo lo que se inyecta en la app: la base de datos, el reloj y el repositorio del depósito. */
+/** Todo lo que se inyecta en la app: la base de datos, el reloj y los repositorios del depósito y del mapa. */
 private fun moduloApp(base: AguardAppDatabase, usuarioId: String) = module {
     single<Reloj> { RelojDelSistema() }
     single { base.usuarioDao() }
     single<DepositoRepository> {
         DepositoRepositoryImpl(base.depositoDao(), usuarioId, get<Reloj>()::ahora, ::nuevoUuid)
     }
+    single<MapaRepository> { MapaRepositoryImpl() }
 }
