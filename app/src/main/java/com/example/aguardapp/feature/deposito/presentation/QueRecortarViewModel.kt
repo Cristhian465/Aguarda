@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
-import com.example.aguardapp.core.util.Reloj
 import com.example.aguardapp.feature.deposito.domain.model.Deposito
 import com.example.aguardapp.feature.deposito.domain.model.PerfilHogar
 import com.example.aguardapp.feature.deposito.domain.model.Recomendacion
@@ -18,7 +17,6 @@ import com.example.aguardapp.feature.deposito.domain.usecase.CalcularDeficit
 import com.example.aguardapp.feature.deposito.domain.usecase.CalcularRecortes
 import com.example.aguardapp.feature.deposito.domain.usecase.RecorteSugerido
 import com.example.aguardapp.feature.deposito.domain.usecase.SituacionRecortes
-import org.koin.mp.KoinPlatform
 
 data class QueRecortarUiState(
     val cargando: Boolean = true,
@@ -92,13 +90,6 @@ class QueRecortarViewModel(
                 litrosGanados = situacion.litrosGanados,
                 litrosQueFaltan = situacion.litrosQueFaltan
             )
-        }
-    }
-
-    companion object {
-        fun desdeInyeccion(): QueRecortarViewModel {
-            val koin = KoinPlatform.getKoin()
-            return QueRecortarViewModel(koin.get(), koin.get<Reloj>()::ahora)
         }
     }
 }

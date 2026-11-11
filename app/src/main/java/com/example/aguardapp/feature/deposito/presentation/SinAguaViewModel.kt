@@ -12,12 +12,10 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.minus
-import com.example.aguardapp.core.util.Reloj
 import com.example.aguardapp.feature.deposito.domain.model.PrevisualizacionSinAgua
 import com.example.aguardapp.feature.deposito.domain.repository.DepositoRepository
 import kotlin.math.abs
 import kotlin.math.roundToInt
-import org.koin.mp.KoinPlatform
 
 enum class OpcionSinAgua { AHORA, ANTES }
 
@@ -161,12 +159,5 @@ class SinAguaViewModel(
             seAcaboAntes = adelanto >= MINUTO_EN_HORAS,
             textoConsumo = if (antes == despues) "$antes L/h" else "$antes → $despues L/h"
         )
-    }
-
-    companion object {
-        fun desdeInyeccion(): SinAguaViewModel {
-            val koin = KoinPlatform.getKoin()
-            return SinAguaViewModel(koin.get(), koin.get<Reloj>()::ahora)
-        }
     }
 }

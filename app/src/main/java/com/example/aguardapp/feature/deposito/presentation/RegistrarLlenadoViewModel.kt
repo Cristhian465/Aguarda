@@ -9,11 +9,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
-import com.example.aguardapp.core.util.Reloj
 import com.example.aguardapp.feature.deposito.domain.model.Litros
 import com.example.aguardapp.feature.deposito.domain.repository.DepositoRepository
 import kotlin.math.roundToInt
-import org.koin.mp.KoinPlatform
 
 enum class TipoLlenado(val ruta: String) {
     COMPLETO("completo"),
@@ -93,10 +91,5 @@ class RegistrarLlenadoViewModel(
 
     companion object {
         private const val MAXIMO_DIGITOS = 5
-
-        fun desdeInyeccion(tipo: TipoLlenado): RegistrarLlenadoViewModel {
-            val koin = KoinPlatform.getKoin()
-            return RegistrarLlenadoViewModel(koin.get(), koin.get<Reloj>()::ahora, tipo)
-        }
     }
 }

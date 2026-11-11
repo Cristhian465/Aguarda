@@ -8,8 +8,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
-import org.koin.mp.KoinPlatform
-import com.example.aguardapp.core.util.Reloj
 import com.example.aguardapp.feature.deposito.domain.model.Deposito
 import com.example.aguardapp.feature.deposito.domain.model.PerfilHogar
 import com.example.aguardapp.feature.deposito.domain.model.PlanRecortes
@@ -99,11 +97,4 @@ class AvisosViewModel(
         texto = "Registra el llenado de tu tanque para saber cuánto te queda.",
         destino = DestinoDelAviso.RegistrarLlenado
     )
-
-    companion object {
-        fun desdeInyeccion(): AvisosViewModel {
-            val koin = KoinPlatform.getKoin()
-            return AvisosViewModel(koin.get(), koin.get<Reloj>()::ahora)
-        }
-    }
 }

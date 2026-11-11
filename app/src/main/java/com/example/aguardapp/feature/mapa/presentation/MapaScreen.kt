@@ -21,7 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import org.koin.compose.viewmodel.koinViewModel
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -41,7 +41,7 @@ private const val ZOOM_INICIAL = 12.5f
 private val PERMISOS_UBICACION = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
 
 @Composable
-fun MapaScreen(viewModel: MapaViewModel = viewModel { MapaViewModel.desdeInyeccion() }) {
+fun MapaScreen(viewModel: MapaViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     IconosClarosEnBarraDeEstado(claros = false)
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {

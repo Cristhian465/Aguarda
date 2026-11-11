@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import org.koin.mp.KoinPlatform
 import com.example.aguardapp.core.data.UsuarioDao
 import com.example.aguardapp.feature.deposito.domain.repository.DepositoRepository
 
@@ -38,12 +37,5 @@ class InicioViewModel(
         !bienvenidaCompletada -> Rutas.BIENVENIDA
         !hayConfiguracion -> Rutas.CONFIGURAR_HOGAR
         else -> Rutas.MI_DEPOSITO
-    }
-
-    companion object {
-        fun desdeInyeccion(): InicioViewModel {
-            val koin = KoinPlatform.getKoin()
-            return InicioViewModel(koin.get(), koin.get())
-        }
     }
 }

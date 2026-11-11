@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.koin.mp.KoinPlatform
 import com.example.aguardapp.core.data.UsuarioDao
 
 data class BienvenidaUiState(
@@ -29,9 +28,5 @@ class BienvenidaViewModel(private val usuarioDao: UsuarioDao) : ViewModel() {
             usuarioDao.completarBienvenida()
             _uiState.update { it.copy(listo = true) }
         }
-    }
-
-    companion object {
-        fun desdeInyeccion(): BienvenidaViewModel = BienvenidaViewModel(KoinPlatform.getKoin().get())
     }
 }

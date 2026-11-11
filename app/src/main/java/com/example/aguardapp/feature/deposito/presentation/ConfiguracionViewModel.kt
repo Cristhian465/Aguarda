@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalTime
-import org.koin.mp.KoinPlatform
 import com.example.aguardapp.feature.deposito.domain.model.CapacidadLitros
 import com.example.aguardapp.feature.deposito.domain.model.ConfiguracionHogar
 import com.example.aguardapp.feature.deposito.domain.model.Habitantes
@@ -134,9 +133,5 @@ class ConfiguracionViewModel(private val repositorio: DepositoRepository) : View
         val habitos = HabitosDelHogar(estado.duchasPorDia, estado.usaLavadora, estado.riegaJardin)
         val consumo = estimar.porHabitos(habitos, Habitantes(estado.habitantes))
         return estado.copy(consumoEstimadoLitrosPorHora = consumo.litrosPorHora.roundToInt())
-    }
-
-    companion object {
-        fun desdeInyeccion(): ConfiguracionViewModel = ConfiguracionViewModel(KoinPlatform.getKoin().get())
     }
 }

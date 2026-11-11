@@ -28,7 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import org.koin.compose.viewmodel.koinViewModel
 import com.example.aguardapp.core.ui.theme.AguaMedia
 import com.example.aguardapp.core.ui.theme.Coral
 import com.example.aguardapp.core.ui.theme.Divisor
@@ -47,7 +47,7 @@ private val MARGEN = Modifier.padding(horizontal = 24.dp)
 @Composable
 fun SinAguaScreen(
     onVolver: () -> Unit,
-    viewModel: SinAguaViewModel = viewModel { SinAguaViewModel.desdeInyeccion() }
+    viewModel: SinAguaViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(uiState.listo) { if (uiState.listo) onVolver() }

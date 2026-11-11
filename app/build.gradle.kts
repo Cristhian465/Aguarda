@@ -78,7 +78,7 @@ dependencies {
     implementation(libs.maps.compose)
 
     // Inyección de dependencias
-    implementation(libs.koin.core)
+    implementation(libs.koin.androidx.compose)
 
     testImplementation(libs.junit)
 }

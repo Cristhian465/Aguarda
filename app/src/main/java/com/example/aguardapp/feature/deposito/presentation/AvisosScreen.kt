@@ -28,7 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import org.koin.compose.viewmodel.koinViewModel
 import com.example.aguardapp.core.ui.theme.Agua
 import com.example.aguardapp.core.ui.theme.Coral
 import com.example.aguardapp.core.ui.theme.FuenteTexto
@@ -44,7 +44,7 @@ fun AvisosScreen(
     onVolver: () -> Unit,
     onRegistrarLlenado: () -> Unit,
     onQueRecortar: () -> Unit,
-    viewModel: AvisosViewModel = viewModel { AvisosViewModel.desdeInyeccion() }
+    viewModel: AvisosViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     IconosClarosEnBarraDeEstado(claros = false)

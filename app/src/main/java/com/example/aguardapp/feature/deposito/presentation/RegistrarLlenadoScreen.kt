@@ -26,7 +26,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import com.example.aguardapp.core.ui.theme.AguaMedia
 import com.example.aguardapp.core.ui.theme.Blanco
 import com.example.aguardapp.core.ui.theme.FuenteTexto
@@ -46,7 +47,7 @@ fun RegistrarLlenadoScreen(
     tipo: TipoLlenado,
     onListo: () -> Unit,
     onVolver: () -> Unit,
-    viewModel: RegistrarLlenadoViewModel = viewModel { RegistrarLlenadoViewModel.desdeInyeccion(tipo) }
+    viewModel: RegistrarLlenadoViewModel = koinViewModel { parametersOf(tipo) }
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(uiState.guardado) { if (uiState.guardado) onListo() }

@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.koin.mp.KoinPlatform
 import com.example.aguardapp.feature.deposito.presentation.formatearHora
 import com.example.aguardapp.feature.mapa.domain.model.Coordenada
 import com.example.aguardapp.feature.mapa.domain.model.EstadoCisterna
@@ -30,10 +29,6 @@ class MapaViewModel(private val repositorio: MapaRepository) : ViewModel() {
             val puntos = repositorio.obtenerPuntosCisterna()
             _uiState.update { MapaUiState(cargando = false, centro = repositorio.centroDelMapa(), puntos = puntos) }
         }
-    }
-
-    companion object {
-        fun desdeInyeccion(): MapaViewModel = MapaViewModel(KoinPlatform.getKoin().get())
     }
 }
 

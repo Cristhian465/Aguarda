@@ -10,8 +10,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
-import org.koin.mp.KoinPlatform
-import com.example.aguardapp.core.util.Reloj
 import com.example.aguardapp.feature.deposito.domain.model.Deposito
 import com.example.aguardapp.feature.deposito.domain.model.PerfilHogar
 import com.example.aguardapp.feature.deposito.domain.model.PlanRecortes
@@ -90,12 +88,5 @@ class DepositoViewModel(
             consumoLitrosPorHora = deposito.consumo.litrosPorHora.roundToInt(),
             litrosPorHabitanteDia = repositorio.litrosPorHabitanteDia()?.roundToInt()
         )
-    }
-
-    companion object {
-        fun desdeInyeccion(): DepositoViewModel {
-            val koin = KoinPlatform.getKoin()
-            return DepositoViewModel(koin.get(), koin.get<Reloj>()::ahora)
-        }
     }
 }

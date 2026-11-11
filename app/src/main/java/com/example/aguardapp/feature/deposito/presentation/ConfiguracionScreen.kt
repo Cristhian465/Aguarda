@@ -18,7 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import org.koin.compose.viewmodel.koinViewModel
 import com.example.aguardapp.core.ui.theme.AguaMedia
 import com.example.aguardapp.core.ui.theme.Divisor
 import com.example.aguardapp.core.ui.theme.FuenteTexto
@@ -45,7 +45,7 @@ private val MARGEN = Modifier.padding(horizontal = 24.dp)
 fun ConfiguracionScreen(
     onListo: () -> Unit,
     onVolver: (() -> Unit)? = null,
-    viewModel: ConfiguracionViewModel = viewModel { ConfiguracionViewModel.desdeInyeccion() }
+    viewModel: ConfiguracionViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(uiState.guardado) { if (uiState.guardado) onListo() }

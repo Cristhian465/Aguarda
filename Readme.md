@@ -143,7 +143,7 @@ AguardApp/
 │           ├── 📁 core/                   🔧 Infraestructura transversal
 │           │   ├── 📁 data/               Usuario local (UUID) y DAO
 │           │   ├── 📁 db/                 AguardAppDatabase (Room)
-│           │   ├── 📁 di/                 Koin: base de datos, usuario y repositorios
+│           │   ├── 📁 di/                 Koin: base de datos, repositorios y ViewModels
 │           │   ├── 📁 navigation/         Rutas, NavHost, barra inferior y pantalla inicial
 │           │   ├── 📁 ui/theme/           Colores, tipografías y tema
 │           │   └── 📁 util/               Reloj y UUID
@@ -322,6 +322,7 @@ git clone https://github.com/tu-usuario/AguardApp.git
 ## 📝 Changelog
 
 ### 2026-11-11
+- [Cambiado] Inyección de dependencias completa: los ViewModels se registran en Koin (`moduloViewModels` en `AppModule.kt`) y cada pantalla los obtiene con `koinViewModel()`. Se eliminaron los `desdeInyeccion()` y se cambió `koin-core` por `koin-androidx-compose`.
 - [Agregado] Feature `mapa`: pantalla "Puntos de cisterna" con Google Maps (`maps-compose`), marcadores por estado y "mi ubicación" si se concede el permiso.
 - [Agregado] Barra inferior con dos pestañas: Mi depósito y Mapa (`core/navigation/BarraInferior.kt`).
 - [Agregado] Permisos `INTERNET` y de ubicación; API key leída de `local.properties` (`MAPS_API_KEY`).
