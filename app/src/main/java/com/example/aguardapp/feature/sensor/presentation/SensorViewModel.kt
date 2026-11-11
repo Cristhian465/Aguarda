@@ -23,7 +23,6 @@ import com.example.aguardapp.feature.deposito.domain.repository.DepositoReposito
 import com.example.aguardapp.feature.sensor.domain.model.LecturaSensor
 import com.example.aguardapp.feature.sensor.domain.repository.SensorRepository
 
-/** Lo que muestra la tarjeta del sensor en Mi depósito. */
 data class SensorUiState(
     val configurado: Boolean = false,
     val cargando: Boolean = true,
@@ -42,31 +41,32 @@ class SensorViewModel(
     private val deposito: DepositoRepository,
     private val ahora: () -> LocalDateTime
 ) : ViewModel() {
-
     private val accion = MutableStateFlow(SensorUiState())
 
-    // Consulta el sensor cada 20 s mientras la pantalla está visible; al salir, se detiene.
-    private val lecturas = flow {
+    private val consultas = flow {
+        emit(Unit)
         if (!sensor.estaConfigurado) return@flow
         while (true) {
-            val lectura = sensor.ultimaLectura()
-            lectura.getOrNull()?.let { aplicarSiEsNueva(it) }
-            emit(lectura)
+            sensor.actualizarDesdeApi()
+                .onSuccess { lectura ->
+                    accion.update { it.copy(error = null) }
+                    aplicarSiEsNueva(lectura)
+                }
+                .onFailure { falla -> accion.update { it.copy(error = falla.message) } }
+            emit(Unit)
             delay(INTERVALO_CONSULTA_MS)
         }
     }
 
     val uiState: StateFlow<SensorUiState> =
-        combine(lecturas, deposito.observarPerfil(), accion) { lectura, perfil, estadoAccion ->
+        combine(consultas, sensor.observarUltimaLectura(), deposito.observarPerfil(), accion) { _, lectura, perfil, estado ->
             val capacidad = perfil?.capacidad?.litros?.valor
-            val valor = lectura.getOrNull()
-            estadoAccion.copy(
-                configurado = true,
-                cargando = false,
-                porcentaje = valor?.porcentaje?.roundToInt(),
-                litros = valor?.let { l -> capacidad?.let { l.litros(it).roundToInt() } },
-                antiguedad = valor?.let(::describirAntiguedad),
-                error = lectura.exceptionOrNull()?.message
+            estado.copy(
+                configurado = sensor.estaConfigurado,
+                cargando = lectura == null && estado.error == null,
+                porcentaje = lectura?.porcentaje?.roundToInt(),
+                litros = lectura?.let { l -> capacidad?.let { l.litros(it).roundToInt() } },
+                antiguedad = lectura?.let(::describirAntiguedad)
             )
         }.stateIn(
             viewModelScope,
@@ -74,15 +74,12 @@ class SensorViewModel(
             SensorUiState(configurado = sensor.estaConfigurado)
         )
 
-    /** Botón: vuelve a tomar la medición del sensor como nivel actual (por ejemplo, tras editarlo a mano). */
     fun onUsarMedicion() {
         val litros = uiState.value.litros ?: return
         if (accion.value.guardando) return
         viewModelScope.launch { guardarNivel(ahora(), litros.toDouble()) }
     }
 
-    // Una lectura más reciente que el último nivel registrado se aplica sola. Si el usuario
-    // editó el nivel después de esa lectura, se respeta hasta que llegue una lectura nueva.
     @OptIn(ExperimentalTime::class)
     private suspend fun aplicarSiEsNueva(lectura: LecturaSensor) {
         val capacidad = deposito.observarPerfil().first()?.capacidad?.litros?.valor ?: return
@@ -93,7 +90,7 @@ class SensorViewModel(
     }
 
     private suspend fun guardarNivel(momento: LocalDateTime, litros: Double) {
-        if (litros < 1) return  // tanque vacío: no hay nivel que registrar
+        if (litros < 1) return
         accion.update { it.copy(guardando = true, mensaje = null) }
         val resultado = deposito.registrarLlenado(momento, Litros(litros))
         accion.update {

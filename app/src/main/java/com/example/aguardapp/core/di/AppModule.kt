@@ -30,6 +30,7 @@ import com.example.aguardapp.feature.mapa.data.MapaRepositoryImpl
 import com.example.aguardapp.feature.mapa.domain.repository.MapaRepository
 import com.example.aguardapp.feature.mapa.presentation.MapaViewModel
 import com.example.aguardapp.feature.sensor.data.SensorRepositoryImpl
+import com.example.aguardapp.feature.sensor.data.local.SensorDatabase
 import com.example.aguardapp.feature.sensor.data.remote.ThingSpeakApi
 import com.example.aguardapp.feature.sensor.domain.repository.SensorRepository
 import com.example.aguardapp.feature.sensor.presentation.SensorViewModel
@@ -40,7 +41,7 @@ fun iniciarAplicacion(context: Context) {
     val base = AguardAppDatabase.crear(context)
     // El usuario debe existir antes de la primera pantalla; es una lectura local y rápida.
     val usuarioId = runBlocking(Dispatchers.IO) { obtenerOCrearUsuario(base) }
-    startKoin { modules(moduloApp(base, usuarioId), moduloRed, moduloViewModels) }
+    startKoin { modules(moduloApp(base, usuarioId), moduloRed(context), moduloViewModels) }
 }
 
 // Lee el usuario local o lo crea la primera vez, con un UUID que ya no cambia.
@@ -64,7 +65,7 @@ private fun moduloApp(base: AguardAppDatabase, usuarioId: String) = module {
 }
 
 /** Cliente HTTP (Retrofit) para leer el sensor IoT del tanque publicado en ThingSpeak. */
-private val moduloRed = module {
+private fun moduloRed(context: Context) = module {
     single {
         Retrofit.Builder()
             .baseUrl("https://api.thingspeak.com/")
@@ -73,7 +74,7 @@ private val moduloRed = module {
     }
     single<ThingSpeakApi> { get<Retrofit>().create(ThingSpeakApi::class.java) }
     single<SensorRepository> {
-        SensorRepositoryImpl(get(), BuildConfig.THINGSPEAK_CHANNEL_ID, BuildConfig.THINGSPEAK_READ_KEY)
+        SensorRepositoryImpl(get(), SensorDatabase.crear(context).lecturaDao(), BuildConfig.THINGSPEAK_CHANNEL_ID, BuildConfig.THINGSPEAK_READ_KEY)
     }
 }
 

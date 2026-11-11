@@ -134,10 +134,10 @@ private fun Encabezado(vista: DepositoVista, onEditarHogar: () -> Unit) {
         Row(horizontalArrangement = Arrangement.spacedBy(22.dp), verticalAlignment = Alignment.CenterVertically) {
             IndicadorNivelReservorio(vista.porcentaje / 100f)
             Column {
-                Text(formatearMiles(vista.nivelLitros), fontFamily = FuenteTexto, fontSize = 60.sp, fontWeight = FontWeight.ExtraBold, color = Blanco)
-                Text("litros disponibles", fontFamily = FuenteTexto, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Blanco)
+                Text("${vista.porcentaje} %", fontFamily = FuenteTexto, fontSize = 60.sp, fontWeight = FontWeight.ExtraBold, color = Blanco)
+                Text("del tanque disponible", fontFamily = FuenteTexto, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Blanco)
                 Spacer(Modifier.height(10.dp))
-                Text("${vista.porcentaje} % de ${formatearMiles(vista.capacidadLitros)} L", fontFamily = FuenteTexto, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Blanco)
+                Text("${formatearMiles(vista.nivelLitros)} L de ${formatearMiles(vista.capacidadLitros)} L", fontFamily = FuenteTexto, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Blanco)
             }
         }
         Spacer(Modifier.height(28.dp))

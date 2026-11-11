@@ -24,7 +24,6 @@ import com.example.aguardapp.core.ui.theme.TintaTenue
 import com.example.aguardapp.feature.deposito.presentation.componentes.TarjetaBlanca
 import com.example.aguardapp.feature.deposito.presentation.formatearMiles
 
-/** Nivel medido por el sensor IoT del tanque. No se muestra si el sensor no está configurado. */
 @Composable
 fun TarjetaSensor(modifier: Modifier = Modifier, viewModel: SensorViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()

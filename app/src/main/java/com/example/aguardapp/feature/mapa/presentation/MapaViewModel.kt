@@ -20,7 +20,6 @@ data class MapaUiState(
 )
 
 class MapaViewModel(private val repositorio: MapaRepository) : ViewModel() {
-
     private val _uiState = MutableStateFlow(MapaUiState())
     val uiState: StateFlow<MapaUiState> = _uiState.asStateFlow()
 
@@ -32,7 +31,6 @@ class MapaViewModel(private val repositorio: MapaRepository) : ViewModel() {
     }
 }
 
-/** Texto bajo el nombre del marcador: "07:00 – 13:00 · Activo". */
 fun detalleDe(punto: PuntoCisterna): String =
     "${formatearHora(punto.horarioInicio)} – ${formatearHora(punto.horarioFin)} · ${nombreDelEstado(punto.estado)}"
 

@@ -6,12 +6,7 @@ import com.example.aguardapp.feature.mapa.domain.model.EstadoCisterna
 import com.example.aguardapp.feature.mapa.domain.model.PuntoCisterna
 import com.example.aguardapp.feature.mapa.domain.repository.MapaRepository
 
-/**
- * Datos de prueba con coordenadas aproximadas en Tacna.
- * Se reemplazan por los puntos oficiales cuando EPS Tacna los publique.
- */
 class MapaRepositoryImpl : MapaRepository {
-
     override fun centroDelMapa(): Coordenada = CENTRO_TACNA
 
     override suspend fun obtenerPuntosCisterna(): List<PuntoCisterna> = PUNTOS

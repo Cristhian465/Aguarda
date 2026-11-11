@@ -80,7 +80,6 @@ private fun MapaDeCisternas(centro: Coordenada, puntos: List<PuntoCisterna>) {
     }
 }
 
-/** Pide el permiso de ubicación al abrir el mapa; si se niega, el mapa funciona sin "mi ubicación". */
 @Composable
 private fun rememberPermisoDeUbicacion(): Boolean {
     val context = LocalContext.current

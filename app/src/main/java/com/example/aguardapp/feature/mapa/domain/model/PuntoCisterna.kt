@@ -11,7 +11,6 @@ data class Coordenada(val latitud: Double, val longitud: Double) {
 
 enum class EstadoCisterna { ACTIVO, EN_RUTA, TERMINADO }
 
-/** Lugar donde una cisterna reparte agua durante un horario. */
 data class PuntoCisterna(
     val id: String,
     val nombre: String,
