@@ -80,7 +80,8 @@ flowchart TD
 | 🗺️ **Mapa de cisternas** | Puntos de reparto de agua en Tacna sobre Google Maps, con su horario y estado |
 | 📶 **Sensor IoT del tanque** | Lee el nivel real del tanque (ESP32 + sensor ultrasónico, simulado en Wokwi) desde ThingSpeak y lo aplica como nivel actual |
 | 🔔 **Avisos** | Alerta dentro de la app si el agua no alcanza, si queda menos del 20 % o si falta registrar un llenado |
-| 📡 **100 % local** | Los datos del hogar se guardan solo en el teléfono (SQLite) y no se copian a la nube; el mapa necesita internet para cargar |
+| 🏞️ **Represas: de dónde viene tu agua** | El recorrido del agua de tu distrito (detectado por GPS o elegido de una lista) y las represas de Tacna con datos oficiales de la ANA, en un mapa y una lista; se ve sin conexión una vez descargado |
+| 📡 **Datos del hogar locales** | Los datos del hogar se guardan solo en el teléfono (SQLite) y no se copian a la nube; internet se usa para el mapa, el sensor y descargar las represas, que quedan guardadas |
 
 ---
 
@@ -117,7 +118,9 @@ Según el Informe de Factibilidad **(FD01, Versión 1.0)**, el proyecto es viabl
 | **Base de datos** | ![Room](https://img.shields.io/badge/Room_(SQLite)-003B57?style=flat-square&logo=sqlite&logoColor=white) |
 | **Mapas** | ![Google Maps](https://img.shields.io/badge/Google_Maps_Compose-4285F4?style=flat-square&logo=googlemaps&logoColor=white) |
 | **Red** | ![Retrofit](https://img.shields.io/badge/Retrofit-48B983?style=flat-square&logo=square&logoColor=white) ![ThingSpeak](https://img.shields.io/badge/ThingSpeak-1D6FA5?style=flat-square) |
+| **Datos públicos** | ![ANA](https://img.shields.io/badge/ANA-ArcGIS_REST-0B6C7A?style=flat-square) ![Nominatim](https://img.shields.io/badge/Nominatim-OpenStreetMap-7EBC6F?style=flat-square&logo=openstreetmap&logoColor=white) |
 | **DI** | ![Koin](https://img.shields.io/badge/Koin-F5A623?style=flat-square) |
+| **Pruebas** | ![JUnit 4](https://img.shields.io/badge/JUnit_4-25A162?style=flat-square&logo=junit5&logoColor=white) |
 | **Fechas** | ![kotlinx.datetime](https://img.shields.io/badge/kotlinx.datetime-7F52FF?style=flat-square) |
 | **Arquitectura** | ![MVVM](https://img.shields.io/badge/MVVM-purple?style=flat-square) ![DDD](https://img.shields.io/badge/DDD-darkblue?style=flat-square) ![Clean Architecture](https://img.shields.io/badge/Clean_Architecture-teal?style=flat-square) |
 
@@ -133,7 +136,8 @@ AguardApp/
 │
 ├── 📁 app/                                Módulo principal Android
 │   ├── 📄 build.gradle.kts                Dependencias y plugins
-│   ├── 📁 schemas/                        Esquemas exportados de Room
+│   ├── 📁 schemas/                        Esquemas exportados de Room (versiones 1 a 4)
+│   ├── 📁 src/test/                       Pruebas unitarias de Represas y respuestas reales de la ANA y Nominatim
 │   └── 📁 src/main/
 │       ├── 📄 AndroidManifest.xml
 │       ├── 📁 res/                        Recursos (iconos, strings, etc.)
@@ -145,7 +149,7 @@ AguardApp/
 │           ├── 📁 core/                   🔧 Infraestructura transversal
 │           │   ├── 📁 data/               Usuario local (UUID) y DAO
 │           │   ├── 📁 db/                 AguardAppDatabase (Room)
-│           │   ├── 📁 di/                 Koin: base de datos, repositorios y ViewModels
+│           │   ├── 📁 di/                 Koin: base de datos, red, repositorios y ViewModels
 │           │   ├── 📁 navigation/         Rutas, NavHost, barra inferior y pantalla inicial
 │           │   ├── 📁 ui/theme/           Colores, tipografías y tema
 │           │   └── 📁 util/               Reloj y UUID
@@ -154,7 +158,8 @@ AguardApp/
 │               ├── 📁 bienvenida/         Pantalla de entrada (solo el primer uso)
 │               ├── 📁 deposito/           Depósito de agua del hogar (MVVM + DDD)
 │               ├── 📁 mapa/               Mapa de puntos de cisterna (Google Maps)
-│               └── 📁 sensor/             Nivel del tanque desde el sensor IoT (Retrofit + ThingSpeak)
+│               ├── 📁 sensor/             Nivel del tanque desde el sensor IoT (Retrofit + ThingSpeak)
+│               └── 📁 represas/           De dónde viene tu agua y represas de Tacna (Retrofit + ANA + Nominatim + Room)
 │
 └── 📁 informes/                           📋 Documentación académica
     ├── 📄 FD01-Factibilidad.md
@@ -166,12 +171,12 @@ AguardApp/
 
 ### Capas internas de cada Feature
 
-Las features `deposito` y `mapa` siguen el patrón **MVVM + DDD** con estas capas (`bienvenida` solo tiene `presentation/`; `mapa` no tiene `usecase/` ni Room):
+Las features `deposito`, `mapa`, `sensor` y `represas` siguen el patrón **MVVM + DDD** con estas capas (`bienvenida` solo tiene `presentation/`; solo `deposito` tiene `usecase/`; `sensor` y `represas` tienen `remote/` con sus APIs de Retrofit; `mapa` no usa Room):
 
 | Capa | Contenido | Depende de |
 |---|---|---|
 | 📐 `domain/` | `model/`, `repository/` (interfaces), `usecase/` — Kotlin puro | Nada |
-| 💾 `data/` | Implementaciones de repositorios, `local/` (Room), `mapper/` | `domain/` |
+| 💾 `data/` | Implementaciones de repositorios, `local/` (Room), `remote/` (Retrofit y DTO), `mapper/` | `domain/` |
 | 🖼️ `presentation/` | Por pantalla: `*Screen.kt` y `*ViewModel.kt` (con su `UiState`); `componentes/` con las piezas comunes | `domain/` |
 
 ---
@@ -186,9 +191,16 @@ C4Context
 
     System(app, "AguardApp", "App Android que gestiona el depósito de agua del hogar")
 
+    System_Ext(ana, "ANA", "Inventario oficial de presas (ArcGIS REST)")
+    System_Ext(osm, "OpenStreetMap - Nominatim", "Distrito que corresponde a una ubicación")
+    System_Ext(gmaps, "Google Maps", "Mapas base")
+    System_Ext(ts, "ThingSpeak", "Lecturas del sensor del tanque")
 
     Rel(user, app, "Usa", "Android")
-
+    Rel(app, ana, "Descarga las presas de Tacna", "HTTPS/JSON")
+    Rel(app, osm, "Consulta el distrito", "HTTPS/JSON")
+    Rel(app, gmaps, "Carga mapas", "HTTPS")
+    Rel(app, ts, "Lee el nivel del tanque", "HTTPS/JSON")
 ```
 
 ## 🏗️ Diagrama C4 — Nivel de Contenedores
@@ -202,15 +214,19 @@ C4Container
     Container_Boundary(mobile, "App Android") {
         Container(ui, "Presentation Layer", "Jetpack Compose", "Screens, ViewModels y UiStates con MVVM")
         Container(domain, "Domain Layer", "Kotlin puro", "Models, UseCases y Repositories (interfaces)")
-        Container(data, "Data Layer", "Room", "Implementación de repositorios, DAOs y Entities")
-        ContainerDb(roomdb, "Room Database", "SQLite", "Fuente de verdad local: perfil del hogar, llenados, novedades y plan de recortes (versión 3)")
+        Container(data, "Data Layer", "Room + Retrofit", "Implementación de repositorios, DAOs, Entities, APIs y DTO")
+        ContainerDb(roomdb, "Room Database", "SQLite", "Fuente de verdad local: perfil del hogar, llenados, novedades, plan de recortes, represas y distrito del hogar (versión 4)")
     }
 
+    System_Ext(ana, "ANA", "Inventario de presas")
+    System_Ext(osm, "Nominatim", "OpenStreetMap")
 
     Rel(user, ui, "Interactúa")
     Rel(ui, domain, "Usa UseCases")
     Rel(data, domain, "Implementa interfaces")
     Rel(data, roomdb, "Lee/Escribe")
+    Rel(data, ana, "GET presas de Tacna", "Retrofit")
+    Rel(data, osm, "GET reverse", "Retrofit")
 ```
 
 ## 🏗️ Diagrama C4 — Nivel de Componentes (Feature Depósito)
@@ -235,6 +251,37 @@ C4Component
     Rel(vm, uc_deficit, "Invoca")
     Rel(repo_impl, repo_if, "Implementa")
     Rel(repo_impl, dao, "Lee/Escribe")
+```
+
+## 🏗️ Diagrama C4 — Nivel de Componentes (Feature Represas)
+
+```mermaid
+C4Component
+    title Feature Represas — Nivel de Componentes
+
+    Container_Boundary(represas, "feature/represas") {
+        Component(screen, "RepresasScreen", "Compose", "Tu recorrido, mapa, filtros y lista de represas")
+        Component(vm, "RepresasViewModel", "MVVM", "Une represas, distrito, recorrido y tanque en el UiState")
+        Component(recorridos, "RecorridosDeTacna", "Domain", "Recorrido del agua de cada distrito")
+        Component(repo_impl, "RepresasRepositoryImpl", "Data", "Caché en Room y renovación semanal")
+        Component(ubicacion, "UbicacionRepositoryImpl", "Data", "Ubicación por red o GPS (LocationManager)")
+        Component(ana_api, "AnaApi", "Retrofit", "Inventario de presas de Tacna")
+        Component(nom_api, "NominatimApi", "Retrofit", "Dirección de unas coordenadas")
+        Component(dao, "RepresasDao", "Room", "Tablas presa y distrito_hogar")
+    }
+
+    System_Ext(ana, "ANA", "ArcGIS REST")
+    System_Ext(osm, "Nominatim", "OpenStreetMap")
+
+    Rel(screen, vm, "Observa UiState")
+    Rel(vm, recorridos, "Pide el recorrido del distrito")
+    Rel(vm, repo_impl, "Usa")
+    Rel(vm, ubicacion, "Pide la ubicación")
+    Rel(repo_impl, ana_api, "Descarga")
+    Rel(repo_impl, nom_api, "Consulta el distrito")
+    Rel(repo_impl, dao, "Lee/Escribe")
+    Rel(ana_api, ana, "HTTPS/JSON")
+    Rel(nom_api, osm, "HTTPS/JSON")
 ```
 
 ---
@@ -290,11 +337,15 @@ git clone https://github.com/tu-usuario/AguardApp.git
 #    MAPS_API_KEY=tu_api_key
 #    THINGSPEAK_CHANNEL_ID=id_del_canal
 #    THINGSPEAK_READ_KEY=read_api_key_del_canal
+#    (Represas no necesita claves: la API de la ANA y Nominatim son públicas)
 
 # 4. Sincronizar Gradle y ejecutar
 ./gradlew :app:assembleDebug
 
 # O simplemente presionar ▶️ Run en Android Studio
+
+# 5. Pruebas unitarias (no necesitan internet)
+./gradlew :app:testDebugUnitTest
 ```
 
 ---
@@ -307,6 +358,8 @@ git clone https://github.com/tu-usuario/AguardApp.git
 | RF-04 | Consultar el depósito (nivel y hasta cuándo alcanza) | 🔴 Alta |
 | RF-05 | Calcular el déficit hasta el próximo llenado | 🔴 Alta |
 | RF-08 | Operar sin conexión | 🔴 Alta |
+| RF-10 | Consultar de dónde viene el agua de mi distrito | 🟡 Media |
+| RF-12 | Consultar las represas de Tacna (datos de la ANA) | 🟡 Media |
 
 > 📄 Ver documentación completa en [`informes/FD03-SRS.md`](./informes/FD03-SRS.md)
 
@@ -327,6 +380,13 @@ git clone https://github.com/tu-usuario/AguardApp.git
 ## 📝 Changelog
 
 ### 2026-11-11
+- [Agregado] Feature `represas` (Unidad II): pestaña "Represas" con "Tu recorrido" (de qué represa o pozo viene el agua del distrito del hogar), las represas de Tacna en un mapa con marcadores propios y en una lista con filtros por uso, y el detalle de cada represa (`represa/{presa}`) con la comparación con el tanque.
+- [Agregado] Consumo de la API REST de la ANA (inventario de presas, ArcGIS) y de Nominatim (OpenStreetMap) con Retrofit, inyectados con Koin en `moduloRepresas` con un `OkHttpClient` propio (tiempos de espera de 20 s y cabecera User-Agent). El inventario se renueva como máximo una vez por semana.
+- [Agregado] Ubicación del teléfono con `LocationManager` (sin Play Services) para detectar el distrito, solo cuando el usuario toca "Usar mi ubicación" (aunque ya haya dado el permiso en el Mapa); también se puede elegir de una lista. Solo se guarda el distrito, no las coordenadas.
+- [Agregado] Base de datos versión 4 con `AutoMigration` de la 3 a la 4: tablas `presa` y `distrito_hogar`.
+- [Cambiado] Barra inferior con tres pestañas: Mi depósito, Mapa y Represas. Al cambiar entre Mapa y Represas, "atrás" vuelve siempre a Mi depósito.
+- [Agregado] 21 pruebas unitarias de Represas, con respuestas reales de la ANA y de Nominatim en `src/test/resources`.
+- [Cambiado] Informes FD03, FD04 y FD05 actualizados a la versión 2.3 con Represas, la inyección completa con Koin y la privacidad con internet y ubicación.
 - [Agregado] Feature `sensor`: tarjeta "Sensor del tanque" en Mi depósito que consulta cada 20 s el canal de ThingSpeak (Retrofit, inyectado con Koin en `moduloRed`). Una lectura más reciente que el último nivel registrado se aplica sola; una edición manual posterior se respeta hasta la siguiente lectura. El botón "Usar esta medición como nivel actual" la vuelve a aplicar.
 - [Corregido] Consumo absurdo (p. ej. 144000 L/h): un "me quedé sin agua" registrado menos de 1 h después del llenado ya no se usa para calcular el consumo.
 - [Cambiado] Inyección de dependencias completa: los ViewModels se registran en Koin (`moduloViewModels` en `AppModule.kt`) y cada pantalla los obtiene con `koinViewModel()`. Se eliminaron los `desdeInyeccion()` y se cambió `koin-core` por `koin-androidx-compose`.

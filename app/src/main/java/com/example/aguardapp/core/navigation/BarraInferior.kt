@@ -23,7 +23,8 @@ import com.example.aguardapp.core.ui.theme.TintaTenue
 /** Pestañas de la barra inferior. */
 enum class Pestana(val ruta: String, val etiqueta: String, @param:DrawableRes val icono: Int) {
     DEPOSITO(Rutas.MI_DEPOSITO, "Mi depósito", R.drawable.ic_gota),
-    MAPA(Rutas.MAPA, "Mapa", R.drawable.ic_mapa)
+    MAPA(Rutas.MAPA, "Mapa", R.drawable.ic_mapa),
+    REPRESAS(Rutas.REPRESAS, "Represas", R.drawable.ic_represa)
 }
 
 @Composable

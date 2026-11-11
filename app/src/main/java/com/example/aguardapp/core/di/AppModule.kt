@@ -33,6 +33,18 @@ import com.example.aguardapp.feature.sensor.data.SensorRepositoryImpl
 import com.example.aguardapp.feature.sensor.data.remote.ThingSpeakApi
 import com.example.aguardapp.feature.sensor.domain.repository.SensorRepository
 import com.example.aguardapp.feature.sensor.presentation.SensorViewModel
+import com.example.aguardapp.feature.represas.data.RepresasRepositoryImpl
+import com.example.aguardapp.feature.represas.data.UbicacionRepositoryImpl
+import com.example.aguardapp.feature.represas.data.remote.AnaApi
+import com.example.aguardapp.feature.represas.data.remote.NominatimApi
+import com.example.aguardapp.feature.represas.data.remote.URL_ANA
+import com.example.aguardapp.feature.represas.data.remote.URL_NOMINATIM
+import com.example.aguardapp.feature.represas.domain.repository.RepresasRepository
+import com.example.aguardapp.feature.represas.domain.repository.UbicacionRepository
+import com.example.aguardapp.feature.represas.presentation.DetallePresaViewModel
+import com.example.aguardapp.feature.represas.presentation.RepresasViewModel
+import java.util.concurrent.TimeUnit
+import okhttp3.OkHttpClient
 
 /** Se llama una sola vez desde la clase `Application`, antes de mostrar ninguna pantalla. */
 fun iniciarAplicacion(context: Context) {
@@ -40,7 +52,7 @@ fun iniciarAplicacion(context: Context) {
     val base = AguardAppDatabase.crear(context)
     // El usuario debe existir antes de la primera pantalla; es una lectura local y rápida.
     val usuarioId = runBlocking(Dispatchers.IO) { obtenerOCrearUsuario(base) }
-    startKoin { modules(moduloApp(base, usuarioId), moduloRed, moduloViewModels) }
+    startKoin { modules(moduloApp(base, usuarioId), moduloRed, moduloRepresas(context.applicationContext, base, usuarioId), moduloViewModels) }
 }
 
 // Lee el usuario local o lo crea la primera vez, con un UUID que ya no cambia.
@@ -77,6 +89,36 @@ private val moduloRed = module {
     }
 }
 
+// Nominatim exige que cada app se identifique (solo caracteres ASCII). Los servicios del Estado a veces tardan.
+private const val AGENTE_DE_USUARIO = "AguardApp/1.0 (proyecto academico UPT, Tacna)"
+private const val ESPERA_DE_RED_SEGUNDOS = 20L
+
+/** Represas de Tacna (API de la ANA), distrito del hogar (GPS y Nominatim) y su copia en Room. */
+private fun moduloRepresas(context: Context, base: AguardAppDatabase, usuarioId: String) = module {
+    single {
+        OkHttpClient.Builder()
+            .connectTimeout(ESPERA_DE_RED_SEGUNDOS, TimeUnit.SECONDS)
+            .readTimeout(ESPERA_DE_RED_SEGUNDOS, TimeUnit.SECONDS)
+            .addInterceptor { cadena ->
+                cadena.proceed(cadena.request().newBuilder().header("User-Agent", AGENTE_DE_USUARIO).build())
+            }
+            .build()
+    }
+    single<AnaApi> { retrofit(URL_ANA, get()).create(AnaApi::class.java) }
+    single<NominatimApi> { retrofit(URL_NOMINATIM, get()).create(NominatimApi::class.java) }
+    single<UbicacionRepository> { UbicacionRepositoryImpl(context) }
+    single<RepresasRepository> {
+        RepresasRepositoryImpl(get(), get(), base.represasDao(), usuarioId, get<Reloj>()::ahora)
+    }
+}
+
+private fun retrofit(urlBase: String, cliente: OkHttpClient): Retrofit =
+    Retrofit.Builder()
+        .baseUrl(urlBase)
+        .client(cliente)
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
 /** ViewModels de cada pantalla: Koin los crea y les entrega sus dependencias. */
 private val moduloViewModels = module {
     viewModel { InicioViewModel(get(), get()) }
@@ -90,4 +132,7 @@ private val moduloViewModels = module {
     viewModel { (tipo: TipoLlenado) -> RegistrarLlenadoViewModel(get(), get<Reloj>()::ahora, tipo) }
     viewModel { MapaViewModel(get()) }
     viewModel { SensorViewModel(get(), get(), get<Reloj>()::ahora) }
+    viewModel { RepresasViewModel(get(), get(), get(), get<Reloj>()::ahora) }
+    // El nombre de la represa llega desde la pantalla con parametersOf(nombre).
+    viewModel { (nombre: String) -> DetallePresaViewModel(get(), get(), nombre) }
 }

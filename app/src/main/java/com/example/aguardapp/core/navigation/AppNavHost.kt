@@ -23,6 +23,8 @@ import com.example.aguardapp.feature.deposito.presentation.RegistrarLlenadoScree
 import com.example.aguardapp.feature.deposito.presentation.SinAguaScreen
 import com.example.aguardapp.feature.deposito.presentation.TipoLlenado
 import com.example.aguardapp.feature.mapa.presentation.MapaScreen
+import com.example.aguardapp.feature.represas.presentation.DetallePresaScreen
+import com.example.aguardapp.feature.represas.presentation.RepresasScreen
 
 /** Declara todas las pantallas de la app y cómo se pasa de una a otra. */
 @Composable
@@ -60,6 +62,24 @@ fun AppNavHost(rutaInicial: String, hayConfiguracion: Boolean) {
         composable(Rutas.MAPA) {
             ConBarraInferior(Pestana.MAPA, navController) {
                 MapaScreen()
+            }
+        }
+
+        composable(Rutas.REPRESAS) {
+            ConBarraInferior(Pestana.REPRESAS, navController) {
+                RepresasScreen(onAbrirPresa = { nombre -> navController.navigate(Rutas.detallePresa(nombre)) })
+            }
+        }
+
+        composable(
+            Rutas.DETALLE_PRESA,
+            arguments = listOf(navArgument(Rutas.ARG_PRESA) { type = NavType.StringType })
+        ) { entrada ->
+            ConBarraDelSistema {
+                DetallePresaScreen(
+                    nombre = entrada.arguments?.getString(Rutas.ARG_PRESA).orEmpty(),
+                    onVolver = { navController.popBackStack() }
+                )
             }
         }
 
@@ -116,7 +136,7 @@ private fun irDespuesDeConfigurar(navController: NavHostController, editando: Bo
     }
 }
 
-/** Pantallas principales: el contenido arriba y la barra inferior para cambiar entre Mi depósito y Mapa. */
+/** Pantallas principales: el contenido arriba y la barra inferior para cambiar entre Mi depósito, Mapa y Represas. */
 @Composable
 private fun ConBarraInferior(actual: Pestana, navController: NavHostController, contenido: @Composable () -> Unit) {
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
@@ -125,11 +145,15 @@ private fun ConBarraInferior(actual: Pestana, navController: NavHostController, 
     }
 }
 
-// Mi depósito queda siempre en la base: el Mapa se apila encima y "atrás" vuelve a Mi depósito.
+// Mi depósito queda siempre en la base: las otras pestañas se apilan encima, una sola a la vez,
+// y "atrás" vuelve a Mi depósito.
 private fun irAPestana(navController: NavHostController, pestana: Pestana) {
     when (pestana) {
         Pestana.DEPOSITO -> navController.popBackStack(Rutas.MI_DEPOSITO, inclusive = false)
-        Pestana.MAPA -> navController.navigate(Rutas.MAPA) { launchSingleTop = true }
+        Pestana.MAPA, Pestana.REPRESAS -> navController.navigate(pestana.ruta) {
+            popUpTo(Rutas.MI_DEPOSITO)
+            launchSingleTop = true
+        }
     }
 }
 

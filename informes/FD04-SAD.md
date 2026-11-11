@@ -5,8 +5,8 @@
 **Sistema:** AguardApp — sistema móvil para la gestión de la reserva domiciliaria de agua y la anticipación de cortes durante el racionamiento hídrico en Tacna.  
 **Curso:** Soluciones Móviles I  
 **Docente:** Mag. Alberto Johnatan Flor Rodríguez  
-**Versión:** 2.2  
-**Fecha:** 14/10/2026  
+**Versión:** 2.3  
+**Fecha:** 11/11/2026  
 **Lugar:** Tacna — Perú, 2026
 
 ### Integrantes
@@ -26,6 +26,7 @@
 | 2.0 | DJ - JL - CM - IS | — | — | 02/10/2026 | Actualización a la arquitectura de AguardApp: Android nativo, MVVM + DDD, módulo Depósito y base de datos local |
 | 2.1 | DJ - JL - CM - IS | — | — | 02/10/2026 | Se agrega la pantalla Avisos (RF-09) y se actualiza la base de datos a la versión 2 |
 | 2.2 | DJ - JL - CM - IS | — | — | 14/10/2026 | Se alinea con el código: plan de recortes (tabla `plan_recortes`, base de datos versión 3 con `AutoMigration`), secuencias y clases corregidas, inyección con Koin y respaldo automático desactivado |
+| 2.3 | DJ - JL - CM - IS | — | — | 11/11/2026 | Unidad II: se agrega el módulo Represas (RF-10 a RF-13) con Retrofit (API de la ANA y Nominatim), ubicación del teléfono y base de datos versión 4 (tablas `presa` y `distrito_hogar`); se actualizan la inyección con Koin (cuatro módulos y ViewModels inyectados), los componentes, el despliegue y la privacidad, porque la aplicación ahora usa internet y ubicación |
 
 ---
 
@@ -49,7 +50,7 @@ flowchart TB
 
 ## 1.2. Alcance
 
-El documento describe la arquitectura de la versión actual de AguardApp: una aplicación Android nativa de un solo módulo (`app`) con dos funcionalidades (`bienvenida` y `deposito`), persistencia local con Room y sin servicios externos. Cubre la organización en capas y paquetes, la interacción entre objetos, el modelo de datos, los componentes, los procesos y el despliegue. Sirve de guía para el desarrollo y el mantenimiento del sistema.
+El documento describe la arquitectura de la versión actual de AguardApp: una aplicación Android nativa de un solo módulo (`app`) con persistencia local en Room. Detalla las funcionalidades `bienvenida`, `deposito` y `represas`; esta última, agregada en la Unidad II, consume servicios REST públicos (la API de la ANA y Nominatim de OpenStreetMap) con Retrofit y usa la ubicación del teléfono. Las funcionalidades `mapa` (puntos de cisterna sobre Google Maps) y `sensor` (nivel del tanque desde ThingSpeak) se muestran en los diagramas de paquetes, componentes y despliegue, sin detalle de diseño. Cubre la organización en capas y paquetes, la interacción entre objetos, el modelo de datos, los componentes, los procesos y el despliegue. Sirve de guía para el desarrollo y el mantenimiento del sistema.
 
 ## 1.3. Definiciones, siglas y abreviaturas
 
@@ -62,6 +63,12 @@ El documento describe la arquitectura de la versión actual de AguardApp: una ap
 | Jetpack Compose | Kit de interfaz declarativa de Android. |
 | Room | Biblioteca de persistencia local sobre SQLite. |
 | Koin | Biblioteca de inyección de dependencias para Kotlin. |
+| REST | Estilo de servicios web en el que cada recurso tiene una URL y se consulta con métodos HTTP (GET, POST…); aquí las respuestas llegan en JSON. |
+| Retrofit / OkHttp | Retrofit convierte una interfaz de Kotlin en un cliente REST; OkHttp es el cliente HTTP que usa por debajo (tiempos de espera, cabeceras). |
+| ANA | Autoridad Nacional del Agua. Publica su inventario de presas como servicio ArcGIS REST, sin clave. |
+| Nominatim | Buscador de direcciones de OpenStreetMap: convierte coordenadas en una dirección. |
+| hm³ | Hectómetro cúbico: un millón de metros cúbicos, es decir, mil millones de litros. |
+| DTO | Data Transfer Object: clase que refleja el JSON de un servicio externo y no sale de la capa de datos. |
 | UiState | Clase de datos con todo lo que una pantalla necesita mostrar. |
 | QA | Quality Attribute (atributo de calidad del software). |
 
@@ -88,22 +95,28 @@ El documento se organiza en cuatro secciones: introducción; objetivos y restric
 | RF-07 | Declarar que se quedó sin agua y ajustar el consumo | Media |
 | RF-08 | Operar sin conexión | Alta |
 | RF-09 | Consultar los avisos del depósito (déficit, nivel bajo, sin llenado) | Media |
+| RF-10 | Consultar el recorrido del agua del distrito del hogar | Media |
+| RF-11 | Indicar el distrito del hogar (ubicación del teléfono o lista) | Media |
+| RF-12 | Consultar las represas de Tacna con datos de la ANA (mapa, filtros y lista) | Media |
+| RF-13 | Ver el detalle de una represa y compararla con el tanque | Baja |
 
 ### 2.1.2. Requerimientos no funcionales — atributos de calidad
 
 | ID | Atributo | Descripción | Prioridad |
 |---|---|---|---|
-| RNF-01 | Disponibilidad | Funcionamiento 100 % sin conexión, con Room como única fuente de verdad. | Alta |
-| RNF-02 | Privacidad y seguridad | Ningún dato sale del teléfono; la aplicación no solicita permisos; identidad con UUID local. | Alta |
+| RNF-01 | Disponibilidad | El depósito funciona 100 % sin conexión, con Room como única fuente de verdad. Represas muestra la copia local del inventario de la ANA y solo necesita internet la primera vez y para renovarla. | Alta |
+| RNF-02 | Privacidad y seguridad | Los datos del hogar no salen del teléfono. Se piden los permisos de internet y de ubicación; las coordenadas solo se envían a Nominatim al detectar el distrito, y solo se guarda el distrito. Identidad con UUID local. | Alta |
 | RNF-03 | Usabilidad | Interfaz simple, una sola fuente, colores sólidos y errores claros debajo de cada campo. | Alta |
 | RNF-04 | Compatibilidad | Android 7.0 (API 24) o superior; probado contra la API 36. | Media |
 | RNF-05 | Mantenibilidad | MVVM + DDD; dominio en Kotlin puro, independiente de Android; un Screen y un ViewModel por pantalla. | Alta |
+| RNF-06 | Uso responsable de servicios externos | Cada consulta se identifica con un User-Agent propio y espera como máximo 20 s; la ANA se consulta como máximo una vez por semana y Nominatim solo al detectar el distrito. | Media |
 
 ## 2.2. Restricciones
 
-- La aplicación debe funcionar sin conexión, con la base de datos local como única fuente de verdad.
-- El dominio (`domain/`) no puede depender de Android, Room ni Koin: es Kotlin puro.
-- Solo se usan tecnologías gratuitas y de código abierto; no hay backend ni servicios en la nube.
+- La aplicación debe funcionar sin conexión, con la base de datos local como única fuente de verdad: el inventario de la ANA y el distrito del hogar se guardan en Room, y las pantallas los leen desde allí.
+- El dominio (`domain/`) no puede depender de Android, Room, Retrofit ni Koin: es Kotlin puro.
+- Solo se usan tecnologías gratuitas y de código abierto; no hay backend propio. Solo se consumen servicios públicos y gratuitos (ANA, OpenStreetMap, Google Maps y ThingSpeak).
+- Los servicios externos se consumen solo desde `data/remote` con Retrofit; sus DTO no salen de la capa de datos y el resto de la aplicación trabaja con modelos del dominio.
 - La persistencia se realiza con Room; el esquema se exporta en `app/schemas/`.
 - Las pantallas no contienen lógica de negocio: solo pintan el `UiState` y llaman funciones del ViewModel.
 
@@ -113,7 +126,7 @@ El documento se organiza en cuatro secciones: introducción; objetivos y restric
 
 ## 3.1. Vista de casos de uso
 
-El único actor es el jefe de hogar, que usa la aplicación en su propio teléfono.
+El actor principal es el jefe de hogar, que usa la aplicación en su propio teléfono. La ANA y OpenStreetMap son actores secundarios: sistemas externos que la aplicación consulta por REST.
 
 ```mermaid
 flowchart LR
@@ -127,7 +140,12 @@ flowchart LR
       U5((Consultar qué recortar))
       U6((Declarar que se quedó sin agua))
       U7((Consultar avisos))
+      U8((Consultar de dónde viene mi agua))
+      U9((Consultar las represas de Tacna))
     end
+
+    ANA[ANA - inventario de presas]
+    OSM[OpenStreetMap - Nominatim]
 
     JH --> U1
     JH --> U2
@@ -136,6 +154,10 @@ flowchart LR
     JH --> U5
     JH --> U6
     JH --> U7
+    JH --> U8
+    JH --> U9
+    U8 --- OSM
+    U9 --- ANA
 ```
 
 ## 3.2. Vista lógica
@@ -160,19 +182,35 @@ flowchart TB
       DOM[domain]
       DAT[data]
     end
+    subgraph REP[feature/represas]
+      RPRES[presentation]
+      RDOM[domain]
+      RDAT[data: local Room + remote Retrofit]
+    end
+    MAPA[feature/mapa]
+    SENSOR[feature/sensor]
 
     MAIN --> NAV
     MAIN --> DI
     NAV --> BIEN
     NAV --> PRES
     NAV --> DOM
+    NAV --> RPRES
+    NAV --> MAPA
     PRES --> DOM
+    PRES --> SENSOR
     DAT -. implementa .-> DOM
+    RPRES --> RDOM
+    RDAT -. implementa .-> RDOM
     DI --> DB
     DI --> DAT
+    DI --> RDAT
+    RDAT --> DB
     BIEN --> DATA
   end
 ```
+
+`feature/represas` reutiliza el modelo `Coordenada` de `feature/mapa` y el perfil del hogar de `feature/deposito` (para comparar las represas con el tanque).
 
 ### 3.2.2. Diagramas de secuencia — vista de diseño
 
@@ -419,6 +457,112 @@ sequenceDiagram
     end
 ```
 
+#### Módulo 3: Represas
+
+##### 3.1. Apertura de la pestaña y descarga del inventario de la ANA
+
+```mermaid
+sequenceDiagram
+    actor U as Usuario
+    participant NAV as AppNavHost
+    participant S as RepresasScreen
+    participant VM as RepresasViewModel
+    participant R as RepresasRepositoryImpl
+    participant DAO as RepresasDao
+    participant API as AnaApi (Retrofit)
+    participant ANA as ANA (ArcGIS REST)
+    U->>NAV: Toca la pestaña Represas
+    NAV->>S: RepresasScreen(onAbrirPresa)
+    S->>VM: koinViewModel() y collectAsStateWithLifecycle()
+    VM->>R: observarPresas() + observarDistrito() + observarDescarga()
+    R->>DAO: Flow de presa y distrito_hogar
+    DAO-->>VM: Datos guardados (vacío la primera vez)
+    VM->>R: actualizarPresas(forzar = false)
+    R->>DAO: fechaDeDescarga()
+    alt Sin datos o con más de 7 días
+        R->>API: presas(where = DEPARTAMEN='TACNA', outSR = 4326)
+        API->>ANA: GET ONRH/Inventario_de_Presas/MapServer/0/query
+        ANA-->>API: HTTP 200 con las presas o con un error
+        API-->>R: RespuestaPresasDto
+        alt Respuesta con presas
+            R->>R: aDominio(): limpia "No disponible", espacios y usos
+            R->>DAO: reemplazarPresas() en una transacción
+            DAO-->>VM: Flow con las 8 presas
+        else Error de ArcGIS, sin red o error HTTP
+            R-->>VM: Result.failure con un mensaje claro
+            VM-->>S: errorDeDescarga (se muestran los datos guardados)
+        end
+    else Datos vigentes
+        R-->>VM: Result.success sin consultar la red
+    end
+    VM-->>S: RepresasUiState (recorrido, presas y filtro)
+```
+
+##### 3.2. Detección del distrito del hogar
+
+```mermaid
+sequenceDiagram
+    actor U as Usuario
+    participant S as RepresasScreen
+    participant VM as RepresasViewModel
+    participant UB as UbicacionRepositoryImpl
+    participant LM as LocationManager (Android)
+    participant R as RepresasRepositoryImpl
+    participant API as NominatimApi (Retrofit)
+    participant DAO as RepresasDao
+    Note over S,VM: Solo empieza al tocar el botón,<br/>aunque el permiso ya esté concedido
+    U->>S: Toca "Usar mi ubicación"
+    S->>U: Pide el permiso de ubicación
+    alt Permiso negado
+        S->>VM: onPermisoDenegado()
+        VM-->>S: Mensaje: elige tu distrito de la lista
+    else Permiso concedido
+        S->>VM: onUsarMiUbicacion()
+        VM->>UB: ubicacionActual()
+        UB->>LM: getCurrentLocation (red o GPS, máximo 15 s)
+        LM-->>UB: Location
+        UB-->>VM: Coordenada
+        VM->>R: detectarDistrito(coordenada)
+        R->>API: direccion(lat, lon) con User-Agent propio
+        API-->>R: DireccionDto (address.city)
+        R->>R: Distrito.desdeTexto(city)
+        alt Distrito de Tacna
+            R->>DAO: guardarDistrito(detectadoPorGps = true)
+            DAO-->>VM: Flow con el distrito
+            VM-->>S: Recorrido del distrito (RecorridosDeTacna)
+        else Fuera de los distritos conocidos
+            R-->>VM: Result.failure
+            VM-->>S: Mensaje: elige tu distrito de la lista
+        end
+    end
+```
+
+Si el usuario elige "Elegir de la lista", `onElegirDistrito(distrito)` lo guarda con `detectadoPorGps = false`, sin usar la ubicación ni la red.
+
+##### 3.3. Detalle de una represa
+
+```mermaid
+sequenceDiagram
+    actor U as Usuario
+    participant S as RepresasScreen
+    participant NAV as AppNavHost
+    participant D as DetallePresaScreen
+    participant VM as DetallePresaViewModel
+    participant R as RepresasRepository
+    participant DR as DepositoRepository
+    U->>S: Toca una represa (recorrido, mapa o lista)
+    S->>NAV: navigate(represa/{nombre codificado})
+    NAV->>D: DetallePresaScreen(nombre)
+    D->>VM: koinViewModel { parametersOf(nombre) }
+    VM->>R: observarPresas() + observarDistrito()
+    VM->>DR: observarPerfil()
+    R-->>VM: Presa y distrito del hogar
+    DR-->>VM: Capacidad del tanque
+    VM->>VM: ¿Abastece al distrito? y tanquesEquivalentes()
+    VM-->>D: DetallePresaUiState
+    D-->>U: Datos de la represa y comparación con el tanque
+```
+
 ### 3.2.3. Diagrama de colaboración
 
 ```mermaid
@@ -440,6 +584,29 @@ flowchart TB
     VM -- déficit con recortes --> CR
     CR -- litrosQueFaltan --> CD
     VM -- DepositoUiState --> S
+```
+
+Colaboración del módulo Represas:
+
+```mermaid
+flowchart TB
+    S[RepresasScreen]
+    VM[RepresasViewModel]
+    UB[UbicacionRepositoryImpl]
+    R[RepresasRepositoryImpl]
+    ANA[AnaApi - Retrofit]
+    NOM[NominatimApi - Retrofit]
+    ROOM[(Room / SQLite)]
+    REC[RecorridosDeTacna]
+
+    S -- observa uiState, onUsarMiUbicacion, onFiltrar --> VM
+    VM -- ubicacionActual --> UB
+    VM -- observarPresas, actualizarPresas, detectarDistrito --> R
+    R -- GET inventario de Tacna --> ANA
+    R -- GET reverse --> NOM
+    R -- presa y distrito_hogar --> ROOM
+    VM -- recorrido del distrito --> REC
+    VM -- RepresasUiState --> S
 ```
 
 ### 3.2.4. Diagrama de objetos
@@ -472,6 +639,34 @@ classDiagram
     perfilCasa --> habitosCasa
     depositoHoy --> llenadoHoy
     perfilCasa ..> depositoHoy
+```
+
+Ejemplo del módulo Represas para el mismo hogar, ubicado en Ciudad Nueva. Paucarani es una de las represas de su recorrido, y con un tanque de 1 100 L equivale a 8.5 × 10⁹ / 1 100 ≈ 7.7 millones de tanques.
+
+```mermaid
+classDiagram
+    class distritoCasa {
+      distrito = CIUDAD_NUEVA
+      detectadoPorGps = true
+    }
+    class recorridoCiudadNueva {
+      tramos = Represas del Uchusuma, Captación Cerro Blanco, Planta Calana, Reservorio R1
+      confirmado = true
+    }
+    class paucarani {
+      nombre = "Paucarani"
+      latitud = -17.534
+      longitud = -69.765
+      rio = "Uchusuma"
+      distrito = "Palca"
+      volumenUtilHm3 = 8.5
+      altitudMetros = 4545
+      anioInicio = 2003
+      usos = RIEGO, AGUA_POTABLE
+      usoPrincipal = AGUA_POTABLE
+    }
+    distritoCasa ..> recorridoCiudadNueva : RecorridosDeTacna.de
+    recorridoCiudadNueva ..> paucarani : abastece
 ```
 
 ### 3.2.5. Diagrama de clases
@@ -541,11 +736,71 @@ classDiagram
     AvisosViewModel --> CalcularRecortes
 ```
 
+Clases del módulo Represas:
+
+```mermaid
+classDiagram
+    direction LR
+    class RepresasRepository {
+      <<interface>>
+      +observarPresas() Flow~List~Presa~~
+      +observarDescarga() Flow~LocalDateTime?~
+      +actualizarPresas(forzar) Result
+      +observarDistrito() Flow~DistritoDelHogar?~
+      +elegirDistrito(distrito)
+      +detectarDistrito(ubicacion) Result~Distrito~
+    }
+    class UbicacionRepository {
+      <<interface>>
+      +ubicacionActual() Coordenada?
+    }
+    class RepresasRepositoryImpl
+    class UbicacionRepositoryImpl
+    class RepresasDao {
+      <<Room>>
+      +observarPresas()
+      +reemplazarPresas(presas)
+      +observarDistrito(usuarioId)
+      +guardarDistrito(distrito)
+    }
+    class AnaApi {
+      <<Retrofit>>
+      +presas(filtro, campos, outSR, formato) RespuestaPresasDto
+    }
+    class NominatimApi {
+      <<Retrofit>>
+      +direccion(latitud, longitud) DireccionDto
+    }
+    class RecorridosDeTacna {
+      <<object>>
+      +de(distrito) RecorridoDelAgua
+    }
+    class RepresasViewModel
+    class DetallePresaViewModel
+
+    RepresasRepository <|.. RepresasRepositoryImpl
+    UbicacionRepository <|.. UbicacionRepositoryImpl
+    RepresasRepositoryImpl --> AnaApi
+    RepresasRepositoryImpl --> NominatimApi
+    RepresasRepositoryImpl --> RepresasDao
+    RepresasViewModel --> RepresasRepository
+    RepresasViewModel --> UbicacionRepository
+    RepresasViewModel --> DepositoRepository
+    RepresasViewModel --> RecorridosDeTacna
+    DetallePresaViewModel --> RepresasRepository
+    DetallePresaViewModel --> DepositoRepository
+    DetallePresaViewModel --> RecorridosDeTacna
+```
+
+`RepresasDao` es una clase abstracta (no una interfaz) para que `reemplazarPresas` borre e inserte dentro de una transacción. Los DTO de la ANA y de Nominatim (`RespuestaPresasDto`, `DireccionDto`) se convierten en modelos del dominio en `RepresasMapper.kt`.
+
 ### 3.2.6. Diagrama de base de datos
 
-Base de datos local `aguardapp.db` (Room, versión 3). De la versión 2 a la 3 se agregó la tabla `plan_recortes` con una migración automática (`AutoMigration`), que conserva los datos existentes. Si falta la migración de alguna versión (por ejemplo, de la 1 a la 2), Room borra la base anterior y crea la nueva (`fallbackToDestructiveMigration`). Los esquemas de cada versión se exportan en `app/schemas/`.
+Base de datos local `aguardapp.db` (Room, versión 4). De la versión 2 a la 3 se agregó la tabla `plan_recortes`, y de la 3 a la 4, las tablas `presa` y `distrito_hogar` del módulo Represas; ambos pasos usan una migración automática (`AutoMigration`), que conserva los datos existentes. Si falta la migración de alguna versión (por ejemplo, de la 1 a la 2), Room borra la base anterior y crea la nueva (`fallbackToDestructiveMigration`). Los esquemas de cada versión se exportan en `app/schemas/`.
 
 Las relaciones del diagrama son lógicas: todas las tablas guardan el `usuarioId`, pero no se declaran claves foráneas. Las fechas y horas se guardan como texto ISO; `plan_recortes.recortes` guarda los nombres de las recomendaciones elegidas separados por comas, y los dos consumos de `perfil_hogar` admiten nulo. Los avisos no tienen tabla, porque se calculan a partir del depósito.
+
+`presa` es una copia del inventario de la ANA, igual para todos los usuarios, por eso no guarda `usuarioId`. Se reemplaza completa en cada descarga (`reemplazarPresas`, dentro de una transacción) y `descargadaEn` indica cuándo se descargó; `usos` guarda los usos separados por comas, y los campos que la ANA no tiene quedan en nulo. `distrito_hogar` guarda solo el nombre del distrito, no las coordenadas. El recorrido del agua no tiene tabla: se arma en el dominio a partir del distrito.
 
 ```mermaid
 erDiagram
@@ -553,6 +808,7 @@ erDiagram
     USUARIO ||--o{ EVENTO_LLENADO : registra
     USUARIO ||--o{ NOVEDAD_DEPOSITO : declara
     USUARIO ||--o| PLAN_RECORTES : planifica
+    USUARIO ||--o| DISTRITO_HOGAR : "vive en"
 
     USUARIO {
       string id PK
@@ -589,6 +845,25 @@ erDiagram
       string hasta
       string recortes
     }
+    DISTRITO_HOGAR {
+      string usuarioId PK
+      string distrito
+      boolean detectadoPorGps
+    }
+    PRESA {
+      string nombre PK
+      double latitud
+      double longitud
+      string rio
+      string distrito
+      double volumenUtilHm3
+      double alturaMetros
+      double altitudMetros
+      int anioInicio
+      string usos
+      string operador
+      string descargadaEn
+    }
 ```
 
 ## 3.3. Vista de implementación — desarrollo
@@ -607,9 +882,10 @@ flowchart LR
       UC[usecase]
     end
     subgraph D[Datos]
-      IMPL[DepositoRepositoryImpl]
+      IMPL[RepositoryImpl: Deposito, Represas, Ubicacion]
       MAP[mapper]
       ROOM[local: Room DAO y entidades]
+      REMOTE[remote: APIs Retrofit y DTO]
     end
 
     UI --> VM
@@ -619,6 +895,7 @@ flowchart LR
     IMPL --> UC
     IMPL --> MAP
     IMPL --> ROOM
+    IMPL --> REMOTE
     UC --> MOD
 ```
 
@@ -630,16 +907,25 @@ app/src/main/java/com/example/aguardapp/
 ├── core/
 │   ├── data/Usuario.kt            (entidad y DAO del usuario local)
 │   ├── db/AguardAppDatabase.kt    (Room)
-│   ├── di/AppModule.kt            (Koin)
-│   ├── navigation/                (Rutas, AppNavHost, InicioViewModel)
+│   ├── di/AppModule.kt            (Koin: moduloApp, moduloRed, moduloRepresas, moduloViewModels)
+│   ├── navigation/                (Rutas, AppNavHost, BarraInferior, InicioViewModel)
 │   ├── ui/theme/                  (colores, tema, tipografía, barra de estado)
 │   └── util/Reloj.kt              (hora actual y UUID)
 └── feature/
     ├── bienvenida/presentation/   (BienvenidaScreen, BienvenidaViewModel)
-    └── deposito/
-        ├── domain/   model/ · repository/ · usecase/
-        ├── data/     DepositoRepositoryImpl · local/ · mapper/
-        └── presentation/  *Screen + *ViewModel · FormatoDeposito · componentes/ (Comunes, ControlesConfiguracion, Tanque)
+    ├── deposito/
+    │   ├── domain/   model/ · repository/ · usecase/
+    │   ├── data/     DepositoRepositoryImpl · local/ · mapper/
+    │   └── presentation/  *Screen + *ViewModel · FormatoDeposito · componentes/ (Comunes, ControlesConfiguracion, Tanque)
+    ├── mapa/                      (puntos de cisterna sobre Google Maps)
+    ├── sensor/                    (nivel del tanque desde ThingSpeak)
+    └── represas/
+        ├── domain/   model/ (Presa, Distrito, RecorridoDelAgua) · repository/ (RepresasRepository, UbicacionRepository)
+        ├── data/     RepresasRepositoryImpl · UbicacionRepositoryImpl · local/ · remote/ (AnaApi, NominatimApi) · mapper/
+        └── presentation/  RepresasScreen · DetallePresaScreen · MapaDeRepresas · *ViewModel · FormatoRepresas
+
+app/src/test/java/.../feature/represas/   (pruebas unitarias del repositorio, del dominio y de los formatos)
+app/src/test/resources/                   (respuestas reales de la ANA y de Nominatim para las pruebas)
 ```
 
 Los casos de uso se agrupan por tema: `CalcularDeposito.kt` contiene `ArmarDeposito`, `DeclararSinAgua` e `HistorialDeposito`; `EstimarConsumo.kt` contiene también `ParametrosConsumo`, con todas las constantes del cálculo; y `CalcularRecortes.kt` contiene `SituacionRecortes` y `RecorteSugerido`.
@@ -654,21 +940,45 @@ flowchart LR
         VM[ViewModels]
         KOIN[Koin]
         DOMAIN[Dominio]
-        REPO[Repositorio]
+        REPO[Repositorios]
+        HTTP[Retrofit + OkHttp]
+        MAPS[Google Maps Compose]
       end
       LOCAL[(SQLite: aguardapp.db)]
+      GPS[Ubicación de Android]
     end
+    ANA[(API de la ANA - ArcGIS REST)]
+    OSM[(Nominatim - OpenStreetMap)]
+    TS[(ThingSpeak)]
+    GM[(Google Maps)]
 
     UI --> VM
     VM --> DOMAIN
     VM --> REPO
+    KOIN -. inyecta .-> VM
     KOIN -. inyecta .-> REPO
     REPO <--> LOCAL
+    REPO --> GPS
+    REPO --> HTTP
+    HTTP -- HTTPS --> ANA
+    HTTP -- HTTPS --> OSM
+    HTTP -- HTTPS --> TS
+    UI --> MAPS
+    MAPS -- HTTPS --> GM
 ```
 
-> La aplicación no se conecta a ningún servicio externo.
+> Represas descarga el inventario de la ANA y consulta Nominatim; el Mapa carga los mapas de Google y el sensor lee ThingSpeak. Los datos del hogar no se envían a ningún servicio.
 
-**Inyección de dependencias:** el módulo de Koin (`core/di/AppModule.kt`) registra solo tres piezas: el `Reloj`, el `UsuarioDao` y el `DepositoRepository`. Antes de iniciar Koin, `iniciarAplicacion` crea la base de datos y el usuario local. Cada ViewModel se crea con su función `desdeInyeccion()`, que pide sus dependencias a Koin; los casos de uso no tienen estado y cada ViewModel o el repositorio los crea directamente.
+**Inyección de dependencias:** `iniciarAplicacion` crea la base de datos y el usuario local, y luego inicia Koin con cuatro módulos definidos en `core/di/AppModule.kt`:
+
+| Módulo | Qué registra |
+|---|---|
+| `moduloApp` | El `Reloj`, el `UsuarioDao` y los repositorios del depósito y del mapa. |
+| `moduloRed` | El Retrofit de ThingSpeak, su API y el repositorio del sensor. |
+| `moduloRepresas` | Un `OkHttpClient` con tiempos de espera de 20 s y un interceptor que agrega la cabecera User-Agent; las APIs de la ANA y de Nominatim, cada una con su propio Retrofit; y los repositorios de represas y de ubicación. |
+| `moduloViewModels` | Todos los ViewModels. |
+
+Cada pantalla obtiene su ViewModel con `koinViewModel()`; los que necesitan un dato de la ruta lo reciben con `parametersOf`: el tipo de llenado en `RegistrarLlenadoViewModel` y el nombre de la represa en `DetallePresaViewModel`. Los casos de uso no tienen estado y cada ViewModel o repositorio los crea directamente.
 
 ## 3.4. Vista de procesos
 
@@ -702,22 +1012,58 @@ flowchart TD
 
 Las operaciones con la base de datos se ejecutan en corrutinas fuera del hilo principal; las pantallas observan `StateFlow` y se recomponen solo cuando cambia su estado.
 
+### 3.4.2. Diagrama de actividad de la pestaña Represas
+
+```mermaid
+flowchart TD
+    A([Abrir la pestaña Represas]) --> B[Mostrar las presas y el distrito guardados en Room]
+    B --> C{"¿Presas guardadas con<br/>menos de 7 días?"}
+    C -- No --> D[Descargar el inventario de la ANA]
+    D --> E{"¿Descarga correcta?"}
+    E -- Sí --> F[Reemplazar las presas en Room]
+    E -- No --> G[Avisar el error y seguir con lo guardado]
+    C -- Sí --> H{"¿Hay distrito guardado?"}
+    F --> H
+    G --> H
+    H -- Sí --> K[Mostrar el recorrido del distrito]
+    H -- No --> L[Pedir el distrito]
+    L -- Usar mi ubicación --> I{"¿Hay permiso de<br/>ubicación o lo concede?"}
+    I -- Sí --> J[Leer la ubicación y consultar Nominatim]
+    I -- No --> L
+    L -- Elegir de la lista --> M[Guardar el distrito elegido]
+    J --> N{"¿Es un distrito de Tacna?"}
+    N -- Sí --> O[Guardar el distrito detectado]
+    N -- No --> L
+    O --> K
+    M --> K
+    K --> P[Mostrar mapa, filtros y lista de represas]
+    P --> Q([Tocar una represa para ver su detalle])
+```
+
+En el código, la descarga de la ANA y la detección del distrito corren en corrutinas separadas del `viewModelScope`; la pantalla se actualiza con cada resultado, porque ambos se guardan en Room y llegan por `Flow`.
+
 ## 3.5. Vista de despliegue — vista física
 
 ### 3.5.1. Diagrama de despliegue
 
 ```mermaid
-flowchart TB
-    subgraph PHONE[Dispositivo Android 7.0+]
-      subgraph PROC[Proceso de la app com.example.aguardapp]
-        APP[AguardApp APK]
-      end
-      DB[(Almacenamiento interno: aguardapp.db)]
-      APP <--> DB
-    end
+flowchart LR
+    APP["Teléfono Android 7.0+<br/>proceso com.example.aguardapp<br/>(AguardApp APK)"]
+    DB[("Teléfono: almacenamiento<br/>interno aguardapp.db")]
+    GPS["Teléfono: servicio de<br/>ubicación de Android"]
+    ANA[["Internet: geosnirh.ana.gob.pe<br/>(inventario de presas)"]]
+    OSM[["Internet: nominatim.openstreetmap.org"]]
+    GM[["Internet: Google Maps"]]
+    TS[["Internet: api.thingspeak.com"]]
+    APP <--> DB
+    APP --> GPS
+    APP -- "HTTPS / JSON" --> ANA
+    APP -- "HTTPS / JSON" --> OSM
+    APP -- HTTPS --> GM
+    APP -- "HTTPS / JSON" --> TS
 ```
 
-La aplicación se distribuye como un único APK. No requiere servidor, cuenta de usuario ni conexión a internet.
+La aplicación se distribuye como un único APK. No requiere servidor propio ni cuenta de usuario. Usa internet solo para descargar datos públicos; el depósito y lo ya descargado de Represas funcionan sin conexión. La API key de Google Maps y los datos del canal de ThingSpeak se leen de `local.properties` al compilar; la ANA y Nominatim no piden clave.
 
 ---
 
@@ -725,7 +1071,7 @@ La aplicación se distribuye como un único APK. No requiere servidor, cuenta de
 
 ## 4.1. Escenario de funcionalidad
 
-Los atributos de calidad (QA) son propiedades medibles que indican en qué grado el sistema satisface las necesidades de sus interesados. AguardApp entrega de forma completa las funciones del módulo Depósito: configurar el hogar, registrar llenados, consultar el nivel y el déficit, ver qué recortar, declarar que se quedó sin agua y consultar los avisos del depósito.
+Los atributos de calidad (QA) son propiedades medibles que indican en qué grado el sistema satisface las necesidades de sus interesados. AguardApp entrega de forma completa las funciones del módulo Depósito: configurar el hogar, registrar llenados, consultar el nivel y el déficit, ver qué recortar, declarar que se quedó sin agua y consultar los avisos del depósito. En la Unidad II se agregó la pestaña Represas: el recorrido del agua según el distrito del hogar, las represas de Tacna con datos de la ANA y el detalle de cada una.
 
 ## 4.2. Escenario de usabilidad
 
@@ -733,16 +1079,18 @@ Un usuario sin experiencia configura su hogar y registra un llenado en menos de 
 
 ## 4.3. Escenario de confiabilidad
 
-Sin conexión, la aplicación funciona igual porque no depende de la red. Las validaciones del dominio y del repositorio impiden datos incoherentes (llenados en el futuro, litros mayores que la capacidad, agotamientos anteriores al último llenado), y el tope de ±30 % evita que un error del usuario desordene la estimación del consumo.
+Sin conexión, el depósito funciona igual porque no depende de la red, y Represas muestra la última copia del inventario de la ANA con su fecha. Si la ANA responde con un error (incluso con HTTP 200, como hace ArcGIS), si no hay red o si el JSON no se puede leer, los datos guardados no se borran: la descarga nueva solo reemplaza a la anterior, dentro de una transacción, cuando trae represas válidas. Las validaciones del dominio y del repositorio impiden datos incoherentes (llenados en el futuro, litros mayores que la capacidad, agotamientos anteriores al último llenado), y el tope de ±30 % evita que un error del usuario desordene la estimación del consumo.
 
 ## 4.4. Escenario de rendimiento
 
-Todas las consultas se resuelven en la base local; los cálculos (nivel, agotamiento, déficit) son operaciones simples en memoria. La pantalla Mi depósito se refresca cada minuto sin bloquear la interfaz.
+Las pantallas leen siempre de la base local; los cálculos (nivel, agotamiento, déficit) son operaciones simples en memoria. La pantalla Mi depósito se refresca cada minuto sin bloquear la interfaz. Represas muestra lo guardado de inmediato y descarga en segundo plano, como máximo una vez por semana, con un tiempo de espera de 20 s por consulta; la lectura de la ubicación espera como máximo 15 s.
 
 ## 4.5. Escenario de mantenibilidad
 
-El dominio es Kotlin puro y no depende de Android, por lo que puede probarse con pruebas unitarias simples. Cada pantalla tiene solo dos archivos (Screen y ViewModel), y la inyección de dependencias está en un único módulo de Koin, lo que facilita agregar nuevas funcionalidades.
+El dominio es Kotlin puro y no depende de Android, por lo que puede probarse con pruebas unitarias simples. Cada pantalla tiene solo dos archivos (Screen y ViewModel), y la inyección de dependencias está en un único archivo de Koin, con un módulo por área, lo que facilita agregar nuevas funcionalidades.
+
+Represas tiene 21 pruebas unitarias. Las del repositorio pasan por Retrofit y Gson de verdad, con respuestas reales de la ANA y de Nominatim guardadas en `src/test/resources`, sin depender de la red: es posible porque el repositorio recibe sus APIs y su DAO por constructor, y la prueba los reemplaza por un cliente que responde desde esos archivos y por un DAO en memoria.
 
 ## 4.6. Otros escenarios
 
-**Privacidad:** la aplicación no declara permisos en el `AndroidManifest.xml` y ningún dato sale del dispositivo, en línea con la privacidad por diseño de la Ley N.° 29733. El respaldo automático de Android está desactivado (`allowBackup="false"`, y `backup_rules.xml` y `data_extraction_rules.xml` excluyen todos los datos), de modo que la base local no se copia a la nube ni a otro teléfono. El consentimiento de la bienvenida empieza sin marcar: el usuario debe aceptarlo de forma explícita.
+**Privacidad:** el `AndroidManifest.xml` declara los permisos `INTERNET`, `ACCESS_COARSE_LOCATION` y `ACCESS_FINE_LOCATION`. La ubicación se pide en tiempo de ejecución, al abrir el Mapa o al tocar "Usar mi ubicación" en Represas; el distrito solo se detecta al tocar ese botón, aunque el permiso ya se haya concedido en el Mapa, de modo que las coordenadas nunca salen del teléfono sin una acción explícita del usuario. Para detectar el distrito, las coordenadas se envían una vez a Nominatim y solo se guarda el nombre del distrito; quien no quiera compartir su ubicación puede elegirlo de una lista. Los datos del hogar (perfil, llenados, consumo y recortes) no se envían a ningún servicio, en línea con la privacidad por diseño de la Ley N.° 29733. El respaldo automático de Android está desactivado (`allowBackup="false"`, y `backup_rules.xml` y `data_extraction_rules.xml` excluyen todos los datos), de modo que la base local no se copia a la nube ni a otro teléfono. El consentimiento de la bienvenida empieza sin marcar: el usuario debe aceptarlo de forma explícita.
