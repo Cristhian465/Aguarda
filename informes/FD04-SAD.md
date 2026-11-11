@@ -5,8 +5,8 @@
 **Sistema:** AguardApp — sistema móvil para la gestión de la reserva domiciliaria de agua y la anticipación de cortes durante el racionamiento hídrico en Tacna.  
 **Curso:** Soluciones Móviles I  
 **Docente:** Mag. Alberto Johnatan Flor Rodríguez  
-**Versión:** 2.2  
-**Fecha:** 14/10/2026  
+**Versión:** 2.3  
+**Fecha:** 11/11/2026  
 **Lugar:** Tacna — Perú, 2026
 
 ### Integrantes
@@ -26,6 +26,7 @@
 | 2.0 | DJ - JL - CM - IS | — | — | 02/10/2026 | Actualización a la arquitectura de AguardApp: Android nativo, MVVM + DDD, módulo Depósito y base de datos local |
 | 2.1 | DJ - JL - CM - IS | — | — | 02/10/2026 | Se agrega la pantalla Avisos (RF-09) y se actualiza la base de datos a la versión 2 |
 | 2.2 | DJ - JL - CM - IS | — | — | 14/10/2026 | Se alinea con el código: plan de recortes (tabla `plan_recortes`, base de datos versión 3 con `AutoMigration`), secuencias y clases corregidas, inyección con Koin y respaldo automático desactivado |
+| 2.3 | DJ - JL - CM - IS | — | — | 11/11/2026 | Se agregan las funcionalidades `mapa` (Google Maps) y `sensor` (Retrofit + ThingSpeak, con un ESP32 simulado en Wokwi), la barra inferior, los ViewModels inyectados con Koin (`koinViewModel()`) y los servicios externos en los diagramas de componentes y despliegue |
 
 ---
 
@@ -49,7 +50,7 @@ flowchart TB
 
 ## 1.2. Alcance
 
-El documento describe la arquitectura de la versión actual de AguardApp: una aplicación Android nativa de un solo módulo (`app`) con dos funcionalidades (`bienvenida` y `deposito`), persistencia local con Room y sin servicios externos. Cubre la organización en capas y paquetes, la interacción entre objetos, el modelo de datos, los componentes, los procesos y el despliegue. Sirve de guía para el desarrollo y el mantenimiento del sistema.
+El documento describe la arquitectura de la versión actual de AguardApp: una aplicación Android nativa de un solo módulo (`app`) con cuatro funcionalidades (`bienvenida`, `deposito`, `mapa` y `sensor`), persistencia local con Room y dos servicios externos de solo lectura: Google Maps, para el mapa de cisternas, y ThingSpeak, donde el sensor IoT del tanque publica sus mediciones. Cubre la organización en capas y paquetes, la interacción entre objetos, el modelo de datos, los componentes, los procesos y el despliegue. Sirve de guía para el desarrollo y el mantenimiento del sistema.
 
 ## 1.3. Definiciones, siglas y abreviaturas
 
@@ -62,6 +63,10 @@ El documento describe la arquitectura de la versión actual de AguardApp: una ap
 | Jetpack Compose | Kit de interfaz declarativa de Android. |
 | Room | Biblioteca de persistencia local sobre SQLite. |
 | Koin | Biblioteca de inyección de dependencias para Kotlin. |
+| Retrofit | Cliente HTTP para Android que convierte una API REST en una interfaz de Kotlin. |
+| IoT | Internet de las cosas: dispositivos físicos que envían datos por internet. |
+| ESP32 | Microcontrolador con WiFi que lee el sensor ultrasónico del tanque. |
+| ThingSpeak | Servicio en la nube que guarda las mediciones del sensor y las expone mediante una API REST. |
 | UiState | Clase de datos con todo lo que una pantalla necesita mostrar. |
 | QA | Quality Attribute (atributo de calidad del software). |
 
@@ -86,24 +91,27 @@ El documento se organiza en cuatro secciones: introducción; objetivos y restric
 | RF-05 | Calcular el déficit hasta el próximo llenado | Alta |
 | RF-06 | Recomendar recortes de consumo | Media |
 | RF-07 | Declarar que se quedó sin agua y ajustar el consumo | Media |
-| RF-08 | Operar sin conexión | Alta |
+| RF-08 | Operar sin conexión en la gestión del depósito | Alta |
 | RF-09 | Consultar los avisos del depósito (déficit, nivel bajo, sin llenado) | Media |
+| RF-10 | Consultar el mapa de cisternas | Media |
+| RF-11 | Consultar el nivel del sensor del tanque | Media |
 
 ### 2.1.2. Requerimientos no funcionales — atributos de calidad
 
 | ID | Atributo | Descripción | Prioridad |
 |---|---|---|---|
-| RNF-01 | Disponibilidad | Funcionamiento 100 % sin conexión, con Room como única fuente de verdad. | Alta |
-| RNF-02 | Privacidad y seguridad | Ningún dato sale del teléfono; la aplicación no solicita permisos; identidad con UUID local. | Alta |
+| RNF-01 | Disponibilidad | Gestión del depósito 100 % sin conexión, con Room como única fuente de verdad; solo el mapa y el sensor usan internet. | Alta |
+| RNF-02 | Privacidad y seguridad | Ningún dato del hogar sale del teléfono; solo se piden los permisos de internet y de ubicación (opcional); identidad con UUID local. | Alta |
 | RNF-03 | Usabilidad | Interfaz simple, una sola fuente, colores sólidos y errores claros debajo de cada campo. | Alta |
 | RNF-04 | Compatibilidad | Android 7.0 (API 24) o superior; probado contra la API 36. | Media |
 | RNF-05 | Mantenibilidad | MVVM + DDD; dominio en Kotlin puro, independiente de Android; un Screen y un ViewModel por pantalla. | Alta |
 
 ## 2.2. Restricciones
 
-- La aplicación debe funcionar sin conexión, con la base de datos local como única fuente de verdad.
+- La gestión del depósito debe funcionar sin conexión, con la base de datos local como única fuente de verdad.
 - El dominio (`domain/`) no puede depender de Android, Room ni Koin: es Kotlin puro.
-- Solo se usan tecnologías gratuitas y de código abierto; no hay backend ni servicios en la nube.
+- Solo se usan tecnologías gratuitas; no hay backend propio. Los únicos servicios externos son Google Maps y ThingSpeak, usados dentro de su cuota gratuita y solo para leer datos.
+- Las claves de los servicios externos (`MAPS_API_KEY`, `THINGSPEAK_CHANNEL_ID` y `THINGSPEAK_READ_KEY`) se leen de `local.properties` y no se suben al repositorio.
 - La persistencia se realiza con Room; el esquema se exporta en `app/schemas/`.
 - Las pantallas no contienen lógica de negocio: solo pintan el `UiState` y llaman funciones del ViewModel.
 
@@ -113,7 +121,7 @@ El documento se organiza en cuatro secciones: introducción; objetivos y restric
 
 ## 3.1. Vista de casos de uso
 
-El único actor es el jefe de hogar, que usa la aplicación en su propio teléfono.
+El actor principal es el jefe de hogar, que usa la aplicación en su propio teléfono. El sensor del tanque (un ESP32 que publica sus mediciones en ThingSpeak) participa como actor secundario en la consulta del nivel del sensor.
 
 ```mermaid
 flowchart LR
@@ -127,7 +135,11 @@ flowchart LR
       U5((Consultar qué recortar))
       U6((Declarar que se quedó sin agua))
       U7((Consultar avisos))
+      U8((Consultar el mapa de cisternas))
+      U9((Consultar el nivel del sensor))
     end
+
+    SEN[Sensor del tanque: ESP32 + ThingSpeak]
 
     JH --> U1
     JH --> U2
@@ -136,6 +148,9 @@ flowchart LR
     JH --> U5
     JH --> U6
     JH --> U7
+    JH --> U8
+    JH --> U9
+    SEN --> U9
 ```
 
 ## 3.2. Vista lógica
@@ -147,7 +162,7 @@ flowchart TB
   subgraph APP[Aplicación AguardApp - módulo app]
     MAIN[AguardApplication / MainActivity / App]
     subgraph CORE[core]
-      NAV[navigation: Rutas, AppNavHost, InicioViewModel]
+      NAV[navigation: Rutas, AppNavHost, BarraInferior, InicioViewModel]
       DI[di: AppModule]
       DB[db: AguardAppDatabase]
       DATA[data: Usuario]
@@ -160,16 +175,35 @@ flowchart TB
       DOM[domain]
       DAT[data]
     end
+    subgraph MAPA[feature/mapa]
+      MPRES[presentation]
+      MDOM[domain]
+      MDAT[data]
+    end
+    subgraph SEN[feature/sensor]
+      SPRES[presentation]
+      SDOM[domain]
+      SDAT[data: Retrofit]
+    end
 
     MAIN --> NAV
     MAIN --> DI
     NAV --> BIEN
     NAV --> PRES
     NAV --> DOM
+    NAV --> MPRES
     PRES --> DOM
     DAT -. implementa .-> DOM
+    MPRES --> MDOM
+    MDAT -. implementa .-> MDOM
+    PRES --> SPRES
+    SPRES --> SDOM
+    SPRES --> DOM
+    SDAT -. implementa .-> SDOM
     DI --> DB
     DI --> DAT
+    DI --> MDAT
+    DI --> SDAT
     BIEN --> DATA
   end
 ```
@@ -419,6 +453,72 @@ sequenceDiagram
     end
 ```
 
+#### Módulo 3: Mapa de cisternas
+
+##### 3.1. Consulta del mapa de cisternas
+
+```mermaid
+sequenceDiagram
+    actor U as Usuario
+    participant BI as BarraInferior
+    participant NAV as AppNavHost
+    participant S as MapaScreen
+    participant VM as MapaViewModel
+    participant R as MapaRepositoryImpl
+    participant GM as Google Maps
+    U->>BI: Toca la pestaña "Mapa"
+    BI->>NAV: navigate(mapa)
+    NAV->>S: MapaScreen(koinViewModel())
+    S->>VM: collectAsStateWithLifecycle()
+    VM->>R: obtenerPuntosCisterna() y centroDelMapa()
+    R-->>VM: Puntos de prueba de Tacna y el centro del mapa
+    VM-->>S: MapaUiState(puntos, centro)
+    alt Permiso de ubicación pendiente
+        S->>U: Pide el permiso de ubicación
+        U-->>S: Lo concede o lo niega
+    end
+    S->>GM: GoogleMap(cámara en Tacna, mi ubicación si hay permiso)
+    GM-->>S: Calles de Tacna (internet)
+    S-->>U: Un marcador por punto, con el color de su estado
+    U->>S: Toca un marcador
+    S-->>U: Nombre, horario y estado del punto
+```
+
+#### Módulo 4: Sensor del tanque
+
+##### 4.1. Lectura del sensor y actualización del nivel
+
+```mermaid
+sequenceDiagram
+    participant ESP as ESP32 + HC-SR04
+    participant TS as ThingSpeak
+    participant DS as DepositoScreen
+    participant TSE as TarjetaSensor
+    participant VM as SensorViewModel
+    participant SR as SensorRepositoryImpl
+    participant API as ThingSpeakApi (Retrofit)
+    participant R as DepositoRepository
+    loop Cada 20 s
+        ESP->>TS: GET /update (field1 = %, field2 = cm)
+    end
+    DS->>TSE: TarjetaSensor() (solo si el canal está configurado)
+    TSE->>VM: collectAsStateWithLifecycle()
+    loop Cada 20 s mientras la pantalla está visible
+        VM->>SR: ultimaLectura()
+        SR->>API: GET channels/{canal}/feeds/last.json
+        API->>TS: Petición HTTPS
+        TS-->>API: created_at, field1, field2
+        API-->>SR: EntradaThingSpeakDto
+        SR-->>VM: Result(LecturaSensor) o el motivo del error
+        VM->>R: observarDeposito().first()
+        alt La lectura es más reciente que el último nivel
+            VM->>R: registrarLlenado(momento de la lectura, litros medidos)
+            R-->>VM: Result.success
+        end
+        VM-->>TSE: SensorUiState(%, litros, antigüedad, error)
+    end
+```
+
 ### 3.2.3. Diagrama de colaboración
 
 ```mermaid
@@ -517,6 +617,26 @@ classDiagram
     class QueRecortarViewModel
     class SinAguaViewModel
     class AvisosViewModel
+    class MapaRepository {
+      <<interface>>
+      +centroDelMapa() Coordenada
+      +obtenerPuntosCisterna() List~PuntoCisterna~
+    }
+    class MapaRepositoryImpl
+    class MapaViewModel
+    class SensorRepository {
+      <<interface>>
+      +estaConfigurado Boolean
+      +ultimaLectura() Result~LecturaSensor~
+    }
+    class SensorRepositoryImpl
+    class ThingSpeakApi {
+      <<Retrofit>>
+      +ultimaEntrada(canal, claveLectura) EntradaThingSpeakDto
+    }
+    class SensorViewModel {
+      +onUsarMedicion()
+    }
 
     DepositoRepositoryImpl ..|> DepositoRepository
     DepositoRepositoryImpl --> DepositoDao
@@ -539,13 +659,19 @@ classDiagram
     AvisosViewModel --> DepositoRepository
     AvisosViewModel --> CalcularDeficit
     AvisosViewModel --> CalcularRecortes
+    MapaRepositoryImpl ..|> MapaRepository
+    MapaViewModel --> MapaRepository
+    SensorRepositoryImpl ..|> SensorRepository
+    SensorRepositoryImpl --> ThingSpeakApi
+    SensorViewModel --> SensorRepository
+    SensorViewModel --> DepositoRepository
 ```
 
 ### 3.2.6. Diagrama de base de datos
 
 Base de datos local `aguardapp.db` (Room, versión 3). De la versión 2 a la 3 se agregó la tabla `plan_recortes` con una migración automática (`AutoMigration`), que conserva los datos existentes. Si falta la migración de alguna versión (por ejemplo, de la 1 a la 2), Room borra la base anterior y crea la nueva (`fallbackToDestructiveMigration`). Los esquemas de cada versión se exportan en `app/schemas/`.
 
-Las relaciones del diagrama son lógicas: todas las tablas guardan el `usuarioId`, pero no se declaran claves foráneas. Las fechas y horas se guardan como texto ISO; `plan_recortes.recortes` guarda los nombres de las recomendaciones elegidas separados por comas, y los dos consumos de `perfil_hogar` admiten nulo. Los avisos no tienen tabla, porque se calculan a partir del depósito.
+Las relaciones del diagrama son lógicas: todas las tablas guardan el `usuarioId`, pero no se declaran claves foráneas. Las fechas y horas se guardan como texto ISO; `plan_recortes.recortes` guarda los nombres de las recomendaciones elegidas separados por comas, y los dos consumos de `perfil_hogar` admiten nulo. Los avisos no tienen tabla, porque se calculan a partir del depósito. El mapa y el sensor tampoco agregan tablas: los puntos de cisterna vienen del repositorio del mapa, y cada lectura nueva del sensor se guarda en `evento_llenado` con los litros medidos.
 
 ```mermaid
 erDiagram
@@ -610,15 +736,21 @@ flowchart LR
       IMPL[DepositoRepositoryImpl]
       MAP[mapper]
       ROOM[local: Room DAO y entidades]
+      MIMPL[MapaRepositoryImpl: puntos de prueba]
+      SIMPL[SensorRepositoryImpl]
+      API[remote: ThingSpeakApi con Retrofit]
     end
 
     UI --> VM
     VM --> UC
     VM --> REPI
     IMPL -. implementa .-> REPI
+    MIMPL -. implementa .-> REPI
+    SIMPL -. implementa .-> REPI
     IMPL --> UC
     IMPL --> MAP
     IMPL --> ROOM
+    SIMPL --> API
     UC --> MOD
 ```
 
@@ -630,16 +762,24 @@ app/src/main/java/com/example/aguardapp/
 ├── core/
 │   ├── data/Usuario.kt            (entidad y DAO del usuario local)
 │   ├── db/AguardAppDatabase.kt    (Room)
-│   ├── di/AppModule.kt            (Koin)
-│   ├── navigation/                (Rutas, AppNavHost, InicioViewModel)
+│   ├── di/AppModule.kt            (Koin: moduloApp, moduloRed y moduloViewModels)
+│   ├── navigation/                (Rutas, AppNavHost, BarraInferior, InicioViewModel)
 │   ├── ui/theme/                  (colores, tema, tipografía, barra de estado)
 │   └── util/Reloj.kt              (hora actual y UUID)
 └── feature/
     ├── bienvenida/presentation/   (BienvenidaScreen, BienvenidaViewModel)
-    └── deposito/
-        ├── domain/   model/ · repository/ · usecase/
-        ├── data/     DepositoRepositoryImpl · local/ · mapper/
-        └── presentation/  *Screen + *ViewModel · FormatoDeposito · componentes/ (Comunes, ControlesConfiguracion, Tanque)
+    ├── deposito/
+    │   ├── domain/   model/ · repository/ · usecase/
+    │   ├── data/     DepositoRepositoryImpl · local/ · mapper/
+    │   └── presentation/  *Screen + *ViewModel · FormatoDeposito · componentes/ (Comunes, ControlesConfiguracion, Tanque)
+    ├── mapa/
+    │   ├── domain/   model/ (PuntoCisterna, Coordenada, EstadoCisterna) · repository/
+    │   ├── data/     MapaRepositoryImpl (puntos de prueba)
+    │   └── presentation/  MapaScreen · MapaViewModel
+    └── sensor/
+        ├── domain/   model/ (LecturaSensor) · repository/
+        ├── data/     SensorRepositoryImpl · remote/ThingSpeakApi
+        └── presentation/  TarjetaSensor · SensorViewModel
 ```
 
 Los casos de uso se agrupan por tema: `CalcularDeposito.kt` contiene `ArmarDeposito`, `DeclararSinAgua` e `HistorialDeposito`; `EstimarConsumo.kt` contiene también `ParametrosConsumo`, con todas las constantes del cálculo; y `CalcularRecortes.kt` contiene `SituacionRecortes` y `RecorteSugerido`.
@@ -654,21 +794,30 @@ flowchart LR
         VM[ViewModels]
         KOIN[Koin]
         DOMAIN[Dominio]
-        REPO[Repositorio]
+        REPO[Repositorios]
+        MAPS[Google Maps Compose]
+        RETRO[Retrofit + Gson]
       end
       LOCAL[(SQLite: aguardapp.db)]
     end
+    GMAPS[(Servidores de Google Maps)]
+    TS[(ThingSpeak: canal del sensor)]
 
     UI --> VM
+    UI --> MAPS
     VM --> DOMAIN
     VM --> REPO
     KOIN -. inyecta .-> REPO
+    KOIN -. inyecta .-> VM
     REPO <--> LOCAL
+    REPO --> RETRO
+    RETRO -- HTTPS --> TS
+    MAPS -- HTTPS --> GMAPS
 ```
 
-> La aplicación no se conecta a ningún servicio externo.
+> La aplicación solo se conecta a dos servicios externos, y únicamente para leer: Google Maps (calles del mapa) y ThingSpeak (mediciones del sensor). Ningún dato del hogar se envía fuera del teléfono.
 
-**Inyección de dependencias:** el módulo de Koin (`core/di/AppModule.kt`) registra solo tres piezas: el `Reloj`, el `UsuarioDao` y el `DepositoRepository`. Antes de iniciar Koin, `iniciarAplicacion` crea la base de datos y el usuario local. Cada ViewModel se crea con su función `desdeInyeccion()`, que pide sus dependencias a Koin; los casos de uso no tienen estado y cada ViewModel o el repositorio los crea directamente.
+**Inyección de dependencias:** Koin (`core/di/AppModule.kt`) se organiza en tres módulos. `moduloApp` registra el `Reloj`, el `UsuarioDao`, el `DepositoRepository` y el `MapaRepository`; `moduloRed` registra Retrofit (con la URL de ThingSpeak), la `ThingSpeakApi` y el `SensorRepository`, que recibe el canal y la clave de lectura desde `BuildConfig`; y `moduloViewModels` registra todos los ViewModels, que cada pantalla obtiene con `koinViewModel()`. El tipo de llenado (completo o parcial) llega a `RegistrarLlenadoViewModel` con `parametersOf`. Antes de iniciar Koin, `iniciarAplicacion` crea la base de datos y el usuario local. Los casos de uso no tienen estado y cada ViewModel o el repositorio los crea directamente.
 
 ## 3.4. Vista de procesos
 
@@ -692,15 +841,21 @@ flowchart TD
     K -- Sin agua --> M[Guardar novedad y nuevo consumo]
     K -- Qué recortar --> N[Mostrar recomendaciones y guardar el plan marcado]
     K -- Ver avisos --> O[Mostrar avisos: déficit, nivel bajo o sin llenado]
+    K -- Pestaña Mapa --> P[Mostrar los puntos de cisterna en Google Maps]
     K -- Editar hogar --> F
     K -- Ninguna, pasa un minuto --> H
+    G -. en paralelo, cada 20 s .-> S1[Consultar el sensor en ThingSpeak]
+    S1 --> S2{¿Lectura más reciente que el último nivel?}
+    S2 -- Sí --> L
+    S2 -- No --> J
     L --> H
     M --> H
     N --> H
     O --> G
+    P --> G
 ```
 
-Las operaciones con la base de datos se ejecutan en corrutinas fuera del hilo principal; las pantallas observan `StateFlow` y se recomponen solo cuando cambia su estado.
+Las operaciones con la base de datos y con la red se ejecutan en corrutinas fuera del hilo principal; las pantallas observan `StateFlow` y se recomponen solo cuando cambia su estado. La consulta del sensor es un `Flow` que se repite cada 20 s y solo está activo mientras Mi depósito es visible (`SharingStarted.WhileSubscribed`): al salir de la pantalla se detiene y no consume datos en segundo plano.
 
 ## 3.5. Vista de despliegue — vista física
 
@@ -709,15 +864,27 @@ Las operaciones con la base de datos se ejecutan en corrutinas fuera del hilo pr
 ```mermaid
 flowchart TB
     subgraph PHONE[Dispositivo Android 7.0+]
+      direction LR
       subgraph PROC[Proceso de la app com.example.aguardapp]
         APP[AguardApp APK]
       end
       DB[(Almacenamiento interno: aguardapp.db)]
       APP <--> DB
     end
+    subgraph TANK[Tanque del hogar - prototipo simulado en Wokwi]
+      ESP[ESP32 + sensor ultrasónico HC-SR04]
+    end
+    subgraph CLOUD[Internet]
+      direction LR
+      GM[(Google Maps Platform)]
+      TS[(ThingSpeak: canal del sensor)]
+    end
+    APP -- HTTPS: mapa --> GM
+    APP -- HTTPS: último dato --> TS
+    ESP -- WiFi, HTTP cada 20 s --> TS
 ```
 
-La aplicación se distribuye como un único APK. No requiere servidor, cuenta de usuario ni conexión a internet.
+La aplicación se distribuye como un único APK y no requiere servidor propio ni cuenta de usuario. La gestión del depósito funciona sin internet; el mapa necesita conexión para cargar las calles y el sensor para leer su último dato. El prototipo del sensor es un ESP32 con un sensor ultrasónico HC-SR04, simulado en Wokwi, que mide la distancia hasta el agua, calcula el porcentaje de llenado y lo publica en un canal de ThingSpeak (campo 1: porcentaje; campo 2: distancia en cm).
 
 ---
 
@@ -725,7 +892,7 @@ La aplicación se distribuye como un único APK. No requiere servidor, cuenta de
 
 ## 4.1. Escenario de funcionalidad
 
-Los atributos de calidad (QA) son propiedades medibles que indican en qué grado el sistema satisface las necesidades de sus interesados. AguardApp entrega de forma completa las funciones del módulo Depósito: configurar el hogar, registrar llenados, consultar el nivel y el déficit, ver qué recortar, declarar que se quedó sin agua y consultar los avisos del depósito.
+Los atributos de calidad (QA) son propiedades medibles que indican en qué grado el sistema satisface las necesidades de sus interesados. AguardApp entrega de forma completa las funciones del módulo Depósito: configurar el hogar, registrar llenados, consultar el nivel y el déficit, ver qué recortar, declarar que se quedó sin agua y consultar los avisos del depósito. Además, muestra los puntos de reparto de agua en cisterna sobre un mapa y toma el nivel real del tanque desde el sensor IoT.
 
 ## 4.2. Escenario de usabilidad
 
@@ -733,16 +900,16 @@ Un usuario sin experiencia configura su hogar y registra un llenado en menos de 
 
 ## 4.3. Escenario de confiabilidad
 
-Sin conexión, la aplicación funciona igual porque no depende de la red. Las validaciones del dominio y del repositorio impiden datos incoherentes (llenados en el futuro, litros mayores que la capacidad, agotamientos anteriores al último llenado), y el tope de ±30 % evita que un error del usuario desordene la estimación del consumo.
+Sin conexión, la gestión del depósito funciona igual porque no depende de la red; el mapa no carga sus calles y la tarjeta del sensor muestra el motivo ("Sin conexión con el sensor"), sin afectar al resto de la aplicación. Las validaciones del dominio y del repositorio impiden datos incoherentes (llenados en el futuro, litros mayores que la capacidad, agotamientos anteriores al último llenado), el tope de ±30 % evita que un error del usuario desordene la estimación del consumo y un "me quedé sin agua" registrado menos de 1 hora después del llenado no se usa para estimarlo.
 
 ## 4.4. Escenario de rendimiento
 
-Todas las consultas se resuelven en la base local; los cálculos (nivel, agotamiento, déficit) son operaciones simples en memoria. La pantalla Mi depósito se refresca cada minuto sin bloquear la interfaz.
+Todas las consultas se resuelven en la base local; los cálculos (nivel, agotamiento, déficit) son operaciones simples en memoria. La pantalla Mi depósito se refresca cada minuto sin bloquear la interfaz. La consulta al sensor es una petición pequeña cada 20 s, solo mientras la pantalla está visible.
 
 ## 4.5. Escenario de mantenibilidad
 
-El dominio es Kotlin puro y no depende de Android, por lo que puede probarse con pruebas unitarias simples. Cada pantalla tiene solo dos archivos (Screen y ViewModel), y la inyección de dependencias está en un único módulo de Koin, lo que facilita agregar nuevas funcionalidades.
+El dominio es Kotlin puro y no depende de Android, por lo que puede probarse con pruebas unitarias simples. Cada pantalla tiene solo dos archivos (Screen y ViewModel), y la inyección de dependencias está en un único archivo de Koin con tres módulos (aplicación, red y ViewModels), lo que facilita agregar nuevas funcionalidades: el mapa y el sensor se sumaron como paquetes nuevos sin cambiar el dominio del depósito.
 
 ## 4.6. Otros escenarios
 
-**Privacidad:** la aplicación no declara permisos en el `AndroidManifest.xml` y ningún dato sale del dispositivo, en línea con la privacidad por diseño de la Ley N.° 29733. El respaldo automático de Android está desactivado (`allowBackup="false"`, y `backup_rules.xml` y `data_extraction_rules.xml` excluyen todos los datos), de modo que la base local no se copia a la nube ni a otro teléfono. El consentimiento de la bienvenida empieza sin marcar: el usuario debe aceptarlo de forma explícita.
+**Privacidad:** la aplicación solo declara en el `AndroidManifest.xml` los permisos de internet (para el mapa y el sensor) y de ubicación (para mostrar al usuario en el mapa; se pide al abrirlo y puede negarse). Ningún dato del hogar sale del dispositivo: el mapa y el sensor solo descargan información, en línea con la privacidad por diseño de la Ley N.° 29733. Las claves de Google Maps y de ThingSpeak se leen de `local.properties` y no se suben al repositorio. El respaldo automático de Android está desactivado (`allowBackup="false"`, y `backup_rules.xml` y `data_extraction_rules.xml` excluyen todos los datos), de modo que la base local no se copia a la nube ni a otro teléfono. El consentimiento de la bienvenida empieza sin marcar: el usuario debe aceptarlo de forma explícita.

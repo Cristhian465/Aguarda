@@ -3,7 +3,7 @@
 > **Universidad Privada de Tacna** · Facultad de Ingeniería · Escuela Profesional de Ingeniería de Sistemas
 > **Curso:** Soluciones Móviles I · **Docente:** Mag. Alberto Johnatan Flor Rodríguez
 > **Sistema:** AguardApp: sistema móvil para la gestión de la reserva domiciliaria de agua y la anticipación de cortes durante el racionamiento hídrico en Tacna
-> **Versión:** 2.2 · Tacna – Perú, 2026
+> **Versión:** 2.3 · Tacna – Perú, 2026
 
 **Integrantes**
 
@@ -22,6 +22,7 @@
 | 2.0 | DJ - JL - CM - IS | — | — | 02/10/2026 | Actualización al sistema AguardApp: aplicación Android nativa centrada en el módulo Depósito, con base de datos local |
 | 2.1 | DJ - JL - CM - IS | — | — | 02/10/2026 | Se agrega la pantalla Avisos (RF-09, RN-11, CU-07) |
 | 2.2 | DJ - JL - CM - IS | — | — | 14/10/2026 | Se alinea con el código: validaciones reales de RF-02 y RF-07, consumo aprendido en RN-03 y RN-04, avisos con recortes en RN-11, privacidad (respaldo desactivado y consentimiento explícito) y plan de recortes en los modelos |
+| 2.3 | DJ - JL - CM - IS | — | — | 11/11/2026 | Se agregan el mapa de cisternas (RF-10, CU-08) y el sensor del tanque (RF-11, CU-09, RN-12); se descarta el "me quedé sin agua" registrado menos de 1 h después del llenado (RN-05) y se actualizan los permisos (RNF-03) |
 
 ## Índice
 
@@ -79,21 +80,21 @@ La ciudad de Tacna se abastece de agua potable bajo un esquema de racionamiento,
 ### 2.3. Objetivos de Diseño
 
 - Construir una aplicación Android nativa con Kotlin y Jetpack Compose.
-- Garantizar el funcionamiento 100 % sin conexión, con una base de datos local (Room / SQLite) como única fuente de verdad.
+- Garantizar que la gestión del depósito funcione 100 % sin conexión, con una base de datos local (Room / SQLite) como única fuente de verdad; solo el mapa de cisternas y el sensor del tanque usan internet.
 - Aplicar el patrón MVVM en la presentación y una organización por dominio (DDD), con el dominio independiente de Android.
-- Proteger la privacidad: todos los datos quedan en el teléfono y la aplicación no solicita permisos del sistema.
+- Proteger la privacidad: todos los datos del hogar quedan en el teléfono; la aplicación solo pide internet (mapa y sensor) y, de forma opcional, la ubicación para el mapa.
 
 ### 2.4. Alcance del proyecto
 
-El sistema comprende la configuración del hogar (tipo y capacidad del depósito, habitantes, hábitos de consumo y hora habitual de llegada del agua), el registro de llenados completos o parciales, el cálculo del nivel actual del depósito, la proyección de la hora de agotamiento, el cálculo del déficit de litros hasta el próximo llenado, las recomendaciones de recorte de consumo, la declaración de "me quedé sin agua", con la que la aplicación aprende el consumo real del hogar, y una pantalla de avisos que alerta dentro de la aplicación sobre el déficit, el nivel bajo o la falta de un llenado registrado.
+El sistema comprende la configuración del hogar (tipo y capacidad del depósito, habitantes, hábitos de consumo y hora habitual de llegada del agua), el registro de llenados completos o parciales, el cálculo del nivel actual del depósito, la proyección de la hora de agotamiento, el cálculo del déficit de litros hasta el próximo llenado, las recomendaciones de recorte de consumo, la declaración de "me quedé sin agua", con la que la aplicación aprende el consumo real del hogar, y una pantalla de avisos que alerta dentro de la aplicación sobre el déficit, el nivel bajo o la falta de un llenado registrado. Además, incluye un mapa con los puntos de reparto de agua en cisterna de Tacna y la lectura del nivel real del tanque desde un sensor IoT (ESP32 con sensor ultrasónico) que publica sus mediciones en ThingSpeak.
 
-La aplicación es nativa para Android y se desarrolla con Kotlin, Jetpack Compose, Room, Koin y Navigation Compose. Todos los datos se guardan en una base de datos SQLite local; la aplicación no necesita internet ni cuentas de usuario.
+La aplicación es nativa para Android y se desarrolla con Kotlin, Jetpack Compose, Room, Koin, Navigation Compose, Google Maps Compose y Retrofit. Todos los datos del hogar se guardan en una base de datos SQLite local y no se necesitan cuentas de usuario; solo el mapa y el sensor requieren conexión a internet.
 
-Quedan fuera del alcance de esta versión: la consulta del sector y del cronograma oficial, el mapa de cisternas, la confirmación colaborativa de horarios, la digitalización de recibos, los retos y reportes ciudadanos, el asistente hídrico, la sincronización en la nube, el inicio de sesión con Google, las notificaciones push (los avisos solo se muestran dentro de la aplicación) y la versión para iOS.
+Quedan fuera del alcance de esta versión: la consulta del sector y del cronograma oficial, la confirmación colaborativa de horarios, la digitalización de recibos, los retos y reportes ciudadanos, el asistente hídrico, la sincronización en la nube, el inicio de sesión con Google, las notificaciones push (los avisos solo se muestran dentro de la aplicación) y la versión para iOS.
 
 ### 2.5. Viabilidad del Sistema
 
-Según el Informe de Factibilidad (FD01, Versión 1.0), el proyecto es viable en las dimensiones técnica, económica (inversión estimada de S/ 17,720.00 con VAN positivo y TIR del 22.2 %), operativa, legal (Ley N.° 29733), social y ambiental. La reducción del alcance a una aplicación local refuerza la viabilidad técnica y legal: no hay costos de servidor ni datos personales fuera del dispositivo.
+Según el Informe de Factibilidad (FD01, Versión 1.0), el proyecto es viable en las dimensiones técnica, económica (inversión estimada de S/ 17,720.00 con VAN positivo y TIR del 22.2 %), operativa, legal (Ley N.° 29733), social y ambiental. La reducción del alcance a una aplicación local refuerza la viabilidad técnica y legal: no hay costos de servidor propio ni datos personales fuera del dispositivo. El mapa y el sensor usan servicios externos (Google Maps y ThingSpeak) dentro de su cuota gratuita.
 
 ### 2.6. Información obtenida del Levantamiento de Información
 
@@ -166,16 +167,18 @@ flowchart TD
 | RF-05 | Calcular el déficit | Calcular los litros que faltarán antes del próximo llenado. | Alta |
 | RF-06 | Recomendar recortes | Mostrar recomendaciones de ahorro según los hábitos del hogar y recalcular en vivo los litros ganados y los que faltan. | Media |
 | RF-07 | Declarar que se quedó sin agua | Registrar que el agua se acabó ahora o a una hora anterior y ajustar el consumo estimado del hogar. | Media |
-| RF-08 | Operar sin conexión | Funcionar sin internet, guardando toda la información en el teléfono. | Alta |
+| RF-08 | Operar sin conexión | Gestionar el depósito sin internet, guardando toda la información en el teléfono. | Alta |
 | RF-09 | Consultar avisos | Mostrar dentro de la aplicación las alertas del depósito y llevar al usuario a la pantalla que las resuelve. | Media |
+| RF-10 | Consultar el mapa de cisternas | Mostrar en un mapa los puntos de reparto de agua en cisterna de Tacna, con su horario y estado. | Media |
+| RF-11 | Consultar el nivel del sensor | Leer el nivel real del tanque medido por un sensor IoT y usarlo como nivel actual del depósito. | Media |
 
 ### b) Cuadro de Requerimientos No funcionales
 
 | ID | Requerimiento | Descripción |
 |---|---|---|
-| RNF-01 | Disponibilidad | La aplicación opera al 100 % sin conexión, con la base de datos local (Room / SQLite) como única fuente de verdad. |
+| RNF-01 | Disponibilidad | La gestión del depósito opera al 100 % sin conexión, con la base de datos local (Room / SQLite) como única fuente de verdad. Sin internet, el mapa y el sensor muestran el motivo y el resto de la aplicación sigue funcionando. |
 | RNF-02 | Rendimiento | Las pantallas deben responder en un máximo de 2 segundos en condiciones normales; los cálculos se hacen en el dispositivo sin esperar a la red. |
-| RNF-03 | Privacidad y seguridad | Ningún dato sale del teléfono: el respaldo automático de Android está desactivado, tanto a la nube como al pasar a otro teléfono. La aplicación no solicita permisos del sistema (ni internet, ni ubicación, ni cámara, ni notificaciones). El usuario se identifica con un UUID local. |
+| RNF-03 | Privacidad y seguridad | Ningún dato del hogar sale del teléfono: el respaldo automático de Android está desactivado, tanto a la nube como al pasar a otro teléfono. La aplicación solo declara los permisos de internet (para el mapa y el sensor, que únicamente descargan datos) y de ubicación, que se pide al abrir el mapa y puede negarse. Las claves de Google Maps y de ThingSpeak se leen de `local.properties` y no se guardan en el repositorio. El usuario se identifica con un UUID local. |
 | RNF-04 | Usabilidad y accesibilidad | Interfaz con textos legibles, una sola fuente tipográfica, colores sólidos, botones a lo ancho de la pantalla y mensajes de error claros debajo de cada campo. |
 | RNF-05 | Compatibilidad | Android 7.0 (API 24) o superior; probado contra la API 36. |
 | RNF-06 | Mantenibilidad | Arquitectura MVVM + DDD: dominio en Kotlin puro, independiente de Android; cada pantalla con un Screen y un ViewModel; sin capas innecesarias. |
@@ -183,7 +186,7 @@ flowchart TD
 
 ### c) Cuadro de Requerimientos funcionales Final
 
-Tras el análisis se mantuvieron los requerimientos iniciales, se precisaron sus validaciones y se detalló el requerimiento de avisos (RF-09):
+Tras el análisis se mantuvieron los requerimientos iniciales, se precisaron sus validaciones y se detallaron los requerimientos de avisos (RF-09), del mapa de cisternas (RF-10) y del sensor del tanque (RF-11):
 
 | ID | Requerimiento | Descripción | Prioridad |
 |---|---|---|---|
@@ -194,8 +197,10 @@ Tras el análisis se mantuvieron los requerimientos iniciales, se precisaron sus
 | RF-05 | Calcular el déficit | Déficit = consumo por hora × horas hasta el próximo llenado − nivel actual (nunca negativo). | Alta |
 | RF-06 | Recomendar recortes | Solo se sugieren las acciones que corresponden a los hábitos del hogar, con litros calculados para ese hogar; se muestra "Ahorras X L" y "Aún te faltan Y L" o "¡Con esto te alcanza hasta el próximo llenado!". Lo marcado se guarda como plan de recortes hasta el próximo llenado (o hasta registrar un llenado nuevo), se vuelve a mostrar al entrar y se refleja en Mi depósito ("Con tus recortes") y en Avisos. | Media |
 | RF-07 | Declarar que se quedó sin agua | Opciones "Se acabó ahora" o "Se acabó antes, a las HH:mm" (4 números en formato de 24 h; el ":" se agrega solo). Una hora posterior a la actual se toma como del día anterior. La hora debe estar completa, existir (00:00 a 23:59) y quedar después del último llenado; cada caso tiene su propio mensaje, y si la hora escrita aún no llega hoy y tampoco sirve como de ayer, se avisa "Esa hora todavía no llega". Antes de registrar se muestra lo proyectado frente a lo ocurrido, y la comparación se actualiza con la hora escrita. El botón Registrar no permite registros duplicados. | Media |
-| RF-08 | Operar sin conexión | Todas las funciones trabajan con la base local. | Alta |
+| RF-08 | Operar sin conexión | Todas las funciones del depósito trabajan con la base local. El mapa y el sensor necesitan internet; sin conexión, el resto de la aplicación funciona igual. | Alta |
 | RF-09 | Consultar avisos | Se abre desde "Ver avisos" en Mi depósito. Los avisos se generan según RN-11, cada tipo con su color; al tocar uno se navega a Qué recortar, a Registrar llenado completo o de vuelta a Mi depósito. Sin avisos se indica que el depósito alcanza hasta el próximo llenado. | Media |
+| RF-10 | Consultar el mapa de cisternas | Se abre desde la pestaña "Mapa" de la barra inferior. Muestra sobre Google Maps los puntos de reparto de Tacna con un marcador por punto, coloreado según su estado (azul: activo, naranja: en ruta, rojo: terminado); al tocarlo se ve el nombre, el horario y el estado. Al abrir el mapa se pide el permiso de ubicación: si se concede, se muestra la ubicación del usuario y el botón para centrarla; si se niega, el mapa funciona igual. Mientras no haya puntos oficiales, se usan puntos de prueba. | Media |
+| RF-11 | Consultar el nivel del sensor | La tarjeta "Sensor del tanque" aparece en Mi depósito solo si está configurado el canal de ThingSpeak. Mientras la pantalla está visible, consulta el último dato cada 20 s y muestra el porcentaje, los litros (porcentaje × capacidad) y la antigüedad de la lectura ("hace 30 s"). Una lectura más reciente que el último nivel registrado se aplica sola como nivel actual del depósito (RN-12); el botón "Usar esta medición como nivel actual" la vuelve a aplicar. Si no hay conexión o el canal no tiene datos, la tarjeta muestra el motivo ("Sin conexión con el sensor" o "El sensor aún no envió datos"). | Media |
 
 ### d) Reglas de Negocio
 
@@ -205,13 +210,14 @@ Tras el análisis se mantuvieron los requerimientos iniciales, se precisaron sus
 | RN-02 | El nivel del depósito baja de forma lineal desde el último llenado según el consumo por hora; nunca es menor que cero ni mayor que la capacidad. |
 | RN-03 | El consumo se estima en este orden: (1) el consumo aprendido en la última declaración de "me quedé sin agua", mientras no se registre un llenado nuevo ni se edite el hogar; (2) con el historial del hogar si hay datos suficientes; (3) con los hábitos declarados y (4) si no hay nada, suponiendo que el depósito dura 48 horas. |
 | RN-04 | El historial alcanza para estimar con al menos un intervalo "observado" (terminó con "me quedé sin agua") o con dos intervalos entre llenados. Se usan los 5 más recientes; si entre ellos hay intervalos observados, se usan solo esos, porque son datos exactos. El consumo es la mediana de los litros por hora de los intervalos elegidos. |
-| RN-05 | Dos llenados separados por menos de 6 horas se consideran un relleno y no cuentan para el consumo; un intervalo de más del doble de la mediana se descarta como un llenado olvidado. |
+| RN-05 | Dos llenados separados por menos de 6 horas se consideran un relleno y no cuentan para el consumo; un "me quedé sin agua" registrado menos de 1 hora después del llenado tampoco cuenta, porque se considera un error al registrar; un intervalo de más del doble de la mediana se descarta como un llenado olvidado. |
 | RN-06 | El consumo por hábitos se calcula con 60 L por persona al día más 30 L por ducha, 100 L si usa lavadora y 150 L si riega el jardín, repartidos en 12 horas de uso al día. |
 | RN-07 | Al declarar que se quedó sin agua, el nuevo consumo no puede variar más de un 30 % respecto del anterior en una sola declaración. |
 | RN-08 | Al registrar un llenado se descarta el consumo aprendido y se vuelve a estimar con todo el historial. |
 | RN-09 | Las recomendaciones de recorte y su ahorro diario son: no lavar ropa hoy (100 L, si usa lavadora), no regar el jardín (150 L, si riega), duchas de 5 minutos (la mitad de 30 L por ducha × duchas por día × habitantes), lavar los platos en un recipiente (8 L por persona) y echar al inodoro agua ya usada (10 L por persona). El ahorro se multiplica por la parte del día de uso (12 h) que falta hasta el próximo llenado, con un máximo de un día; así es coherente con el cálculo del déficit. |
 | RN-10 | El usuario se identifica con un UUID local que se crea una sola vez y no cambia. |
 | RN-11 | Los avisos se generan así: si el hogar no tiene llenados, solo "¿Llegó el agua a tu casa?"; si queda déficit después de descontar los recortes elegidos (RF-05 y RF-06), "Tu reserva se agota antes de que vuelva el agua" (con "aun con tus recortes" si hay un plan); y si el nivel actual es menor al 20 % de la capacidad, "Te queda poca agua". Los avisos se calculan al vuelo y no se guardan. |
+| RN-12 | Una lectura del sensor se aplica como nivel actual solo si es más reciente que el último nivel registrado; sus litros son el porcentaje medido por la capacidad del depósito y se registran como un llenado con la hora de la medición. Si el usuario registró un llenado después de esa lectura, se respeta hasta que llegue una lectura nueva. Una lectura de tanque vacío (menos de 1 L) no se registra. |
 
 ## 5. Fase de Desarrollo
 
@@ -219,7 +225,7 @@ Tras el análisis se mantuvieron los requerimientos iniciales, se precisaron sus
 
 | Perfil | Descripción | Permisos principales |
 |---|---|---|
-| Jefe de hogar | Persona que administra el agua de la casa | Configurar el hogar, registrar llenados, consultar el depósito y el déficit, ver qué recortar, declarar que se quedó sin agua y consultar los avisos |
+| Jefe de hogar | Persona que administra el agua de la casa | Configurar el hogar, registrar llenados, consultar el depósito y el déficit, ver qué recortar, declarar que se quedó sin agua, consultar los avisos, el mapa de cisternas y el nivel del sensor |
 
 > La aplicación tiene un único perfil: no hay cuentas ni roles, y cada teléfono guarda los datos de un hogar.
 
@@ -250,11 +256,30 @@ flowchart LR
         D1["domain"]
         DA1["data"]
     end
+    subgraph MAPA["📦 feature.mapa"]
+        direction TB
+        P2["presentation"]
+        D2["domain"]
+        DA2["data"]
+    end
+    subgraph SEN["📦 feature.sensor"]
+        direction TB
+        P3["presentation"]
+        D3["domain"]
+        DA3["data (Retrofit)"]
+    end
     BIEN -- usa --> CORE
     P1 -- usa --> D1
     DA1 -. implementa .-> D1
-    CORE -- crea --> DA1
+    P2 -- usa --> D2
+    DA2 -. implementa .-> D2
+    P3 -- usa --> D3
+    DA3 -. implementa .-> D3
+    P1 -- muestra --> P3
+    P3 -- registra el nivel en --> D1
+    CORE -- crea --> DA1 & DA2 & DA3
     CORE -- navega a --> P1
+    CORE -- navega a --> P2
     CORE -- navega a --> BIEN
 ```
 
@@ -277,15 +302,21 @@ flowchart LR
         CU05(["CU-05 Consultar qué recortar"])
         CU06(["CU-06 Declarar que se quedó sin agua"])
         CU07(["CU-07 Consultar avisos"])
+        CU08(["CU-08 Consultar el mapa de cisternas"])
+        CU09(["CU-09 Consultar el nivel del sensor"])
     end
 
-    JH --> CU01 & CU02 & CU03 & CU04 & CU05 & CU06 & CU07
+    SEN(["📡 Sensor del tanque<br/>(ESP32 + ThingSpeak)"])
+
+    JH --> CU01 & CU02 & CU03 & CU04 & CU05 & CU06 & CU07 & CU08
 
     CU04 -. "«include»" .-> CD
     CU04 -. "«include»" .-> EC
     CU05 -. "«extend»" .-> CU04
     CU06 -. "«include»" .-> EC
     CU07 -. "«include»" .-> CD
+    CU09 -. "«extend»" .-> CU04
+    CU09 --- SEN
 ```
 
 #### c) Escenarios de Caso de Uso (narrativa)
@@ -344,6 +375,22 @@ flowchart LR
 | **Flujo alternativo** | Si no hay avisos, se muestra "No tienes avisos" y que el depósito alcanza hasta el próximo llenado. |
 | **Postcondición** | El usuario conoce las alertas de su depósito y la acción para atenderlas. |
 
+| CU-08 | Consultar el mapa de cisternas |
+|---|---|
+| **Actor** | Jefe de hogar |
+| **Precondición** | El hogar está configurado y el teléfono tiene conexión a internet. |
+| **Flujo principal** | 1) El usuario toca la pestaña "Mapa" de la barra inferior. 2) El sistema pide el permiso de ubicación si aún no lo tiene. 3) Obtiene los puntos de cisterna y centra el mapa en Tacna. 4) Muestra un marcador por punto, con el color de su estado. 5) El usuario toca un marcador y ve el nombre, el horario y el estado del punto. |
+| **Flujo alternativo** | Si el usuario niega el permiso de ubicación, el mapa se muestra igual, sin su ubicación. Sin conexión, el mapa no carga sus calles. |
+| **Postcondición** | El usuario sabe dónde y en qué horario reparten agua las cisternas. |
+
+| CU-09 | Consultar el nivel del sensor |
+|---|---|
+| **Actor** | Jefe de hogar (actor secundario: sensor del tanque) |
+| **Precondición** | El hogar está configurado, el canal de ThingSpeak está configurado en la aplicación y el sensor publica sus mediciones. |
+| **Flujo principal** | 1) El usuario abre Mi depósito. 2) El sistema consulta el último dato del sensor y lo repite cada 20 s mientras la pantalla está visible. 3) Muestra el porcentaje, los litros y la antigüedad de la lectura. 4) Si la lectura es más reciente que el último nivel registrado, la registra como nivel actual (RN-12). 5) Mi depósito recalcula el nivel, el agotamiento y el déficit. |
+| **Flujo alternativo** | El usuario toca "Usar esta medición como nivel actual" para volver a aplicar la lectura. Si no hay conexión o el canal no tiene datos, la tarjeta muestra el motivo y el depósito sigue con el último nivel registrado. |
+| **Postcondición** | El nivel del depósito coincide con el medido en el tanque. |
+
 ### 5.3. Modelo Lógico
 
 #### a) Análisis de Objetos
@@ -360,18 +407,28 @@ flowchart LR
     VM(("⟳ ViewModels"))
     REP(("⟳ Repositorio del depósito"))
     EST(("⟳ Estimar consumo / Calcular déficit / Recortes / Avisos"))
+    RMA(("⟳ Repositorio del mapa"))
+    RSE(("⟳ Repositorio del sensor"))
     US[("Usuario")]
     PH[("Perfil del hogar")]
     LL[("Evento de llenado")]
     NV[("Novedad: sin agua")]
     PR[("Plan de recortes")]
+    PC[("Punto de cisterna")]
+    LS[("Lectura del sensor")]
+    TS[/"⊢○ ThingSpeak (API REST)"/]
 
     U --> PANT
     PANT --> VM
     VM --> REP
     VM --> EST
+    VM --> RMA
+    VM --> RSE
     REP --> EST
     REP --> PH & LL & NV & PR
+    RMA --> PC
+    RSE --> TS
+    RSE --> LS
     VM --> US
 ```
 
@@ -528,6 +585,28 @@ classDiagram
         NIVEL_BAJO
         SIN_LLENADO
     }
+    class LecturaSensor {
+        porcentaje
+        distanciaCm
+        medidaEn
+        litros(capacidad)
+    }
+    class PuntoCisterna {
+        id
+        nombre
+        horarioInicio
+        horarioFin
+    }
+    class Coordenada {
+        latitud
+        longitud
+    }
+    class EstadoCisterna {
+        <<enumeration>>
+        ACTIVO
+        EN_RUTA
+        TERMINADO
+    }
 
     PerfilHogar "1" *-- "1" ConfiguracionHogar
     ConfiguracionHogar "1" *-- "1" HabitosDelHogar
@@ -540,14 +619,18 @@ classDiagram
     PlanRecortes ..> Deposito : vale para su llenado
     AvisoVista --> TipoDeAviso
     AvisoVista ..> Deposito : se arma con
+    LecturaSensor ..> EventoLlenado : se registra como
+    PuntoCisterna "1" *-- "1" Coordenada : ubicacion
+    PuntoCisterna --> EstadoCisterna
 ```
 
-> `AvisoVista` y `TipoDeAviso` pertenecen a la capa de presentación (`AvisosViewModel`): los avisos se derivan del `Deposito` y no se guardan en la base de datos. Los litros de cada `RecorteSugerido` los calcula el caso de uso `CalcularRecortes` según los hábitos y habitantes del hogar (RN-09); `PlanRecortes` sí se guarda (tabla `plan_recortes`) y solo vale para el llenado en que se creó y hasta el próximo llenado.
+> `AvisoVista` y `TipoDeAviso` pertenecen a la capa de presentación (`AvisosViewModel`): los avisos se derivan del `Deposito` y no se guardan en la base de datos. Los litros de cada `RecorteSugerido` los calcula el caso de uso `CalcularRecortes` según los hábitos y habitantes del hogar (RN-09); `PlanRecortes` sí se guarda (tabla `plan_recortes`) y solo vale para el llenado en que se creó y hasta el próximo llenado. `LecturaSensor` (paquete `feature.sensor`) no tiene tabla propia: cuando es nueva, se guarda como un `EventoLlenado` con los litros medidos (RN-12). `PuntoCisterna`, `Coordenada` y `EstadoCisterna` pertenecen al paquete `feature.mapa` y tampoco se guardan en la base de datos.
 
 ## 6. Conclusiones
 
-- La especificación definió las funcionalidades de AguardApp mediante 9 requerimientos funcionales, 7 no funcionales y 11 reglas de negocio, centrados en la gestión del depósito domiciliario de agua.
-- La reducción del alcance a un solo módulo (Depósito) permite entregar una solución completa, simple y que funciona sin conexión ni cuentas de usuario.
+- La especificación definió las funcionalidades de AguardApp mediante 11 requerimientos funcionales, 7 no funcionales y 12 reglas de negocio, centrados en la gestión del depósito domiciliario de agua.
+- El módulo Depósito ofrece una solución completa y simple que funciona sin conexión ni cuentas de usuario; el mapa de cisternas y el sensor del tanque la amplían y son las únicas funciones que usan internet.
+- El sensor IoT reemplaza la estimación por una medición real del tanque cuando está disponible, sin cambiar el modelo de datos: cada lectura nueva se registra como un llenado.
 - El modelado de procesos evidencia la mejora frente al proceso manual: el hogar sabe cuánta agua le queda, hasta cuándo le alcanza y cuántos litros le faltarán antes del próximo llenado.
 - Los diagramas de paquetes, casos de uso, actividades, secuencia y clases reflejan la arquitectura MVVM + DDD implementada en el código.
 
@@ -557,6 +640,8 @@ classDiagram
 - Agregar pruebas unitarias para la capa de dominio, que es Kotlin puro y no depende de Android.
 - Mantener la trazabilidad entre requerimientos, casos de uso y pruebas en las próximas versiones.
 - Evaluar en versiones futuras los módulos que quedaron fuera del alcance (sector, notificaciones push a partir de los avisos actuales, sincronización) sin perder el funcionamiento sin conexión.
+- Reemplazar los puntos de cisterna de prueba por los oficiales de EPS Tacna cuando estén disponibles.
+- Validar el sensor del tanque con un ESP32 y un sensor ultrasónico reales instalados en un tanque, además de la simulación.
 
 ## 8. Bibliografía
 
@@ -572,4 +657,7 @@ classDiagram
 - Documentación de Room: <https://developer.android.com/training/data-storage/room>
 - Guía de arquitectura de apps Android: <https://developer.android.com/topic/architecture>
 - Documentación de Koin: <https://insert-koin.io/docs>
+- Documentación de Maps Compose: <https://developers.google.com/maps/documentation/android-sdk/maps-compose>
+- Documentación de Retrofit: <https://square.github.io/retrofit/>
+- Documentación de ThingSpeak: <https://www.mathworks.com/help/thingspeak/>
 - Documentación de Mermaid: <https://mermaid.js.org/>
