@@ -3,7 +3,7 @@
 > **Universidad Privada de Tacna** · Facultad de Ingeniería · Escuela Profesional de Ingeniería de Sistemas
 > **Curso:** Soluciones Móviles I · **Docente:** Mag. Alberto Johnatan Flor Rodríguez
 > **Proyecto:** AguardApp
-> **Versión:** 2.2 · Tacna – Perú, 2026
+> **Versión:** 2.3 · Tacna – Perú, 2026
 
 **Integrantes**
 
@@ -22,6 +22,7 @@
 | 2.0 | DJ - JL - CM - IS | — | — | 02/10/2026 | Actualización al sistema AguardApp: aplicación Android nativa, módulo Depósito y base de datos local |
 | 2.1 | DJ - JL - CM - IS | — | — | 02/10/2026 | Se agrega la pantalla Avisos a las funcionalidades implementadas |
 | 2.2 | DJ - JL - CM - IS | — | — | 14/10/2026 | Se alinea con el código: plan de recortes, base de datos versión 3, Koin y privacidad (respaldo desactivado y consentimiento explícito) |
+| 2.3 | DJ - JL - CM - IS | — | — | 11/11/2026 | Se agregan el mapa de cisternas y el sensor IoT del tanque (ESP32 + ThingSpeak) a las funcionalidades implementadas, las tecnologías, la arquitectura y el cronograma |
 
 ## Índice
 
@@ -43,7 +44,7 @@
 
 El presente documento constituye el Informe Final del proyecto AguardApp, desarrollado por el equipo de desarrollo AguardApp.
 
-El proyecto nació como **AguaTacna**, una aplicación Kotlin Multiplatform (Android e iOS) con varios módulos: reserva, sector y mapas, recibos, retos, asistente hídrico y sincronización con la nube. Durante el desarrollo, el equipo decidió concentrar el esfuerzo en el problema central —saber cuánta agua le queda al hogar y hasta cuándo le alcanza— y migró la solución a **AguardApp**, una aplicación **Android nativa** con un único módulo funcional, **Depósito**, que trabaja por completo con una base de datos local.
+El proyecto nació como **AguaTacna**, una aplicación Kotlin Multiplatform (Android e iOS) con varios módulos: reserva, sector y mapas, recibos, retos, asistente hídrico y sincronización con la nube. Durante el desarrollo, el equipo decidió concentrar el esfuerzo en el problema central —saber cuánta agua le queda al hogar y hasta cuándo le alcanza— y migró la solución a **AguardApp**, una aplicación **Android nativa** centrada en el módulo **Depósito**, que trabaja por completo con una base de datos local. Sobre esa base se incorporaron después dos funciones de apoyo: el **mapa de cisternas** y la lectura del nivel del tanque desde un **sensor IoT**.
 
 Este informe consolida el trabajo realizado e integra los documentos elaborados en cada etapa: el Informe de Factibilidad (FD01), el Documento de Visión (FD02), la Especificación de Requerimientos de Software (FD03) y el Documento de Arquitectura de Software (FD04), que se adjuntan como anexos.
 
@@ -68,11 +69,13 @@ El desarrollo de AguardApp se justifica por la necesidad de que cada hogar conoz
 - Recomendaciones de recorte de consumo según los hábitos del hogar, con un plan que se guarda hasta el próximo llenado.
 - Declaración de "me quedé sin agua", con la que la aplicación aprende el consumo real.
 - Avisos dentro de la aplicación cuando el agua no alcanza hasta el próximo llenado, cuando el nivel baja del 20 % o cuando aún no se registró ningún llenado.
-- Operación 100 % sin conexión con una base de datos local (Room / SQLite).
+- Mapa de los puntos de reparto de agua en cisterna de Tacna, con su horario y estado.
+- Lectura del nivel real del tanque desde un sensor IoT (ESP32 con sensor ultrasónico, prototipo simulado en Wokwi) que publica sus mediciones en ThingSpeak.
+- Gestión del depósito 100 % sin conexión con una base de datos local (Room / SQLite); solo el mapa y el sensor usan internet.
 
 **Fuera del alcance del proyecto se considera:**
 
-- La consulta del sector, los cronogramas oficiales y el mapa de cisternas.
+- La consulta del sector y de los cronogramas oficiales.
 - La digitalización de recibos, los retos y reportes ciudadanos y el asistente hídrico.
 - La sincronización en la nube, el inicio de sesión con Google y las notificaciones push (los avisos solo se muestran dentro de la aplicación).
 - La versión para iOS y la integración con los sistemas de EPS Tacna.
@@ -90,7 +93,9 @@ Desarrollar una aplicación móvil que permita a los hogares de Tacna conocer y 
 - **Gestionar el depósito del hogar:** calcular el nivel actual y proyectar hasta cuándo alcanza el agua.
 - **Anticipar la falta de agua:** calcular el déficit de litros hasta el próximo llenado, avisar al usuario y recomendar recortes de consumo.
 - **Aprender el consumo real:** ajustar la estimación con el historial de llenados y las declaraciones de "me quedé sin agua".
-- **Operar sin conexión y con privacidad:** funcionar sin internet y sin sacar datos del teléfono.
+- **Medir el nivel real del tanque:** tomar el nivel desde un sensor IoT cuando esté disponible, en lugar de solo estimarlo.
+- **Orientar al hogar cuando falta agua:** mostrar en un mapa dónde y en qué horario reparten agua las cisternas.
+- **Operar sin conexión y con privacidad:** gestionar el depósito sin internet y sin sacar datos del hogar del teléfono.
 
 ## 4. Marco Teórico
 
@@ -110,9 +115,13 @@ El patrón MVVM separa la pantalla (View) de su lógica de presentación (ViewMo
 
 AguardApp estima el consumo con el historial real del hogar (los intervalos entre llenados y los momentos en que se quedó sin agua) y usa la mediana, un estadístico robusto frente a datos erróneos. Si aún no hay historial suficiente, estima a partir de los hábitos declarados.
 
+### Internet de las cosas (IoT) y medición del nivel del tanque
+
+El internet de las cosas conecta dispositivos físicos a internet para que envíen datos sin intervención humana. Un sensor ultrasónico instalado en la tapa del tanque mide el tiempo que tarda un pulso de sonido en ir y volver desde la superficie del agua; con esa distancia y la altura del tanque se calcula el porcentaje de llenado. Un microcontrolador ESP32, que tiene WiFi, publica esa medición en un servicio en la nube (ThingSpeak), del que la aplicación lee el último dato mediante una API REST.
+
 ### Privacidad por diseño
 
-La Ley N.° 29733 exige proteger los datos personales. AguardApp aplica la privacidad por diseño: todos los datos se guardan en el teléfono, no se envían a ningún servidor y la aplicación no solicita permisos del sistema.
+La Ley N.° 29733 exige proteger los datos personales. AguardApp aplica la privacidad por diseño: todos los datos del hogar se guardan en el teléfono y no se envían a ningún servidor. La aplicación solo pide internet, para descargar el mapa y la medición del sensor, y, de forma opcional, la ubicación para mostrar al usuario en el mapa.
 
 ## 5. Desarrollo de la Solución
 
@@ -120,16 +129,16 @@ La Ley N.° 29733 exige proteger los datos personales. AguardApp aplica la priva
 
 | Dimensión | Resultado | Sustento |
 |---|---|---|
-| Técnica | **Factible** | El equipo domina las tecnologías seleccionadas (todas gratuitas y de código abierto). La aplicación compila y funciona como un único APK, sin depender de servidores. |
-| Económica | **Viable** | La inversión estimada es de S/ 17,720.00, con un VAN de S/ 3,176.00, una TIR del 22.2 % y una relación beneficio/costo de 1.14, según el Informe de Factibilidad (FD01). Al no usar servicios en la nube, no hay costos de operación adicionales. |
+| Técnica | **Factible** | El equipo domina las tecnologías seleccionadas (todas gratuitas y de código abierto). La aplicación compila y funciona como un único APK, sin depender de un servidor propio. |
+| Económica | **Viable** | La inversión estimada es de S/ 17,720.00, con un VAN de S/ 3,176.00, una TIR del 22.2 % y una relación beneficio/costo de 1.14, según el Informe de Factibilidad (FD01). Los servicios externos (Google Maps y ThingSpeak) se usan dentro de su cuota gratuita, por lo que no hay costos de operación adicionales. |
 | Operativa | **Factible** | La aplicación es simple, funciona sin conexión y no requiere personal adicional; los hogares la usan con un teléfono de gama básica (Android 7.0 o superior). |
 | Social | **Positiva** | Ayuda a las familias a anticipar la falta de agua y a consumir de forma responsable, contribuyendo a los ODS 6, 11 y 12. |
-| Legal | **Factible** | Cumple la Ley N.° 29733: ningún dato sale del teléfono y la aplicación no solicita permisos. Utiliza software libre conforme a sus licencias. |
+| Legal | **Factible** | Cumple la Ley N.° 29733: ningún dato del hogar sale del teléfono y solo se piden los permisos de internet y de ubicación (opcional). Utiliza software libre conforme a sus licencias y servicios externos según sus condiciones de uso. |
 | Ambiental | **Positiva** | Incentiva el ahorro y evita el desperdicio del agua, un recurso escaso en Tacna, sin generar residuos físicos. |
 
 ### 5.2. Tecnología de Desarrollo
 
-La solución se construye con un conjunto de tecnologías gratuitas y de código abierto:
+La solución se construye con un conjunto de tecnologías gratuitas, en su mayoría de código abierto:
 
 | Capa | Tecnología | Justificación |
 |---|---|---|
@@ -137,9 +146,12 @@ La solución se construye con un conjunto de tecnologías gratuitas y de código
 | Interfaz | Jetpack Compose + Material 3 | Interfaz declarativa, con el tema propio de la app (colores sólidos y una sola fuente). |
 | Navegación | Navigation Compose | Rutas declaradas en un solo NavHost. |
 | Base de datos local | Room (SQLite) | Operación sin conexión; única fuente de verdad. |
-| Inyección de dependencias | Koin | Un único módulo simple que registra el reloj, el DAO del usuario y el repositorio del depósito; cada ViewModel los pide al crearse. |
+| Inyección de dependencias | Koin (koin-androidx-compose) | Tres módulos (aplicación, red y ViewModels); cada pantalla obtiene su ViewModel con `koinViewModel()`. |
 | Estado y asincronía | Corrutinas, Flow y Lifecycle (ViewModel) | Las pantallas observan un `StateFlow` y Room avisa de cada cambio con `Flow`. |
 | Fechas y horas | kotlinx-datetime | Cálculo del nivel, del agotamiento y del próximo llenado. |
+| Mapas | Google Maps Compose (maps-compose) | Mapa de los puntos de cisterna con marcadores por estado y la ubicación del usuario. |
+| Red | Retrofit + Gson | Lectura del último dato del sensor desde la API REST de ThingSpeak. |
+| IoT | ESP32 + sensor ultrasónico HC-SR04 (simulado en Wokwi) y ThingSpeak | El ESP32 mide el nivel del tanque y lo publica cada 20 s en un canal de ThingSpeak. |
 
 La arquitectura general de la solución se muestra a continuación:
 
@@ -150,13 +162,19 @@ flowchart LR
     subgraph DM["Teléfono Android"]
         PRES["Presentación (MVVM):<br/>Screens Compose + ViewModels"]
         DOM["Dominio (DDD):<br/>modelos y casos de uso"]
-        DAT["Datos:<br/>DepositoRepositoryImpl"]
+        DAT["Datos:<br/>repositorios del depósito,<br/>del mapa y del sensor"]
         ROOM[("Room / SQLite<br/>aguardapp.db")]
     end
+    GM[("Google Maps")]
+    TS[("ThingSpeak")]
+    ESP["ESP32 + HC-SR04<br/>(tanque, simulado en Wokwi)"]
 
     PRES --> DOM
     DAT -. implementa .-> DOM
     DAT --> ROOM
+    PRES -- mapa --> GM
+    DAT -- "Retrofit: último dato" --> TS
+    ESP -- "nivel cada 20 s" --> TS
 ```
 
 Las pantallas implementadas y sus rutas de navegación son:
@@ -165,11 +183,12 @@ Las pantallas implementadas y sus rutas de navegación son:
 |---|---|---|
 | `bienvenida` | Bienvenida | Presenta la app y pide el consentimiento (solo la primera vez). |
 | `configurar_hogar` | Configurar hogar | Formulario del hogar con validaciones y hora del próximo llenado escrita en formato 24 h. |
-| `mi_deposito` | Mi depósito | Nivel, "Te alcanza hasta", próximo llenado, déficit y consumo. |
+| `mi_deposito` | Mi depósito | Nivel, "Te alcanza hasta", próximo llenado, déficit, consumo y, si el sensor está configurado, la tarjeta "Sensor del tanque" con el nivel medido. |
 | `registrar_llenado/{tipo}` | Registrar llenado | Llenado completo (confirmar) o parcial (con litros). |
 | `que_recortar` | Qué recortar | Recomendaciones con litros según el hogar; lo marcado se guarda hasta el próximo llenado y se refleja en Mi depósito y Avisos. |
 | `me_quede_sin_agua` | Me quedé sin agua | "Se acabó ahora" o "Se acabó antes, a las HH:mm" (hora escrita; si es posterior a la actual, se toma como de ayer). |
 | `avisos` | Avisos | Alertas de déficit (descontando los recortes elegidos), nivel bajo (menos del 20 %) o sin llenado; cada aviso lleva a la pantalla que lo resuelve. |
+| `mapa` | Puntos de cisterna | Mapa de Google con los puntos de reparto de Tacna, su horario y su estado; se abre desde la barra inferior. |
 
 ### 5.3. Metodología de implementación (Documento de VISIÓN, SRS, SAD)
 
@@ -194,8 +213,12 @@ Durante la implementación se tomaron estas decisiones:
 6. **Avisos dentro de la aplicación:** en lugar de notificaciones push, que requieren permisos, se agregó una pantalla de avisos que se calcula a partir del depósito y no necesita tablas nuevas.
 7. **Base de datos versión 3:** se agregó la tabla `plan_recortes` para guardar los recortes elegidos hasta el próximo llenado. El paso de la versión 2 a la 3 usa una migración automática de Room (`AutoMigration`) que conserva los datos; solo si falta una migración, Room recrea la base. Los esquemas de cada versión se exportan en `app/schemas/`.
 8. **Privacidad reforzada:** el respaldo automático de Android está desactivado (`allowBackup="false"` y reglas que excluyen todos los datos), de modo que la base local no se copia a la nube ni a otro teléfono; además, la casilla de consentimiento de la bienvenida empieza sin marcar.
+9. **Mapa de cisternas:** se agregó la funcionalidad `mapa`, con Google Maps y una barra inferior para pasar de Mi depósito al mapa. Mientras EPS Tacna no publique los puntos oficiales, se usan puntos de prueba; la clave de Google Maps se lee de `local.properties`.
+10. **Sensor IoT del tanque:** se construyó un prototipo con un ESP32 y un sensor ultrasónico HC-SR04, simulado en Wokwi, que publica el nivel en ThingSpeak cada 20 s. La aplicación lo lee con Retrofit (funcionalidad `sensor`) y registra cada lectura nueva como el nivel actual del depósito, sin agregar tablas.
+11. **Inyección completa con Koin:** todos los ViewModels se registran en Koin y cada pantalla los obtiene con `koinViewModel()`.
+12. **Estimación más robusta:** un "me quedé sin agua" registrado menos de 1 hora después del llenado ya no se usa para estimar el consumo, porque se considera un error al registrar.
 
-Al cierre de esta versión se cuenta con una aplicación funcional que permite configurar el hogar, registrar llenados, consultar el depósito y el déficit, ver qué recortar, declarar que se quedó sin agua y consultar los avisos del depósito, todo sin conexión.
+Al cierre de esta versión se cuenta con una aplicación funcional que permite configurar el hogar, registrar llenados, consultar el depósito y el déficit, ver qué recortar, declarar que se quedó sin agua y consultar los avisos del depósito, todo sin conexión; además, muestra el mapa de cisternas y toma el nivel real del tanque desde el sensor IoT cuando hay internet.
 
 ## 6. Cronograma
 
@@ -209,15 +232,16 @@ Cronograma del Proyecto AguardApp (agosto – diciembre 2026). Comienzo: mar 25/
 | 4 | **2. Diseño** | **20 días** | **lun 14/09/26** | **vie 09/10/26** | | |
 | 5 | Documento SRS (FD03) | 10 días | lun 14/09/26 | vie 25/09/26 | 3 | Equipo Diseño |
 | 6 | Documento SAD (FD04) | 10 días | lun 28/09/26 | vie 09/10/26 | 5 | Equipo Diseño |
-| 7 | **3. Desarrollo** | **35 días** | **mar 15/09/26** | **lun 02/11/26** | | |
+| 7 | **3. Desarrollo** | **42 días** | **mar 15/09/26** | **mié 11/11/26** | | |
 | 8 | Dominio y datos del Depósito | 21 días | mar 15/09/26 | mar 13/10/26 | | Equipo Desarrollo |
 | 9 | Pantallas y navegación | 21 días | mar 15/09/26 | mar 13/10/26 | | Equipo Desarrollo |
 | 10 | Migración a Android nativo y simplificación | 21 días | mar 22/09/26 | mar 20/10/26 | | Equipo Desarrollo |
 | 11 | Integración con la base local (Room) | 14 días | mié 14/10/26 | lun 02/11/26 | 8 | Equipo Desarrollo |
-| 12 | **4. Cierre** | **24 días** | **mar 03/11/26** | **jue 26/11/26** | | |
-| 13 | Pruebas y piloto | 10 días | mar 03/11/26 | lun 16/11/26 | 11 | Equipo QA |
-| 14 | Informe Final (FD05) | 7 días | mar 17/11/26 | mié 25/11/26 | 13 | Equipo Dirección |
-| 15 | Puesta en producción | 0 días | jue 26/11/26 | jue 26/11/26 | 14 | Equipo TI |
+| 12 | Mapa de cisternas y sensor IoT | 7 días | mar 03/11/26 | mié 11/11/26 | 11 | Equipo Desarrollo |
+| 13 | **4. Cierre** | **24 días** | **mar 03/11/26** | **jue 26/11/26** | | |
+| 14 | Pruebas y piloto | 10 días | mar 03/11/26 | lun 16/11/26 | 11 | Equipo QA |
+| 15 | Informe Final (FD05) | 7 días | mar 17/11/26 | mié 25/11/26 | 14 | Equipo Dirección |
+| 16 | Puesta en producción | 0 días | jue 26/11/26 | jue 26/11/26 | 15 | Equipo TI |
 
 ```mermaid
 gantt
@@ -239,6 +263,7 @@ gantt
     Pantallas y navegación           :t9, 2026-09-15, 21d
     Migración a Android nativo       :t10, 2026-09-22, 21d
     Integración con Room             :t11, 2026-10-14, 14d
+    Mapa de cisternas y sensor IoT   :t12, 2026-11-03, 7d
 
     section 4. Cierre
     Pruebas y piloto                 :t13, 2026-11-03, 10d
@@ -248,7 +273,7 @@ gantt
 
 ## 7. Presupuesto
 
-El presupuesto del proyecto, detallado en el Informe de Factibilidad, se resume a continuación. El costo principal corresponde al recurso humano, dado que las herramientas empleadas son gratuitas y la aplicación no usa servicios en la nube.
+El presupuesto del proyecto, detallado en el Informe de Factibilidad, se resume a continuación. El costo principal corresponde al recurso humano, dado que las herramientas empleadas son gratuitas y los servicios en la nube (Google Maps y ThingSpeak) se usan dentro de su cuota gratuita.
 
 | Categoría | Total (S/) |
 |---|---:|
@@ -271,9 +296,10 @@ pie showData
 
 - AguardApp responde a una necesidad real de la ciudad de Tacna: saber cuánta agua le queda al hogar y hasta cuándo le alcanza durante el racionamiento.
 - El proyecto es viable y factible en las dimensiones técnica, económica, operativa, social, legal y ambiental, con indicadores financieros que respaldan la inversión (VAN positivo, TIR del 22.2 % y B/C de 1.14).
-- Concentrar el producto en el módulo Depósito, con una aplicación Android nativa y datos locales, simplificó la arquitectura y eliminó la dependencia de servidores, cuentas y permisos.
-- La arquitectura MVVM + DDD, documentada en los entregables FD03 y FD04, separa el dominio de Android y deja cada pantalla con un Screen y un ViewModel, lo que facilita el mantenimiento.
-- La privacidad por diseño —ningún dato sale del teléfono— alinea la solución con la Ley N.° 29733.
+- Concentrar el producto en el módulo Depósito, con una aplicación Android nativa y datos locales, simplificó la arquitectura y eliminó la dependencia de servidores propios y cuentas.
+- La arquitectura MVVM + DDD, documentada en los entregables FD03 y FD04, separa el dominio de Android y deja cada pantalla con un Screen y un ViewModel, lo que facilitó sumar el mapa de cisternas y el sensor IoT como paquetes nuevos sin cambiar el dominio del depósito.
+- El prototipo IoT (ESP32 + sensor ultrasónico + ThingSpeak) demuestra que el nivel del tanque puede medirse en lugar de solo estimarse, y que la aplicación lo integra con una simple lectura de una API REST.
+- La privacidad por diseño —ningún dato del hogar sale del teléfono— alinea la solución con la Ley N.° 29733.
 
 ## Recomendaciones
 
@@ -281,6 +307,7 @@ pie showData
 - Agregar pruebas unitarias para la capa de dominio (estimación del consumo, déficit y recortes), que es Kotlin puro.
 - Evaluar en próximas versiones la reincorporación de funciones fuera del alcance actual (notificaciones push a partir de los avisos actuales, sector y cronograma oficial, sincronización opcional), sin perder el funcionamiento sin conexión.
 - Mantener las pruebas en dispositivos físicos de gama básica.
+- Reemplazar los puntos de cisterna de prueba por los oficiales de EPS Tacna y probar el sensor con un ESP32 y un sensor ultrasónico reales instalados en un tanque.
 
 ## Bibliografía
 
