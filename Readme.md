@@ -78,6 +78,7 @@ flowchart TD
 | 📉 **Aprender el consumo** | Ajusta la proyección cuando el agua se acaba antes de lo previsto |
 | ✂️ **Qué recortar** | Sugerencias de ahorro cuando el agua no alcanza hasta el próximo llenado |
 | 🗺️ **Mapa de cisternas** | Puntos de reparto de agua en Tacna sobre Google Maps, con su horario y estado |
+| 📶 **Sensor IoT del tanque** | Lee el nivel real del tanque (ESP32 + sensor ultrasónico, simulado en Wokwi) desde ThingSpeak y lo aplica como nivel actual |
 | 🔔 **Avisos** | Alerta dentro de la app si el agua no alcanza, si queda menos del 20 % o si falta registrar un llenado |
 | 📡 **100 % local** | Los datos del hogar se guardan solo en el teléfono (SQLite) y no se copian a la nube; el mapa necesita internet para cargar |
 
@@ -115,6 +116,7 @@ Según el Informe de Factibilidad **(FD01, Versión 1.0)**, el proyecto es viabl
 | **UI** | ![Jetpack Compose](https://img.shields.io/badge/Jetpack_Compose-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white) ![Material 3](https://img.shields.io/badge/Material_3-757575?style=flat-square&logo=materialdesign&logoColor=white) |
 | **Base de datos** | ![Room](https://img.shields.io/badge/Room_(SQLite)-003B57?style=flat-square&logo=sqlite&logoColor=white) |
 | **Mapas** | ![Google Maps](https://img.shields.io/badge/Google_Maps_Compose-4285F4?style=flat-square&logo=googlemaps&logoColor=white) |
+| **Red** | ![Retrofit](https://img.shields.io/badge/Retrofit-48B983?style=flat-square&logo=square&logoColor=white) ![ThingSpeak](https://img.shields.io/badge/ThingSpeak-1D6FA5?style=flat-square) |
 | **DI** | ![Koin](https://img.shields.io/badge/Koin-F5A623?style=flat-square) |
 | **Fechas** | ![kotlinx.datetime](https://img.shields.io/badge/kotlinx.datetime-7F52FF?style=flat-square) |
 | **Arquitectura** | ![MVVM](https://img.shields.io/badge/MVVM-purple?style=flat-square) ![DDD](https://img.shields.io/badge/DDD-darkblue?style=flat-square) ![Clean Architecture](https://img.shields.io/badge/Clean_Architecture-teal?style=flat-square) |
@@ -151,7 +153,8 @@ AguardApp/
 │           └── 📁 feature/
 │               ├── 📁 bienvenida/         Pantalla de entrada (solo el primer uso)
 │               ├── 📁 deposito/           Depósito de agua del hogar (MVVM + DDD)
-│               └── 📁 mapa/               Mapa de puntos de cisterna (Google Maps)
+│               ├── 📁 mapa/               Mapa de puntos de cisterna (Google Maps)
+│               └── 📁 sensor/             Nivel del tanque desde el sensor IoT (Retrofit + ThingSpeak)
 │
 └── 📁 informes/                           📋 Documentación académica
     ├── 📄 FD01-Factibilidad.md
@@ -285,6 +288,8 @@ git clone https://github.com/tu-usuario/AguardApp.git
 
 # 3. Poner la API key de Google Maps en local.properties
 #    MAPS_API_KEY=tu_api_key
+#    THINGSPEAK_CHANNEL_ID=id_del_canal
+#    THINGSPEAK_READ_KEY=read_api_key_del_canal
 
 # 4. Sincronizar Gradle y ejecutar
 ./gradlew :app:assembleDebug
@@ -322,6 +327,8 @@ git clone https://github.com/tu-usuario/AguardApp.git
 ## 📝 Changelog
 
 ### 2026-11-11
+- [Agregado] Feature `sensor`: tarjeta "Sensor del tanque" en Mi depósito que consulta cada 20 s el canal de ThingSpeak (Retrofit, inyectado con Koin en `moduloRed`). Una lectura más reciente que el último nivel registrado se aplica sola; una edición manual posterior se respeta hasta la siguiente lectura. El botón "Usar esta medición como nivel actual" la vuelve a aplicar.
+- [Corregido] Consumo absurdo (p. ej. 144000 L/h): un "me quedé sin agua" registrado menos de 1 h después del llenado ya no se usa para calcular el consumo.
 - [Cambiado] Inyección de dependencias completa: los ViewModels se registran en Koin (`moduloViewModels` en `AppModule.kt`) y cada pantalla los obtiene con `koinViewModel()`. Se eliminaron los `desdeInyeccion()` y se cambió `koin-core` por `koin-androidx-compose`.
 - [Agregado] Feature `mapa`: pantalla "Puntos de cisterna" con Google Maps (`maps-compose`), marcadores por estado y "mi ubicación" si se concede el permiso.
 - [Agregado] Barra inferior con dos pestañas: Mi depósito y Mapa (`core/navigation/BarraInferior.kt`).

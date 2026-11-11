@@ -16,6 +16,9 @@ internal object ParametrosConsumo {
 
     const val HORAS_MINIMAS_ENTRE_LLENADOS = 6.0
 
+    // Un "me quedé sin agua" pocos minutos después de llenar no es consumo real (es un error al registrar).
+    const val HORAS_MINIMAS_OBSERVADO = 1.0
+
     const val MINIMO_INFERIDOS = 2
 
     const val LITROS_BASE_POR_PERSONA = 60.0
@@ -74,8 +77,10 @@ class EstimarConsumo {
     private fun alcanzanParaEstimar(validos: List<IntervaloConsumo>): Boolean =
         validos.any { it.clase == ClaseIntervalo.OBSERVADO } || validos.size >= ParametrosConsumo.MINIMO_INFERIDOS
 
-    private fun esRelleno(intervalo: IntervaloConsumo): Boolean =
-        intervalo.clase == ClaseIntervalo.POR_LLENADO && intervalo.horas < ParametrosConsumo.HORAS_MINIMAS_ENTRE_LLENADOS
+    private fun esRelleno(intervalo: IntervaloConsumo): Boolean = when (intervalo.clase) {
+        ClaseIntervalo.POR_LLENADO -> intervalo.horas < ParametrosConsumo.HORAS_MINIMAS_ENTRE_LLENADOS
+        ClaseIntervalo.OBSERVADO -> intervalo.horas < ParametrosConsumo.HORAS_MINIMAS_OBSERVADO
+    }
 
     private fun descartarOlvidos(intervalos: List<IntervaloConsumo>): List<IntervaloConsumo> {
         if (intervalos.isEmpty()) return intervalos

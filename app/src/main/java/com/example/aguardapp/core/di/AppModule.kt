@@ -6,6 +6,9 @@ import kotlinx.coroutines.runBlocking
 import org.koin.core.context.startKoin
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import com.example.aguardapp.BuildConfig
 import org.koin.mp.KoinPlatform
 import com.example.aguardapp.core.data.UsuarioEntity
 import com.example.aguardapp.core.db.AguardAppDatabase
@@ -26,6 +29,10 @@ import com.example.aguardapp.feature.deposito.presentation.TipoLlenado
 import com.example.aguardapp.feature.mapa.data.MapaRepositoryImpl
 import com.example.aguardapp.feature.mapa.domain.repository.MapaRepository
 import com.example.aguardapp.feature.mapa.presentation.MapaViewModel
+import com.example.aguardapp.feature.sensor.data.SensorRepositoryImpl
+import com.example.aguardapp.feature.sensor.data.remote.ThingSpeakApi
+import com.example.aguardapp.feature.sensor.domain.repository.SensorRepository
+import com.example.aguardapp.feature.sensor.presentation.SensorViewModel
 
 /** Se llama una sola vez desde la clase `Application`, antes de mostrar ninguna pantalla. */
 fun iniciarAplicacion(context: Context) {
@@ -33,7 +40,7 @@ fun iniciarAplicacion(context: Context) {
     val base = AguardAppDatabase.crear(context)
     // El usuario debe existir antes de la primera pantalla; es una lectura local y rápida.
     val usuarioId = runBlocking(Dispatchers.IO) { obtenerOCrearUsuario(base) }
-    startKoin { modules(moduloApp(base, usuarioId), moduloViewModels) }
+    startKoin { modules(moduloApp(base, usuarioId), moduloRed, moduloViewModels) }
 }
 
 // Lee el usuario local o lo crea la primera vez, con un UUID que ya no cambia.
@@ -56,6 +63,20 @@ private fun moduloApp(base: AguardAppDatabase, usuarioId: String) = module {
     single<MapaRepository> { MapaRepositoryImpl() }
 }
 
+/** Cliente HTTP (Retrofit) para leer el sensor IoT del tanque publicado en ThingSpeak. */
+private val moduloRed = module {
+    single {
+        Retrofit.Builder()
+            .baseUrl("https://api.thingspeak.com/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+    single<ThingSpeakApi> { get<Retrofit>().create(ThingSpeakApi::class.java) }
+    single<SensorRepository> {
+        SensorRepositoryImpl(get(), BuildConfig.THINGSPEAK_CHANNEL_ID, BuildConfig.THINGSPEAK_READ_KEY)
+    }
+}
+
 /** ViewModels de cada pantalla: Koin los crea y les entrega sus dependencias. */
 private val moduloViewModels = module {
     viewModel { InicioViewModel(get(), get()) }
@@ -68,4 +89,5 @@ private val moduloViewModels = module {
     // El tipo de llenado (completo o parcial) llega desde la pantalla con parametersOf(tipo).
     viewModel { (tipo: TipoLlenado) -> RegistrarLlenadoViewModel(get(), get<Reloj>()::ahora, tipo) }
     viewModel { MapaViewModel(get()) }
+    viewModel { SensorViewModel(get(), get(), get<Reloj>()::ahora) }
 }

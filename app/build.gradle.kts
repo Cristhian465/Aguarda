@@ -25,6 +25,10 @@ android {
             rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use(::load)
         }
         manifestPlaceholders["MAPS_API_KEY"] = propiedadesLocales.getProperty("MAPS_API_KEY", "")
+
+        // Canal de ThingSpeak donde el sensor del tanque (ESP32) publica el nivel.
+        buildConfigField("String", "THINGSPEAK_CHANNEL_ID", "\"${propiedadesLocales.getProperty("THINGSPEAK_CHANNEL_ID", "")}\"")
+        buildConfigField("String", "THINGSPEAK_READ_KEY", "\"${propiedadesLocales.getProperty("THINGSPEAK_READ_KEY", "")}\"")
     }
 
     buildTypes {
@@ -40,6 +44,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     packaging {
         resources {
@@ -76,6 +81,10 @@ dependencies {
 
     // Mapas
     implementation(libs.maps.compose)
+
+    // Red
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
 
     // Inyección de dependencias
     implementation(libs.koin.androidx.compose)
