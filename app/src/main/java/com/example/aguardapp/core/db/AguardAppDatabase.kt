@@ -12,6 +12,8 @@ import com.example.aguardapp.feature.deposito.data.local.EventoLlenadoEntity
 import com.example.aguardapp.feature.deposito.data.local.NovedadDepositoEntity
 import com.example.aguardapp.feature.deposito.data.local.PerfilHogarEntity
 import com.example.aguardapp.feature.deposito.data.local.PlanRecortesEntity
+import com.example.aguardapp.feature.represas.data.Presa
+import com.example.aguardapp.feature.represas.data.PresaDao
 
 private const val NOMBRE_BASE_DE_DATOS = "aguardapp.db"
 
@@ -26,15 +28,17 @@ private const val NOMBRE_BASE_DE_DATOS = "aguardapp.db"
         PerfilHogarEntity::class,
         EventoLlenadoEntity::class,
         NovedadDepositoEntity::class,
-        PlanRecortesEntity::class
+        PlanRecortesEntity::class,
+        Presa::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 2, to = 3)]
+    autoMigrations = [AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4)]
 )
 abstract class AguardAppDatabase : RoomDatabase() {
     abstract fun usuarioDao(): UsuarioDao
     abstract fun depositoDao(): DepositoDao
+    abstract fun presaDao(): PresaDao
 
     companion object {
         fun crear(context: Context): AguardAppDatabase =

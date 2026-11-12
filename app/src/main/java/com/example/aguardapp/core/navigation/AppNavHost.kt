@@ -23,6 +23,7 @@ import com.example.aguardapp.feature.deposito.presentation.RegistrarLlenadoScree
 import com.example.aguardapp.feature.deposito.presentation.SinAguaScreen
 import com.example.aguardapp.feature.deposito.presentation.TipoLlenado
 import com.example.aguardapp.feature.mapa.presentation.MapaScreen
+import com.example.aguardapp.feature.represas.presentation.RepresasScreen
 
 /** Declara todas las pantallas de la app y cómo se pasa de una a otra. */
 @Composable
@@ -60,6 +61,12 @@ fun AppNavHost(rutaInicial: String, hayConfiguracion: Boolean) {
         composable(Rutas.MAPA) {
             ConBarraInferior(Pestana.MAPA, navController) {
                 MapaScreen()
+            }
+        }
+
+        composable(Rutas.REPRESAS) {
+            ConBarraInferior(Pestana.REPRESAS, navController) {
+                RepresasScreen()
             }
         }
 
@@ -125,11 +132,14 @@ private fun ConBarraInferior(actual: Pestana, navController: NavHostController, 
     }
 }
 
-// Mi depósito queda siempre en la base: el Mapa se apila encima y "atrás" vuelve a Mi depósito.
+// Mi depósito queda siempre en la base: las otras pestañas se apilan encima y "atrás" vuelve a Mi depósito.
 private fun irAPestana(navController: NavHostController, pestana: Pestana) {
     when (pestana) {
         Pestana.DEPOSITO -> navController.popBackStack(Rutas.MI_DEPOSITO, inclusive = false)
-        Pestana.MAPA -> navController.navigate(Rutas.MAPA) { launchSingleTop = true }
+        else -> navController.navigate(pestana.ruta) {
+            popUpTo(Rutas.MI_DEPOSITO)
+            launchSingleTop = true
+        }
     }
 }
 

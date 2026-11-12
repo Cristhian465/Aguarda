@@ -9,6 +9,7 @@ object Rutas {
     const val AVISOS = "avisos"
     const val QUE_RECORTAR = "que_recortar"
     const val MAPA = "mapa"
+    const val REPRESAS = "represas"
 
     // Rutas con argumentos.
     const val ARG_TIPO = "tipo"
