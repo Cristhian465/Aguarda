@@ -77,6 +77,7 @@ flowchart TD
 | 💧 **Registrar llenados** | Un toque cuando llega el agua (completo o a la mitad) |
 | 📉 **Aprender el consumo** | Ajusta la proyección cuando el agua se acaba antes de lo previsto |
 | ✂️ **Qué recortar** | Sugerencias de ahorro cuando el agua no alcanza hasta el próximo llenado |
+| 🏅 **Ahorro** | Marca los retos de hoy y consulta tu racha, calendario e insignias. El progreso se guarda en el teléfono. |
 | 🗺️ **Mapa de cisternas** | Puntos de reparto de agua en Tacna sobre Google Maps, con su horario y estado, la lista de los más cercanos a tu ubicación y el aviso "Antes de que se acabe", que te dice a qué cisterna ir antes de quedarte sin agua |
 | 📶 **Sensor IoT del tanque** | Lee el nivel real del tanque (ESP32 + sensor ultrasónico, simulado en Wokwi) desde ThingSpeak y lo aplica como nivel actual |
 | 🔔 **Avisos** | Alerta dentro de la app si el agua no alcanza, si queda menos del 20 % o si falta registrar un llenado |
@@ -154,7 +155,8 @@ AguardApp/
 │               ├── 📁 bienvenida/         Pantalla de entrada (solo el primer uso)
 │               ├── 📁 deposito/           Depósito de agua del hogar (MVVM + DDD)
 │               ├── 📁 mapa/               Mapa de puntos de cisterna (Google Maps)
-│               └── 📁 sensor/             Nivel del tanque desde el sensor IoT (Retrofit + ThingSpeak)
+│               ├── 📁 sensor/             Nivel del tanque desde el sensor IoT (Retrofit + ThingSpeak)
+│               └── 📁 ahorro/             Retos, racha, calendario e insignias (SharedPreferences)
 │
 ├── 📄 claves.properties                 Claves compartidas (Maps y ThingSpeak)
 ├── 📁 iot/wokwi/                          Simulación del sensor: ESP32 + HC-SR04 (diagram.json, sketch.ino)
@@ -207,6 +209,7 @@ C4Container
         Container(domain, "Domain Layer", "Kotlin puro", "Models, UseCases y Repositories (interfaces)")
         Container(data, "Data Layer", "Room", "Implementación de repositorios, DAOs y Entities")
         ContainerDb(roomdb, "Room Database", "SQLite", "Fuente de verdad local: perfil del hogar, llenados, novedades y plan de recortes (versión 3)")
+        ContainerDb(ahorro, "Progreso de ahorro", "SharedPreferences", "Retos cumplidos por fecha")
     }
 
 
@@ -214,6 +217,7 @@ C4Container
     Rel(ui, domain, "Usa UseCases")
     Rel(data, domain, "Implementa interfaces")
     Rel(data, roomdb, "Lee/Escribe")
+    Rel(ui, ahorro, "Consulta y guarda a través de AhorroLocal")
 ```
 
 ## 🏗️ Diagrama C4 — Nivel de Componentes (Feature Depósito)
@@ -309,6 +313,7 @@ git clone https://github.com/tu-usuario/AguardApp.git
 | RF-04 | Consultar el depósito (nivel y hasta cuándo alcanza) | 🔴 Alta |
 | RF-05 | Calcular el déficit hasta el próximo llenado | 🔴 Alta |
 | RF-08 | Operar sin conexión | 🔴 Alta |
+| RF-12 | Registrar y consultar el progreso de ahorro | Media |
 
 > 📄 Ver documentación completa en [`informes/FD03-SRS.md`](./informes/FD03-SRS.md)
 
@@ -329,6 +334,7 @@ git clone https://github.com/tu-usuario/AguardApp.git
 ## 📝 Changelog
 
 ### 2026-11-12
+- [Agregado] Pestaña Ahorro con retos de la semana, racha, calendario e insignias. Los retos se registran por día y funcionan sin internet.
 - [Agregado] Mapa en pantalla completa: al tocar el mapa se ocultan el título y la lista; "Volver a la lista" o el botón atrás lo devuelven a su tamaño. El permiso de ubicación y el botón pasan a `ControlesMapa.kt`.
 - [Agregado] Mapa, aviso "Antes de que se acabe": cruza la hora en que se acaba el agua del tanque (`Deposito.agotamientoProyectado()`) con el próximo llenado y con las cisternas. Si el agua no alcanza, una tarjeta coral dice cuándo se acaba y a qué cisterna ir ("Ve a Viñani (a 3.8 km): reparte hasta la 1:00 p.m."); si alcanza, una tarjeta celeste sugiere la más conveniente por si se necesita más. La cisterna sugerida se marca "Te conviene" en la lista. Nuevo caso de uso `ElegirCisternaConveniente` (la más cercana que no terminó y no pasó su hora de fin) y 13 pruebas unitarias nuevas (27 en total en `feature/mapa`). `MapaViewModel` ahora recibe `DepositoRepository` y el reloj (Koin).
 - [Cambiado] Mapa: el aviso queda fijo sobre la lista y la lista se desplaza en un panel más bajo, para que el mapa conserve su espacio.

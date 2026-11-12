@@ -50,7 +50,7 @@ flowchart TB
 
 ## 1.2. Alcance
 
-El documento describe la arquitectura de la versión actual de AguardApp: una aplicación Android nativa de un solo módulo (`app`) con cuatro funcionalidades (`bienvenida`, `deposito`, `mapa` y `sensor`), persistencia local con Room y dos servicios externos de solo lectura: Google Maps, para el mapa de cisternas, y ThingSpeak, donde el sensor IoT del tanque publica sus mediciones. Cubre la organización en capas y paquetes, la interacción entre objetos, el modelo de datos, los componentes, los procesos y el despliegue. Sirve de guía para el desarrollo y el mantenimiento del sistema.
+El documento describe la arquitectura de AguardApp, una aplicación Android nativa de un solo módulo (`app`). Depósito usa Room y Ahorro guarda sus retos por fecha con SharedPreferences. Google Maps permite mostrar los puntos de cisterna y ThingSpeak entrega las mediciones del sensor del tanque. El documento cubre la organización en capas y paquetes, la interacción entre objetos, el modelo de datos, los componentes, los procesos y el despliegue.
 
 ## 1.3. Definiciones, siglas y abreviaturas
 
@@ -95,6 +95,7 @@ El documento se organiza en cuatro secciones: introducción; objetivos y restric
 | RF-09 | Consultar los avisos del depósito (déficit, nivel bajo, sin llenado) | Media |
 | RF-10 | Consultar el mapa de cisternas | Media |
 | RF-11 | Consultar el nivel del sensor del tanque | Media |
+| RF-12 | Registrar retos y consultar el progreso de ahorro | Media |
 
 ### 2.1.2. Requerimientos no funcionales — atributos de calidad
 
@@ -112,7 +113,7 @@ El documento se organiza en cuatro secciones: introducción; objetivos y restric
 - El dominio (`domain/`) no puede depender de Android, Room ni Koin: es Kotlin puro.
 - Solo se usan tecnologías gratuitas; no hay backend propio. Los únicos servicios externos son Google Maps y ThingSpeak, usados dentro de su cuota gratuita y solo para leer datos.
 - Las claves de los servicios externos (`MAPS_API_KEY`, `THINGSPEAK_CHANNEL_ID` y `THINGSPEAK_READ_KEY`) se leen de `local.properties` y no se suben al repositorio.
-- La persistencia se realiza con Room; el esquema se exporta en `app/schemas/`.
+- El esquema de Room se exporta en `app/schemas/`. El historial de Ahorro se guarda en las preferencias privadas del teléfono.
 - Las pantallas no contienen lógica de negocio: solo pintan el `UiState` y llaman funciones del ViewModel.
 
 ---
@@ -170,6 +171,7 @@ flowchart TB
       UTIL[util: Reloj, UUID]
     end
     BIEN[feature/bienvenida: presentation]
+    AHORRO[feature/ahorro: Compose, ViewModel y SharedPreferences]
     subgraph DEP[feature/deposito]
       PRES[presentation]
       DOM[domain]
@@ -189,6 +191,7 @@ flowchart TB
     MAIN --> NAV
     MAIN --> DI
     NAV --> BIEN
+    NAV --> AHORRO
     NAV --> PRES
     NAV --> DOM
     NAV --> MPRES

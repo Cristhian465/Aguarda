@@ -90,7 +90,7 @@ El sistema comprende la configuración del hogar (tipo y capacidad del depósito
 
 La aplicación es nativa para Android y se desarrolla con Kotlin, Jetpack Compose, Room, Koin, Navigation Compose, Google Maps Compose y Retrofit. Todos los datos del hogar se guardan en una base de datos SQLite local y no se necesitan cuentas de usuario; solo el mapa y el sensor requieren conexión a internet.
 
-Quedan fuera del alcance de esta versión: la consulta del sector y del cronograma oficial, la confirmación colaborativa de horarios, la digitalización de recibos, los retos y reportes ciudadanos, el asistente hídrico, la sincronización en la nube, el inicio de sesión con Google, las notificaciones push (los avisos solo se muestran dentro de la aplicación) y la versión para iOS.
+Quedan fuera del alcance de esta versión: la consulta del sector y del cronograma oficial, la confirmación colaborativa de horarios, la digitalización de recibos, los reportes ciudadanos, la clasificación por sector, el asistente hídrico, la sincronización en la nube, el inicio de sesión con Google, las notificaciones push (los avisos solo se muestran dentro de la aplicación) y la versión para iOS.
 
 ### 2.5. Viabilidad del Sistema
 
@@ -171,6 +171,7 @@ flowchart TD
 | RF-09 | Consultar avisos | Mostrar dentro de la aplicación las alertas del depósito y llevar al usuario a la pantalla que las resuelve. | Media |
 | RF-10 | Consultar el mapa de cisternas | Mostrar en un mapa los puntos de reparto de agua en cisterna de Tacna, con su horario y estado. | Media |
 | RF-11 | Consultar el nivel del sensor | Leer el nivel real del tanque medido por un sensor IoT y usarlo como nivel actual del depósito. | Media |
+| RF-12 | Registrar y consultar el progreso de ahorro | Marcar y desmarcar los retos del día, consultar la racha y el calendario, y ver las insignias. El historial se guarda en el teléfono. | Media |
 
 ### b) Cuadro de Requerimientos No funcionales
 
@@ -201,6 +202,7 @@ Tras el análisis se mantuvieron los requerimientos iniciales, se precisaron sus
 | RF-09 | Consultar avisos | Se abre desde "Ver avisos" en Mi depósito. Los avisos se generan según RN-11, cada tipo con su color; al tocar uno se navega a Qué recortar, a Registrar llenado completo o de vuelta a Mi depósito. Sin avisos se indica que el depósito alcanza hasta el próximo llenado. | Media |
 | RF-10 | Consultar el mapa de cisternas | Se abre desde la pestaña "Mapa" de la barra inferior. Muestra sobre Google Maps los puntos de reparto de Tacna con un marcador por punto, coloreado según su estado (azul: activo, naranja: en ruta, rojo: terminado); al tocarlo se ve el nombre, el horario y el estado. Al abrir el mapa se pide el permiso de ubicación: si se concede, se muestra la ubicación del usuario y el botón para centrarla; si se niega, el mapa funciona igual. Mientras no haya puntos oficiales, se usan puntos de prueba. | Media |
 | RF-11 | Consultar el nivel del sensor | La tarjeta "Sensor del tanque" aparece en Mi depósito solo si está configurado el canal de ThingSpeak. Mientras la pantalla está visible, consulta el último dato cada 20 s y muestra el porcentaje, los litros (porcentaje × capacidad) y la antigüedad de la lectura ("hace 30 s"). Una lectura más reciente que el último nivel registrado se aplica sola como nivel actual del depósito (RN-12); el botón "Usar esta medición como nivel actual" la vuelve a aplicar. Si no hay conexión o el canal no tiene datos, la tarjeta muestra el motivo ("Sin conexión con el sensor" o "El sensor aún no envió datos"). | Media |
+| RF-12 | Registrar y consultar el progreso de ahorro | La pestaña Ahorro permite marcar y desmarcar los retos del día. Un día cuenta para la racha y el calendario si tiene al menos un reto marcado. Las insignias se calculan con el historial local. | Media |
 
 ### d) Reglas de Negocio
 
