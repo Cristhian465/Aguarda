@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "author": "AguardApp",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    {
+      "type": "wokwi-hc-sr04",
+      "id": "sensorNivel",
+      "top": -150,
+      "left": -30,
+      "attrs": { "distance": "70" }
+    }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "sensorNivel:VCC", "esp:5V", "red", [ "v20", "h-60", "v260" ] ],
+    [ "sensorNivel:GND", "esp:GND.1", "black", [ "v30", "h-80", "v180" ] ],
+    [ "sensorNivel:TRIG", "esp:5", "green", [ "v40", "h90", "v100" ] ],
+    [ "sensorNivel:ECHO", "esp:18", "blue", [ "v50", "h70", "v70" ] ]
+  ],
+  "dependencies": {}
+}

@@ -156,6 +156,9 @@ AguardApp/
 │               ├── 📁 mapa/               Mapa de puntos de cisterna (Google Maps)
 │               └── 📁 sensor/             Nivel del tanque desde el sensor IoT (Retrofit + ThingSpeak)
 │
+├── 📄 claves.properties                 Claves compartidas (Maps y ThingSpeak)
+├── 📁 iot/wokwi/                          Simulación del sensor: ESP32 + HC-SR04 (diagram.json, sketch.ino)
+│
 └── 📁 informes/                           📋 Documentación académica
     ├── 📄 FD01-Factibilidad.md
     ├── 📄 FD02-Vision.md
@@ -286,10 +289,9 @@ git clone https://github.com/tu-usuario/AguardApp.git
 
 # 2. Abrir en Android Studio
 
-# 3. Poner la API key de Google Maps en local.properties
-#    MAPS_API_KEY=tu_api_key
-#    THINGSPEAK_CHANNEL_ID=id_del_canal
-#    THINGSPEAK_READ_KEY=read_api_key_del_canal
+# 3. Claves: se leen de claves.properties (compartido en el repo privado).
+#    Si alguien pone una clave propia en su local.properties, se usa esa.
+#    MAPS_API_KEY, THINGSPEAK_CHANNEL_ID, THINGSPEAK_READ_KEY
 
 # 4. Sincronizar Gradle y ejecutar
 ./gradlew :app:assembleDebug
@@ -327,6 +329,8 @@ git clone https://github.com/tu-usuario/AguardApp.git
 ## 📝 Changelog
 
 ### 2026-11-11
+- [Agregado] `iot/wokwi/`: código del ESP32 con sensor ultrasónico que publica el nivel del tanque en ThingSpeak.
+- [Agregado] `claves.properties`: claves compartidas del equipo; `local.properties` tiene prioridad si define una clave.
 - [Agregado] Feature `sensor`: tarjeta "Sensor del tanque" en Mi depósito que consulta cada 20 s el canal de ThingSpeak (Retrofit, inyectado con Koin en `moduloRed`). Una lectura más reciente que el último nivel registrado se aplica sola; una edición manual posterior se respeta hasta la siguiente lectura. El botón "Usar esta medición como nivel actual" la vuelve a aplicar.
 - [Corregido] Consumo absurdo (p. ej. 144000 L/h): un "me quedé sin agua" registrado menos de 1 h después del llenado ya no se usa para calcular el consumo.
 - [Cambiado] Inyección de dependencias completa: los ViewModels se registran en Koin (`moduloViewModels` en `AppModule.kt`) y cada pantalla los obtiene con `koinViewModel()`. Se eliminaron los `desdeInyeccion()` y se cambió `koin-core` por `koin-androidx-compose`.

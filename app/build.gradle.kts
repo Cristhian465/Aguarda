@@ -20,15 +20,20 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        // La API key de Google Maps se lee de local.properties (no se sube al repositorio).
-        val propiedadesLocales = Properties().apply {
-            rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use(::load)
+        // Claves: primero local.properties (propias de cada PC); si no están, claves.properties (compartido en el repo).
+        fun leer(archivo: String) = Properties().apply {
+            rootProject.file(archivo).takeIf { it.exists() }?.inputStream()?.use(::load)
         }
-        manifestPlaceholders["MAPS_API_KEY"] = propiedadesLocales.getProperty("MAPS_API_KEY", "")
+        val locales = leer("local.properties")
+        val compartidas = leer("claves.properties")
+        fun clave(nombre: String): String =
+            locales.getProperty(nombre)?.takeIf { it.isNotBlank() } ?: compartidas.getProperty(nombre, "")
+
+        manifestPlaceholders["MAPS_API_KEY"] = clave("MAPS_API_KEY")
 
         // Canal de ThingSpeak donde el sensor del tanque (ESP32) publica el nivel.
-        buildConfigField("String", "THINGSPEAK_CHANNEL_ID", "\"${propiedadesLocales.getProperty("THINGSPEAK_CHANNEL_ID", "")}\"")
-        buildConfigField("String", "THINGSPEAK_READ_KEY", "\"${propiedadesLocales.getProperty("THINGSPEAK_READ_KEY", "")}\"")
+        buildConfigField("String", "THINGSPEAK_CHANNEL_ID", "\"${clave("THINGSPEAK_CHANNEL_ID")}\"")
+        buildConfigField("String", "THINGSPEAK_READ_KEY", "\"${clave("THINGSPEAK_READ_KEY")}\"")
     }
 
     buildTypes {
