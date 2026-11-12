@@ -1,16 +1,18 @@
 package com.example.aguardapp.feature.mapa.presentation
 
-import android.Manifest
-import android.content.pm.PackageManager
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -19,12 +21,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
@@ -46,7 +47,6 @@ import com.example.aguardapp.feature.mapa.domain.model.PuntoCisterna
 
 private const val ZOOM_INICIAL = 12.5f
 private const val ZOOM_PUNTO = 15f
-private val PERMISOS_UBICACION = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
 
 @Composable
 fun MapaScreen(viewModel: MapaViewModel = koinViewModel()) {
@@ -54,8 +54,11 @@ fun MapaScreen(viewModel: MapaViewModel = koinViewModel()) {
     val permisoConcedido = rememberPermisoDeUbicacion()
     LaunchedEffect(permisoConcedido) { viewModel.onPermisoDeUbicacion(permisoConcedido) }
     IconosClarosEnBarraDeEstado(claros = false)
+    // Al tocar el mapa se agranda; "Volver a la lista" o el botón atrás lo devuelven a su tamaño.
+    var pantallaCompleta by rememberSaveable { mutableStateOf(false) }
+    BackHandler(enabled = pantallaCompleta) { pantallaCompleta = false }
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        BarraSuperior("Puntos de cisterna", subtituloDe(uiState.puntos.size), onVolver = null)
+        if (!pantallaCompleta) BarraSuperior("Puntos de cisterna", subtituloDe(uiState.puntos.size), onVolver = null)
         val centro = uiState.centro
         if (uiState.cargando || centro == null) {
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
@@ -68,10 +71,14 @@ fun MapaScreen(viewModel: MapaViewModel = koinViewModel()) {
             }
             val alcance = rememberCoroutineScope()
             Box(Modifier.weight(1f).fillMaxWidth()) {
-                MapaDeCisternas(camara, uiState.puntos, marcadores, permisoConcedido)
-                LeyendaDeEstados(Modifier.align(Alignment.TopStart).padding(12.dp))
+                MapaDeCisternas(camara, uiState.puntos, marcadores, permisoConcedido, pantallaCompleta) { pantallaCompleta = true }
+                val bajoLaBarraDeEstado = if (pantallaCompleta) Modifier.statusBarsPadding() else Modifier
+                LeyendaDeEstados(Modifier.align(Alignment.TopStart).then(bajoLaBarraDeEstado).padding(12.dp))
+                if (pantallaCompleta) {
+                    BotonVolverALaLista(Modifier.align(Alignment.BottomCenter).padding(bottom = 20.dp)) { pantallaCompleta = false }
+                }
             }
-            ListaCisternas(
+            if (!pantallaCompleta) ListaCisternas(
                 estado = uiState,
                 onSeleccionar = { punto ->
                     alcance.launch {
@@ -90,11 +97,16 @@ private fun MapaDeCisternas(
     camara: CameraPositionState,
     puntos: List<PuntoCisterna>,
     marcadores: Map<String, MarkerState>,
-    permisoConcedido: Boolean
+    permisoConcedido: Boolean,
+    pantallaCompleta: Boolean,
+    onTocarMapa: () -> Unit
 ) {
     GoogleMap(
         modifier = Modifier.fillMaxSize(),
         cameraPositionState = camara,
+        // En pantalla completa, los botones del mapa no quedan debajo de la barra de estado.
+        contentPadding = if (pantallaCompleta) WindowInsets.statusBars.asPaddingValues() else PaddingValues(),
+        onMapClick = { onTocarMapa() },
         properties = MapProperties(isMyLocationEnabled = permisoConcedido),
         uiSettings = MapUiSettings(myLocationButtonEnabled = permisoConcedido, mapToolbarEnabled = false)
     ) {
@@ -107,25 +119,6 @@ private fun MapaDeCisternas(
             )
         }
     }
-}
-
-@Composable
-private fun rememberPermisoDeUbicacion(): Boolean {
-    val context = LocalContext.current
-    var concedido by remember {
-        mutableStateOf(PERMISOS_UBICACION.any { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED })
-    }
-    val solicitar = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { resultado ->
-        concedido = resultado.values.any { it }
-    }
-    LaunchedEffect(Unit) { if (!concedido) solicitar.launch(PERMISOS_UBICACION) }
-    return concedido
-}
-
-private fun subtituloDe(cantidad: Int): String = when (cantidad) {
-    0 -> "Sin puntos de reparto por ahora"
-    1 -> "1 punto de reparto en Tacna"
-    else -> "$cantidad puntos de reparto en Tacna"
 }
 
 private fun Coordenada.aLatLng() = LatLng(latitud, longitud)

@@ -329,6 +329,7 @@ git clone https://github.com/tu-usuario/AguardApp.git
 ## 📝 Changelog
 
 ### 2026-11-12
+- [Agregado] Mapa en pantalla completa: al tocar el mapa se ocultan el título y la lista; "Volver a la lista" o el botón atrás lo devuelven a su tamaño. El permiso de ubicación y el botón pasan a `ControlesMapa.kt`.
 - [Agregado] Mapa, aviso "Antes de que se acabe": cruza la hora en que se acaba el agua del tanque (`Deposito.agotamientoProyectado()`) con el próximo llenado y con las cisternas. Si el agua no alcanza, una tarjeta coral dice cuándo se acaba y a qué cisterna ir ("Ve a Viñani (a 3.8 km): reparte hasta la 1:00 p.m."); si alcanza, una tarjeta celeste sugiere la más conveniente por si se necesita más. La cisterna sugerida se marca "Te conviene" en la lista. Nuevo caso de uso `ElegirCisternaConveniente` (la más cercana que no terminó y no pasó su hora de fin) y 13 pruebas unitarias nuevas (27 en total en `feature/mapa`). `MapaViewModel` ahora recibe `DepositoRepository` y el reloj (Koin).
 - [Cambiado] Mapa: el aviso queda fijo sobre la lista y la lista se desplaza en un panel más bajo, para que el mapa conserve su espacio.
 
