@@ -77,7 +77,7 @@ flowchart TD
 | 💧 **Registrar llenados** | Un toque cuando llega el agua (completo o a la mitad) |
 | 📉 **Aprender el consumo** | Ajusta la proyección cuando el agua se acaba antes de lo previsto |
 | ✂️ **Qué recortar** | Sugerencias de ahorro cuando el agua no alcanza hasta el próximo llenado |
-| 🗺️ **Mapa de cisternas** | Puntos de reparto de agua en Tacna sobre Google Maps, con su horario y estado, y la lista de los más cercanos a tu ubicación |
+| 🗺️ **Mapa de cisternas** | Puntos de reparto de agua en Tacna sobre Google Maps, con su horario y estado, la lista de los más cercanos a tu ubicación y el aviso "Antes de que se acabe", que te dice a qué cisterna ir antes de quedarte sin agua |
 | 📶 **Sensor IoT del tanque** | Lee el nivel real del tanque (ESP32 + sensor ultrasónico, simulado en Wokwi) desde ThingSpeak y lo aplica como nivel actual |
 | 🔔 **Avisos** | Alerta dentro de la app si el agua no alcanza, si queda menos del 20 % o si falta registrar un llenado |
 | 📡 **100 % local** | Los datos del hogar se guardan solo en el teléfono (SQLite) y no se copian a la nube; el mapa necesita internet para cargar |
@@ -327,6 +327,10 @@ git clone https://github.com/tu-usuario/AguardApp.git
 ---
 
 ## 📝 Changelog
+
+### 2026-11-12
+- [Agregado] Mapa, aviso "Antes de que se acabe": cruza la hora en que se acaba el agua del tanque (`Deposito.agotamientoProyectado()`) con el próximo llenado y con las cisternas. Si el agua no alcanza, una tarjeta coral dice cuándo se acaba y a qué cisterna ir ("Ve a Viñani (a 3.8 km): reparte hasta la 1:00 p.m."); si alcanza, una tarjeta celeste sugiere la más conveniente por si se necesita más. La cisterna sugerida se marca "Te conviene" en la lista. Nuevo caso de uso `ElegirCisternaConveniente` (la más cercana que no terminó y no pasó su hora de fin) y 13 pruebas unitarias nuevas (27 en total en `feature/mapa`). `MapaViewModel` ahora recibe `DepositoRepository` y el reloj (Koin).
+- [Cambiado] Mapa: el aviso queda fijo sobre la lista y la lista se desplaza en un panel más bajo, para que el mapa conserve su espacio.
 
 ### 2026-11-11
 - [Agregado] Feature `mapa`, cisternas cercanas en pantalla: al abrir el mapa con permiso de ubicación, se lee la ubicación una sola vez (`UbicacionRepository`, con `LocationManagerCompat`, sin guardar la coordenada) y bajo el mapa aparece la lista "Cisternas cercanas" con la distancia ("a 1.2 km"), el horario y el estado. Sin permiso, sin ubicación o sin puntos a menos de 10 km, se listan todos los puntos con un aviso. Al tocar una fila, el mapa se centra en ese punto y abre su ficha. Leyenda de colores (Activo, En ruta, Terminado) sobre el mapa. `UbicacionRepository` se registra en `moduloApp` (Koin).

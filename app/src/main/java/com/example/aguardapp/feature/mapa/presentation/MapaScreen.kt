@@ -79,7 +79,7 @@ fun MapaScreen(viewModel: MapaViewModel = koinViewModel()) {
                         marcadores[punto.id]?.showInfoWindow()
                     }
                 },
-                modifier = Modifier.heightIn(max = 300.dp)
+                modifier = Modifier.heightIn(max = 280.dp)
             )
         }
     }
