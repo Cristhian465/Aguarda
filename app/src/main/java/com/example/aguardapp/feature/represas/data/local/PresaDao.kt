@@ -1,4 +1,4 @@
-package com.example.aguardapp.feature.represas.data
+package com.example.aguardapp.feature.represas.data.local
 
 import androidx.room.Dao
 import androidx.room.Query
@@ -9,8 +9,8 @@ import kotlinx.coroutines.flow.Flow
 interface PresaDao {
     /** Las represas guardadas, de la más grande a la más chica. Se actualiza sola cuando cambia la tabla. */
     @Query("SELECT * FROM presa ORDER BY volumenHm3 DESC")
-    fun todas(): Flow<List<Presa>>
+    fun todas(): Flow<List<PresaEntity>>
 
     @Upsert
-    suspend fun guardar(presas: List<Presa>)
+    suspend fun guardar(presas: List<PresaEntity>)
 }

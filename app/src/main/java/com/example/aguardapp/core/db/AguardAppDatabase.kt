@@ -12,8 +12,8 @@ import com.example.aguardapp.feature.deposito.data.local.EventoLlenadoEntity
 import com.example.aguardapp.feature.deposito.data.local.NovedadDepositoEntity
 import com.example.aguardapp.feature.deposito.data.local.PerfilHogarEntity
 import com.example.aguardapp.feature.deposito.data.local.PlanRecortesEntity
-import com.example.aguardapp.feature.represas.data.Presa
-import com.example.aguardapp.feature.represas.data.PresaDao
+import com.example.aguardapp.feature.represas.data.local.PresaEntity
+import com.example.aguardapp.feature.represas.data.local.PresaDao
 
 private const val NOMBRE_BASE_DE_DATOS = "aguardapp.db"
 
@@ -29,7 +29,7 @@ private const val NOMBRE_BASE_DE_DATOS = "aguardapp.db"
         EventoLlenadoEntity::class,
         NovedadDepositoEntity::class,
         PlanRecortesEntity::class,
-        Presa::class
+        PresaEntity::class
     ],
     version = 4,
     exportSchema = true,

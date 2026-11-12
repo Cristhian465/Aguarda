@@ -1,4 +1,4 @@
-package com.example.aguardapp.feature.represas.data
+package com.example.aguardapp.feature.represas.data.remote
 
 import com.google.gson.annotations.SerializedName
 import retrofit2.http.GET
@@ -26,22 +26,3 @@ data class DatosAna(
     @SerializedName("VOL_UT_HM3") val volumen: String?, // texto: "12.5" o "No disponible"
     @SerializedName("USO_EMBALS") val uso: String?
 )
-
-/** Convierte lo que manda la ANA en una [Presa]. Si falta el nombre o la ubicación, se descarta. */
-fun PresaAna.aPresa(): Presa? {
-    val nombre = attributes.nombre?.trim() ?: return null
-    val punto = geometry ?: return null
-    val uso = attributes.uso.orEmpty().lowercase()
-    return Presa(
-        nombre = nombre.lowercase().split(" ").joinToString(" ") { it.replaceFirstChar(Char::titlecase) },
-        distrito = attributes.distrito?.trim().orEmpty(),
-        uso = when {
-            "sumin" in uso -> "Agua potable y riego"
-            "miner" in uso -> "Minería"
-            else -> "Riego"
-        },
-        volumenHm3 = attributes.volumen?.toDoubleOrNull(),
-        latitud = punto.y,
-        longitud = punto.x
-    )
-}

@@ -9,8 +9,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import com.example.aguardapp.feature.represas.data.Presa
-import com.example.aguardapp.feature.represas.data.RepresasRepository
+import com.example.aguardapp.feature.represas.domain.model.Presa
+import com.example.aguardapp.feature.represas.domain.repository.RepresasRepository
 
 class RepresasViewModel(private val repositorio: RepresasRepository) : ViewModel() {
 

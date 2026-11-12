@@ -40,7 +40,7 @@ import com.example.aguardapp.core.ui.theme.Tinta
 import com.example.aguardapp.core.ui.theme.TintaSuave
 import com.example.aguardapp.feature.deposito.presentation.componentes.BarraSuperior
 import com.example.aguardapp.feature.deposito.presentation.componentes.TarjetaBlanca
-import com.example.aguardapp.feature.represas.data.Presa
+import com.example.aguardapp.feature.represas.domain.model.Presa
 
 private val SIERRA_DE_TACNA = LatLng(-17.4, -70.1)
 
@@ -63,9 +63,10 @@ fun RepresasScreen(viewModel: RepresasViewModel = koinViewModel()) {
 }
 
 @Composable
-private fun ListaDeRepresas(presas: List<Presa>, sinConexion: Boolean) {
-    LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        item { MapaDeRepresas(presas) }
+private fun ListaDeRepresas(presas: List<Presa>, sinConexion: Boolean) = Column {
+    // El mapa va fuera de la lista para que se pueda arrastrar sin que la lista se lleve el gesto.
+    MapaDeRepresas(presas)
+    LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         if (sinConexion) item { Texto("Sin conexión: mostrando los datos guardados.") }
         items(presas, key = { it.nombre }) { presa ->
             TarjetaBlanca {
@@ -79,14 +80,15 @@ private fun ListaDeRepresas(presas: List<Presa>, sinConexion: Boolean) {
     }
 }
 
-/** Mapa fijo (no se arrastra, para no pelear con el desplazamiento de la lista); se acerca con + y −. */
+/** Mapa fijo arriba de la lista: se arrastra y se acerca con los dedos o con + y −. */
 @Composable
 private fun MapaDeRepresas(presas: List<Presa>) {
     val camara = rememberCameraPositionState { position = CameraPosition.fromLatLngZoom(SIERRA_DE_TACNA, 8.3f) }
     GoogleMap(
-        modifier = Modifier.fillMaxWidth().height(240.dp).clip(RoundedCornerShape(18.dp)),
+        modifier = Modifier.padding(start = 20.dp, top = 20.dp, end = 20.dp)
+            .fillMaxWidth().height(240.dp).clip(RoundedCornerShape(18.dp)),
         cameraPositionState = camara,
-        uiSettings = MapUiSettings(scrollGesturesEnabled = false, zoomGesturesEnabled = false, mapToolbarEnabled = false)
+        uiSettings = MapUiSettings(mapToolbarEnabled = false)
     ) {
         presas.forEach { presa ->
             Marker(
