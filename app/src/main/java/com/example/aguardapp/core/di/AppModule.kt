@@ -27,7 +27,9 @@ import com.example.aguardapp.feature.deposito.presentation.RegistrarLlenadoViewM
 import com.example.aguardapp.feature.deposito.presentation.SinAguaViewModel
 import com.example.aguardapp.feature.deposito.presentation.TipoLlenado
 import com.example.aguardapp.feature.mapa.data.MapaRepositoryImpl
+import com.example.aguardapp.feature.mapa.data.UbicacionRepositoryImpl
 import com.example.aguardapp.feature.mapa.domain.repository.MapaRepository
+import com.example.aguardapp.feature.mapa.domain.repository.UbicacionRepository
 import com.example.aguardapp.feature.mapa.presentation.MapaViewModel
 import com.example.aguardapp.feature.sensor.data.SensorRepositoryImpl
 import com.example.aguardapp.feature.sensor.data.local.SensorDatabase
@@ -41,7 +43,7 @@ fun iniciarAplicacion(context: Context) {
     val base = AguardAppDatabase.crear(context)
     // El usuario debe existir antes de la primera pantalla; es una lectura local y rápida.
     val usuarioId = runBlocking(Dispatchers.IO) { obtenerOCrearUsuario(base) }
-    startKoin { modules(moduloApp(base, usuarioId), moduloRed(context), moduloViewModels) }
+    startKoin { modules(moduloApp(context, base, usuarioId), moduloRed(context), moduloViewModels) }
 }
 
 // Lee el usuario local o lo crea la primera vez, con un UUID que ya no cambia.
@@ -54,14 +56,15 @@ private suspend fun obtenerOCrearUsuario(base: AguardAppDatabase): String {
     return nuevo.id
 }
 
-/** Todo lo que se inyecta en la app: la base de datos, el reloj y los repositorios del depósito y del mapa. */
-private fun moduloApp(base: AguardAppDatabase, usuarioId: String) = module {
+/** Todo lo que se inyecta en la app: la base de datos, el reloj, los repositorios del depósito y del mapa, y la ubicación. */
+private fun moduloApp(context: Context, base: AguardAppDatabase, usuarioId: String) = module {
     single<Reloj> { RelojDelSistema() }
     single { base.usuarioDao() }
     single<DepositoRepository> {
         DepositoRepositoryImpl(base.depositoDao(), usuarioId, get<Reloj>()::ahora, ::nuevoUuid)
     }
     single<MapaRepository> { MapaRepositoryImpl() }
+    single<UbicacionRepository> { UbicacionRepositoryImpl(context) }
 }
 
 /** Cliente HTTP (Retrofit) para leer el sensor IoT del tanque publicado en ThingSpeak. */
@@ -89,6 +92,6 @@ private val moduloViewModels = module {
     viewModel { SinAguaViewModel(get(), get<Reloj>()::ahora) }
     // El tipo de llenado (completo o parcial) llega desde la pantalla con parametersOf(tipo).
     viewModel { (tipo: TipoLlenado) -> RegistrarLlenadoViewModel(get(), get<Reloj>()::ahora, tipo) }
-    viewModel { MapaViewModel(get()) }
+    viewModel { MapaViewModel(get(), get()) }
     viewModel { SensorViewModel(get(), get(), get<Reloj>()::ahora) }
 }
