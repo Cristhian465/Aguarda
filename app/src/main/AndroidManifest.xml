@@ -18,7 +18,7 @@
         android:theme="@style/Theme.AguardApp">
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="${MAPS_API_KEY}" />
+            android:value="AIzaSyBw-1EAiZ0Tm-XFsIwgqcNAanQBNGL3Mb4" />
 
         <activity
             android:name=".MainActivity"
