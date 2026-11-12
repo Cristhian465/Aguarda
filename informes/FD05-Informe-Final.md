@@ -71,12 +71,13 @@ El desarrollo de AguardApp se justifica por la necesidad de que cada hogar conoz
 - Avisos dentro de la aplicación cuando el agua no alcanza hasta el próximo llenado, cuando el nivel baja del 20 % o cuando aún no se registró ningún llenado.
 - Mapa de los puntos de reparto de agua en cisterna de Tacna, con su horario y estado.
 - Lectura del nivel real del tanque desde un sensor IoT (ESP32 con sensor ultrasónico, prototipo simulado en Wokwi) que publica sus mediciones en ThingSpeak.
+- Pestaña Ahorro con registro local de retos diarios, racha semanal, calendario e insignias.
 - Gestión del depósito 100 % sin conexión con una base de datos local (Room / SQLite); solo el mapa y el sensor usan internet.
 
 **Fuera del alcance del proyecto se considera:**
 
 - La consulta del sector y de los cronogramas oficiales.
-- La digitalización de recibos, los retos y reportes ciudadanos y el asistente hídrico.
+- La digitalización de recibos, los reportes ciudadanos, la clasificación por sector y el asistente hídrico.
 - La sincronización en la nube, el inicio de sesión con Google y las notificaciones push (los avisos solo se muestran dentro de la aplicación).
 - La versión para iOS y la integración con los sistemas de EPS Tacna.
 
@@ -145,7 +146,7 @@ La solución se construye con un conjunto de tecnologías gratuitas, en su mayor
 | Lenguaje y plataforma | Kotlin · Android (API 24 a 36) | Lenguaje oficial de Android; compatible con teléfonos de gama básica. |
 | Interfaz | Jetpack Compose + Material 3 | Interfaz declarativa, con el tema propio de la app (colores sólidos y una sola fuente). |
 | Navegación | Navigation Compose | Rutas declaradas en un solo NavHost. |
-| Base de datos local | Room (SQLite) | Operación sin conexión; única fuente de verdad. |
+| Persistencia local | Room (SQLite) y SharedPreferences | Room guarda los datos del depósito y SharedPreferences registra los retos de Ahorro por fecha. |
 | Inyección de dependencias | Koin (koin-androidx-compose) | Tres módulos (aplicación, red y ViewModels); cada pantalla obtiene su ViewModel con `koinViewModel()`. |
 | Estado y asincronía | Corrutinas, Flow y Lifecycle (ViewModel) | Las pantallas observan un `StateFlow` y Room avisa de cada cambio con `Flow`. |
 | Fechas y horas | kotlinx-datetime | Cálculo del nivel, del agotamiento y del próximo llenado. |

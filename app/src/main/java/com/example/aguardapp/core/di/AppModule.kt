@@ -16,6 +16,8 @@ import com.example.aguardapp.core.navigation.InicioViewModel
 import com.example.aguardapp.core.util.Reloj
 import com.example.aguardapp.core.util.RelojDelSistema
 import com.example.aguardapp.core.util.nuevoUuid
+import com.example.aguardapp.feature.ahorro.data.AhorroLocal
+import com.example.aguardapp.feature.ahorro.presentation.AhorroViewModel
 import com.example.aguardapp.feature.deposito.data.DepositoRepositoryImpl
 import com.example.aguardapp.feature.bienvenida.presentation.BienvenidaViewModel
 import com.example.aguardapp.feature.deposito.domain.repository.DepositoRepository
@@ -66,6 +68,7 @@ private suspend fun obtenerOCrearUsuario(base: AguardAppDatabase): String {
 /** Todo lo que se inyecta en la app: la base de datos, el reloj, los repositorios del depósito y del mapa, y la ubicación. */
 private fun moduloApp(context: Context, base: AguardAppDatabase, usuarioId: String) = module {
     single<Reloj> { RelojDelSistema() }
+    single { AhorroLocal(context.getSharedPreferences("ahorro", Context.MODE_PRIVATE)) }
     single { base.usuarioDao() }
     single<DepositoRepository> {
         DepositoRepositoryImpl(base.depositoDao(), usuarioId, get<Reloj>()::ahora, ::nuevoUuid)
@@ -101,6 +104,7 @@ private fun moduloRed(context: Context) = module {
 
 /** ViewModels de cada pantalla: Koin los crea y les entrega sus dependencias. */
 private val moduloViewModels = module {
+    viewModel { AhorroViewModel(get(), get()) }
     viewModel { InicioViewModel(get(), get()) }
     viewModel { BienvenidaViewModel(get()) }
     viewModel { ConfiguracionViewModel(get()) }

@@ -24,7 +24,8 @@ import com.example.aguardapp.core.ui.theme.TintaTenue
 enum class Pestana(val ruta: String, val etiqueta: String, @param:DrawableRes val icono: Int) {
     DEPOSITO(Rutas.MI_DEPOSITO, "Mi depósito", R.drawable.ic_gota),
     MAPA(Rutas.MAPA, "Mapa", R.drawable.ic_mapa),
-    REPRESAS(Rutas.REPRESAS, "Represas", R.drawable.ic_represa)
+    REPRESAS(Rutas.REPRESAS, "Represas", R.drawable.ic_represa),
+    AHORRO(Rutas.AHORRO, "Ahorro", R.drawable.ic_ahorro)
 }
 
 @Composable

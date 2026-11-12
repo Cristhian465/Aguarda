@@ -14,6 +14,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.aguardapp.feature.ahorro.presentation.AhorroScreen
 import com.example.aguardapp.feature.bienvenida.presentation.BienvenidaScreen
 import com.example.aguardapp.feature.deposito.presentation.AvisosScreen
 import com.example.aguardapp.feature.deposito.presentation.ConfiguracionScreen
@@ -70,6 +71,12 @@ fun AppNavHost(rutaInicial: String, hayConfiguracion: Boolean) {
             }
         }
 
+        composable(Rutas.AHORRO) {
+            ConBarraInferior(Pestana.AHORRO, navController) {
+                AhorroScreen()
+            }
+        }
+
         composable(
             Rutas.REGISTRAR_LLENADO,
             arguments = listOf(navArgument(Rutas.ARG_TIPO) { type = NavType.StringType })
@@ -123,7 +130,7 @@ private fun irDespuesDeConfigurar(navController: NavHostController, editando: Bo
     }
 }
 
-/** Pantallas principales: el contenido arriba y la barra inferior para cambiar entre Mi depósito y Mapa. */
+/** Muestra la barra inferior en las pantallas principales. */
 @Composable
 private fun ConBarraInferior(actual: Pestana, navController: NavHostController, contenido: @Composable () -> Unit) {
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
