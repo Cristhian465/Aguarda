@@ -3,7 +3,7 @@ package com.example.aguardapp.feature.represas.data.local
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-/** Tabla de Room con las represas guardadas para verlas sin internet. */
+// tabla de represas
 @Entity(tableName = "presa")
 data class PresaEntity(
     @PrimaryKey val nombre: String,

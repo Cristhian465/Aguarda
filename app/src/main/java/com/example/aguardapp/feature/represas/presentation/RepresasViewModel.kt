@@ -14,7 +14,7 @@ import com.example.aguardapp.feature.represas.domain.repository.RepresasReposito
 
 class RepresasViewModel(private val repositorio: RepresasRepository) : ViewModel() {
 
-    /** Lo que hay en Room. Cuando llegan datos nuevos de la ANA, la lista cambia sola. */
+    // datos de room
     val presas: StateFlow<List<Presa>> =
         repositorio.presas.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 

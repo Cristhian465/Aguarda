@@ -11,10 +11,7 @@ import com.example.aguardapp.feature.represas.data.remote.PresaAna
 import com.example.aguardapp.feature.represas.domain.model.Presa
 import com.example.aguardapp.feature.represas.domain.repository.RepresasRepository
 
-/**
- * Offline first: la pantalla siempre lee de Room. [actualizar] trae los datos de la ANA y los guarda;
- * si no hay internet, se siguen viendo los últimos guardados.
- */
+// lee de room y actualiza desde la ANA
 class RepresasRepositoryImpl(private val api: AnaApi, private val dao: PresaDao) : RepresasRepository {
 
     override val presas: Flow<List<Presa>> = dao.todas().map { lista -> lista.map { it.aDominio() } }
@@ -24,13 +21,13 @@ class RepresasRepositoryImpl(private val api: AnaApi, private val dao: PresaDao)
         if (presas.isNotEmpty()) dao.guardar(presas)
         true
     } catch (e: IOException) {
-        false // sin internet o la ANA no respondió a tiempo
+        false // sin internet
     } catch (e: HttpException) {
-        false // la ANA respondió con un error
+        false // error del servidor
     }
 }
 
-/** Convierte lo que manda la ANA en una fila de Room. Si falta el nombre o la ubicación, se descarta. */
+// pasa los datos de la ANA a la tabla
 private fun PresaAna.aEntidad(): PresaEntity? {
     val nombre = attributes.nombre?.trim() ?: return null
     val punto = geometry ?: return null

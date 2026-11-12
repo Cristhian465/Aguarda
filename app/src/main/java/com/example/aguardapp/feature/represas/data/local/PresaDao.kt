@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PresaDao {
-    /** Las represas guardadas, de la más grande a la más chica. Se actualiza sola cuando cambia la tabla. */
+    // ordenadas por volumen
     @Query("SELECT * FROM presa ORDER BY volumenHm3 DESC")
     fun todas(): Flow<List<PresaEntity>>
 

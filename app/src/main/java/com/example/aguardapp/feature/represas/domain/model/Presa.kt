@@ -1,6 +1,6 @@
 package com.example.aguardapp.feature.represas.domain.model
 
-/** Una represa de Tacna, tal como la usa la app (sin depender de Room ni de la ANA). */
+// modelo de represa
 data class Presa(
     val nombre: String,
     val distrito: String,

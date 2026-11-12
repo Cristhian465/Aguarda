@@ -87,7 +87,7 @@ private fun moduloRed(context: Context) = module {
     single<SensorRepository> {
         SensorRepositoryImpl(get(), SensorDatabase.crear(context).lecturaDao(), BuildConfig.THINGSPEAK_CHANNEL_ID, BuildConfig.THINGSPEAK_READ_KEY)
     }
-    // La ANA es lenta: se le da hasta 30 s antes de mostrar los datos guardados.
+    // la ANA demora, timeout de 30s
     single<AnaApi> {
         Retrofit.Builder()
             .baseUrl(URL_ANA)
