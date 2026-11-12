@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.example.aguardapp.core.ui.theme.AguaMedia
 import com.example.aguardapp.core.ui.theme.Blanco
 import com.example.aguardapp.core.ui.theme.Divisor
 import com.example.aguardapp.core.ui.theme.FuenteTexto
@@ -32,6 +33,7 @@ import com.example.aguardapp.core.ui.theme.TintaSuave
 import com.example.aguardapp.feature.mapa.domain.model.EstadoCisterna
 import com.example.aguardapp.feature.mapa.domain.model.PuntoCisterna
 import com.example.aguardapp.feature.mapa.domain.usecase.BuscarCisternasCercanas
+import com.example.aguardapp.feature.mapa.domain.usecase.CandidataCisterna
 
 /** Tono del marcador de Google Maps según el estado del punto. */
 fun tonoDelEstado(estado: EstadoCisterna): Float = when (estado) {
@@ -65,18 +67,33 @@ fun ListaCisternas(estado: MapaUiState, onSeleccionar: (PuntoCisterna) -> Unit, 
     val encontrada = estado.ubicacion == EstadoUbicacion.ENCONTRADA
     val conDistancia = encontrada && estado.cercanas.isNotEmpty()
     // Si no hay ninguna dentro del radio, se muestran igual todos los puntos (sin distancia).
-    val filas: List<Pair<PuntoCisterna, Double?>> =
-        if (conDistancia) estado.cercanas.map { it.punto to it.distanciaKm } else estado.puntos.map { it to null }
+    val filas = estado.candidatas
+    // El aviso queda fijo arriba; debajo se desplaza la lista, para que el mapa conserve su espacio.
     Column(modifier.fillMaxWidth().background(Blanco)) {
-        Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 6.dp)) {
-            Texto(if (conDistancia) "Cisternas cercanas" else "Puntos de reparto", 15, Tinta, FontWeight.ExtraBold)
-            avisoDeUbicacion(estado.ubicacion, encontrada && !conDistancia)?.let { Texto(it, 12.5, TintaSuave) }
-        }
-        LazyColumn {
-            items(filas, key = { it.first.id }) { (punto, distanciaKm) ->
-                FilaCisterna(punto, distanciaKm) { onSeleccionar(punto) }
-                HorizontalDivider(color = Divisor)
+        estado.aviso?.let { TarjetaAntesDeQueSeAcabe(it, Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp)) }
+        ListaDesplazable(estado, filas, encontrada, conDistancia, onSeleccionar)
+    }
+}
+
+@Composable
+private fun ListaDesplazable(
+    estado: MapaUiState,
+    filas: List<CandidataCisterna>,
+    encontrada: Boolean,
+    conDistancia: Boolean,
+    onSeleccionar: (PuntoCisterna) -> Unit
+) {
+    LazyColumn {
+        item(key = "encabezado") {
+            Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 6.dp)) {
+                Texto(if (conDistancia) "Cisternas cercanas" else "Puntos de reparto", 15, Tinta, FontWeight.ExtraBold)
+                avisoDeUbicacion(estado.ubicacion, encontrada && !conDistancia)?.let { Texto(it, 12.5, TintaSuave) }
             }
+        }
+        items(filas, key = { it.punto.id }) { candidata ->
+            val sugerida = candidata.punto.id == estado.aviso?.sugeridaId
+            FilaCisterna(candidata.punto, candidata.distanciaKm, sugerida) { onSeleccionar(candidata.punto) }
+            HorizontalDivider(color = Divisor)
         }
     }
 }
@@ -90,7 +107,7 @@ private fun avisoDeUbicacion(estado: EstadoUbicacion, sinCercanas: Boolean): Str
 }
 
 @Composable
-private fun FilaCisterna(punto: PuntoCisterna, distanciaKm: Double?, onClick: () -> Unit) {
+private fun FilaCisterna(punto: PuntoCisterna, distanciaKm: Double?, sugerida: Boolean, onClick: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -100,6 +117,7 @@ private fun FilaCisterna(punto: PuntoCisterna, distanciaKm: Double?, onClick: ()
         Column(Modifier.weight(1f)) {
             Texto(punto.nombre, 14, Tinta, FontWeight.Bold)
             Texto(detalleDe(punto), 12.5, TintaSuave)
+            if (sugerida) Texto("Te conviene", 12, AguaMedia, FontWeight.ExtraBold)
         }
         distanciaKm?.let { Texto(formatearDistancia(it), 13, Tinta, FontWeight.SemiBold) }
     }
