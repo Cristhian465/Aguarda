@@ -2,6 +2,7 @@ package com.example.aguardapp.feature.mapa.presentation
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -43,7 +44,6 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import com.example.aguardapp.core.ui.theme.IconosClarosEnBarraDeEstado
 import com.example.aguardapp.feature.deposito.presentation.componentes.BarraSuperior
 import com.example.aguardapp.feature.mapa.domain.model.Coordenada
-import com.example.aguardapp.feature.mapa.domain.model.PuntoCisterna
 
 private const val ZOOM_INICIAL = 12.5f
 private const val ZOOM_PUNTO = 15f
@@ -56,7 +56,11 @@ fun MapaScreen(viewModel: MapaViewModel = koinViewModel()) {
     IconosClarosEnBarraDeEstado(claros = false)
     // Al tocar el mapa se agranda; "Volver a la lista" o el botón atrás lo devuelven a su tamaño.
     var pantallaCompleta by rememberSaveable { mutableStateOf(false) }
-    BackHandler(enabled = pantallaCompleta) { pantallaCompleta = false }
+    val salirDePantallaCompleta = {
+        pantallaCompleta = false
+        viewModel.onCerrarDistrito()
+    }
+    BackHandler(enabled = pantallaCompleta, onBack = salirDePantallaCompleta)
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         if (!pantallaCompleta) BarraSuperior("Puntos de cisterna", subtituloDe(uiState.puntos.size), onVolver = null)
         val centro = uiState.centro
@@ -71,11 +75,23 @@ fun MapaScreen(viewModel: MapaViewModel = koinViewModel()) {
             }
             val alcance = rememberCoroutineScope()
             Box(Modifier.weight(1f).fillMaxWidth()) {
-                MapaDeCisternas(camara, uiState.puntos, marcadores, permisoConcedido, pantallaCompleta) { pantallaCompleta = true }
+                MapaDeCisternas(camara, uiState, marcadores, permisoConcedido, pantallaCompleta) { punto ->
+                    // Primer toque: agranda el mapa. Con el mapa grande, cada toque elige un distrito.
+                    if (pantallaCompleta) viewModel.onTocarDistrito(punto) else pantallaCompleta = true
+                }
                 val bajoLaBarraDeEstado = if (pantallaCompleta) Modifier.statusBarsPadding() else Modifier
                 LeyendaDeEstados(Modifier.align(Alignment.TopStart).then(bajoLaBarraDeEstado).padding(12.dp))
                 if (pantallaCompleta) {
-                    BotonVolverALaLista(Modifier.align(Alignment.BottomCenter).padding(bottom = 20.dp)) { pantallaCompleta = false }
+                    Column(
+                        Modifier.align(Alignment.BottomCenter).padding(start = 16.dp, end = 72.dp, bottom = 20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        uiState.distritoElegido?.let { distrito ->
+                            TarjetaDistrito(distrito, distrito.ubigeo == uiState.miDistrito?.ubigeo)
+                        }
+                        BotonVolverALaLista(onClick = salirDePantallaCompleta)
+                    }
                 }
             }
             if (!pantallaCompleta) ListaCisternas(
@@ -95,22 +111,23 @@ fun MapaScreen(viewModel: MapaViewModel = koinViewModel()) {
 @Composable
 private fun MapaDeCisternas(
     camara: CameraPositionState,
-    puntos: List<PuntoCisterna>,
+    estado: MapaUiState,
     marcadores: Map<String, MarkerState>,
     permisoConcedido: Boolean,
     pantallaCompleta: Boolean,
-    onTocarMapa: () -> Unit
+    onTocarMapa: (Coordenada) -> Unit
 ) {
     GoogleMap(
         modifier = Modifier.fillMaxSize(),
         cameraPositionState = camara,
         // En pantalla completa, los botones del mapa no quedan debajo de la barra de estado.
         contentPadding = if (pantallaCompleta) WindowInsets.statusBars.asPaddingValues() else PaddingValues(),
-        onMapClick = { onTocarMapa() },
+        onMapClick = { onTocarMapa(Coordenada(it.latitude, it.longitude)) },
         properties = MapProperties(isMyLocationEnabled = permisoConcedido),
         uiSettings = MapUiSettings(myLocationButtonEnabled = permisoConcedido, mapToolbarEnabled = false)
     ) {
-        puntos.forEach { punto ->
+        CapaDistritos(estado.distritos, estado.distritoElegido)
+        estado.puntos.forEach { punto ->
             Marker(
                 state = marcadores.getValue(punto.id),
                 title = punto.nombre,

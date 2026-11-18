@@ -78,7 +78,7 @@ flowchart TD
 | 📉 **Aprender el consumo** | Ajusta la proyección cuando el agua se acaba antes de lo previsto |
 | ✂️ **Qué recortar** | Sugerencias de ahorro cuando el agua no alcanza hasta el próximo llenado |
 | 🏅 **Ahorro** | Marca los retos de hoy y consulta tu racha, calendario e insignias. El progreso se guarda en el teléfono. |
-| 🗺️ **Mapa de cisternas** | Puntos de reparto de agua en Tacna sobre Google Maps, con su horario y estado, la lista de los más cercanos a tu ubicación y el aviso "Antes de que se acabe", que te dice a qué cisterna ir antes de quedarte sin agua |
+| 🗺️ **Mapa de cisternas** | Puntos de reparto de agua en Tacna sobre Google Maps, con su horario y estado, la lista de los más cercanos a tu ubicación el aviso "Antes de que se acabe", que te dice a qué cisterna ir antes de quedarte sin agua, y los límites reales de los distritos |
 | 📶 **Sensor IoT del tanque** | Lee el nivel real del tanque (ESP32 + sensor ultrasónico, simulado en Wokwi) desde ThingSpeak y lo aplica como nivel actual |
 | 🔔 **Avisos** | Alerta dentro de la app si el agua no alcanza, si queda menos del 20 % o si falta registrar un llenado |
 | 📡 **100 % local** | Los datos del hogar se guardan solo en el teléfono (SQLite) y no se copian a la nube; el mapa necesita internet para cargar |
@@ -332,6 +332,9 @@ git clone https://github.com/tu-usuario/AguardApp.git
 ---
 
 ## 📝 Changelog
+
+### 2026-11-18
+- [Agregado] Mapa por distritos: límites reales de Tacna, Alto de la Alianza, Ciudad Nueva, Pocollay y Coronel Gregorio Albarracín Lanchipa en `app/src/main/assets/distritos_tacna.geojson` (OpenStreetMap, licencia ODbL, con el ubigeo del INEI). Con el mapa en pantalla completa, al tocar un distrito se muestra su tarjeta. Los distritos salen en gris porque la Liga del Agua aún no tiene datos de hogares: la app no muestra puntajes inventados. El distrito del usuario se calcula en el teléfono y la ubicación no se envía a ningún servidor.
 
 ### 2026-11-12
 - [Agregado] Pestaña Ahorro con retos de la semana, racha, calendario e insignias. Los retos se registran por día y funcionan sin internet.
