@@ -117,7 +117,7 @@ private val moduloViewModels = module {
     viewModel { SinAguaViewModel(get(), get<Reloj>()::ahora) }
     // El tipo de llenado (completo o parcial) llega desde la pantalla con parametersOf(tipo).
     viewModel { (tipo: TipoLlenado) -> RegistrarLlenadoViewModel(get(), get<Reloj>()::ahora, tipo) }
-    viewModel { MapaViewModel(get(), get(), get(), get(), get<Reloj>()::ahora) }
+    viewModel { MapaViewModel(get(), get(), get(), get(), get(), get<Reloj>()::ahora) }
     viewModel { SensorViewModel(get(), get(), get<Reloj>()::ahora) }
     viewModel { RepresasViewModel(get()) }
 }

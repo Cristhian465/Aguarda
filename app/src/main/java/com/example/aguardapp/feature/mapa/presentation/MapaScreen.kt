@@ -27,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
@@ -53,6 +54,10 @@ fun MapaScreen(onAbrirLiga: () -> Unit, viewModel: MapaViewModel = koinViewModel
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val permisoConcedido = rememberPermisoDeUbicacion()
     LaunchedEffect(permisoConcedido) { viewModel.onPermisoDeUbicacion(permisoConcedido) }
+    LifecycleResumeEffect(Unit) {
+        viewModel.onRefrescarLiga()
+        onPauseOrDispose { }
+    }
     IconosClarosEnBarraDeEstado(claros = false)
     // Al tocar el mapa se agranda; "Volver a la lista" o el botón atrás lo devuelven a su tamaño.
     var pantallaCompleta by rememberSaveable { mutableStateOf(false) }
@@ -89,7 +94,7 @@ fun MapaScreen(onAbrirLiga: () -> Unit, viewModel: MapaViewModel = koinViewModel
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         uiState.distritoElegido?.let { distrito ->
-                            TarjetaDistrito(distrito, distrito.ubigeo == uiState.miDistrito?.ubigeo)
+                            TarjetaDistrito(distrito, distrito.ubigeo == uiState.miDistrito?.ubigeo, uiState.liga.firstOrNull { it.ubigeo == distrito.ubigeo })
                         }
                         BotonVolverALaLista(onClick = salirDePantallaCompleta)
                     }
@@ -127,7 +132,7 @@ private fun MapaDeCisternas(
         properties = MapProperties(isMyLocationEnabled = permisoConcedido),
         uiSettings = MapUiSettings(myLocationButtonEnabled = permisoConcedido, mapToolbarEnabled = false)
     ) {
-        CapaDistritos(estado.distritos, estado.distritoElegido)
+        CapaDistritos(estado.distritos, estado.distritoElegido, estado.liga)
         estado.puntos.forEach { punto ->
             Marker(
                 state = marcadores.getValue(punto.id),
