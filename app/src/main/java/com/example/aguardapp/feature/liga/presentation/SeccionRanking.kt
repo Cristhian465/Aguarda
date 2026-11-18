@@ -53,7 +53,10 @@ fun SeccionRanking(viewModel: RankingLigaViewModel = koinViewModel()) {
             Detalle("El ranking todavía no está conectado. Tu medición y tu puntaje ya funcionan en este teléfono.")
         }
         !estado.participa -> TarjetaConsentimiento(estado, viewModel::onElegirDistrito, viewModel::onParticipar)
-        else -> TarjetaRanking(estado, viewModel::onDejarDeParticipar)
+        else -> Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            TarjetaRanking(estado, viewModel::onDejarDeParticipar)
+            TarjetaDuelos(estado.duelos)
+        }
     }
 }
 
@@ -102,7 +105,7 @@ private fun FilaDeRanking(fila: FilaRanking, esMiDistrito: Boolean) {
                 fila.nombre + if (esMiDistrito) " (tu distrito)" else "",
                 fontFamily = FuenteTexto, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Tinta
             )
-            Text(textoHogares(fila.hogares), fontFamily = FuenteTexto, fontSize = 12.sp, color = TintaSuave)
+            Text(textoHogares(fila.hogares, fila.verificados), fontFamily = FuenteTexto, fontSize = 12.sp, color = TintaSuave)
         }
         Text(
             fila.puntaje?.let { "${it.roundToInt()} pts" } ?: "Sin datos",
@@ -111,4 +114,7 @@ private fun FilaDeRanking(fila: FilaRanking, esMiDistrito: Boolean) {
     }
 }
 
-internal fun textoHogares(hogares: Int): String = if (hogares == 1) "1 hogar" else "$hogares hogares"
+internal fun textoHogares(hogares: Int, verificados: Int): String {
+    val total = if (hogares == 1) "1 hogar" else "$hogares hogares"
+    return if (verificados > 0) "$total · $verificados verificados" else total
+}

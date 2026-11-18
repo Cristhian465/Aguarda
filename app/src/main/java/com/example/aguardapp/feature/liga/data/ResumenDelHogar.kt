@@ -10,21 +10,27 @@ import com.example.aguardapp.feature.liga.domain.CalcularPuntaje
 import com.example.aguardapp.feature.liga.domain.LigaRepository
 import com.example.aguardapp.feature.liga.domain.ResumenSemanal
 
-data class DatosDelHogar(val capacidadLitros: Int, val resumen: ResumenSemanal)
+data class DatosDelHogar(val capacidadLitros: Int, val resumen: ResumenSemanal, val verificado: Boolean)
 
-/** Junta las marcas, los llenados y los retos en el resumen semanal del hogar. */
+/** Junta las marcas, los llenados, los retos y el recibo en el resumen semanal del hogar. */
 class ResumenDelHogar(
     private val liga: LigaRepository,
     private val deposito: DepositoRepository,
     private val ahorro: AhorroLocal,
+    private val preferencias: PreferenciasLiga,
     private val ahora: () -> LocalDateTime,
     private val calcular: CalcularPuntaje = CalcularPuntaje()
 ) {
-    fun observar(): Flow<DatosDelHogar?> =
-        combine(liga.observarMarcas(), deposito.observarMomentosDeLlenado(), deposito.observarPerfil()) { marcas, llenados, perfil ->
-            perfil?.let {
-                val resumen = calcular.resumen(marcas, llenados, ahorro.historial().keys, it.habitantes.cantidad, ahora().date)
-                DatosDelHogar(it.capacidad.litros.valor.roundToInt(), resumen)
-            }
+    fun observar(): Flow<DatosDelHogar?> = combine(
+        liga.observarMarcas(), deposito.observarMomentosDeLlenado(), deposito.observarPerfil(), preferencias.recibo
+    ) { marcas, llenados, perfil, recibo ->
+        perfil?.let {
+            val hoy = ahora().date
+            val habitantes = it.habitantes.cantidad
+            // Sin semanas anteriores medidas, el recibo vigente sirve como consumo habitual.
+            val base = recibo?.takeIf { r -> r.vigente(hoy) }?.litrosPorPersonaDia(habitantes)
+            val resumen = calcular.resumen(marcas, llenados, ahorro.historial().keys, habitantes, hoy, base)
+            DatosDelHogar(it.capacidad.litros.valor.roundToInt(), resumen, recibo?.verificado(hoy) == true)
         }
+    }
 }

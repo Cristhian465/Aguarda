@@ -13,6 +13,7 @@ room = "2.8.5"
 navigation = "2.9.7"
 mapsCompose = "9.0.1"
 retrofit = "3.0.0"
+mlkitTextRecognition = "16.0.1"
 
 [libraries]
 # Android y Compose
@@ -35,6 +36,9 @@ androidx-room-runtime = { group = "androidx.room", name = "room-runtime", versio
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinxDatetime" }
+
+# Lectura de texto del recibo dentro del teléfono
+mlkit-text-recognition = { group = "com.google.mlkit", name = "text-recognition", version.ref = "mlkitTextRecognition" }
 
 # Mapas (Google Maps para Compose)
 maps-compose = { group = "com.google.maps.android", name = "maps-compose", version.ref = "mapsCompose" }

@@ -11,10 +11,12 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
 import com.example.aguardapp.feature.liga.data.PreferenciasLiga
 import com.example.aguardapp.feature.liga.data.ResumenDelHogar
+import com.example.aguardapp.feature.liga.domain.Duelo
 import com.example.aguardapp.feature.liga.domain.EnvioSemanal
 import com.example.aguardapp.feature.liga.domain.FilaRanking
 import com.example.aguardapp.feature.liga.domain.RankingRepository
 import com.example.aguardapp.feature.liga.domain.armarRanking
+import com.example.aguardapp.feature.liga.domain.duelosDeLaSemana
 import com.example.aguardapp.feature.liga.domain.lunesDe
 import com.example.aguardapp.feature.mapa.domain.model.distritoDe
 import com.example.aguardapp.feature.mapa.domain.repository.DistritosRepository
@@ -26,6 +28,7 @@ data class RankingLigaUiState(
     val distritos: List<Pair<String, String>> = emptyList(),
     val ubigeoElegido: String? = null,
     val filas: List<FilaRanking> = emptyList(),
+    val duelos: List<Duelo> = emptyList(),
     val error: String? = null
 )
 
@@ -85,8 +88,10 @@ class RankingLigaViewModel(
             val envio = if (preferencias.participa) enviarResumen() else Result.success(Unit)
             val posiciones = ranking.ranking(lunes)
             _uiState.update { estado ->
+                val filas = posiciones.getOrNull()?.let { armarRanking(estado.distritos, it) } ?: estado.filas
                 estado.copy(
-                    filas = posiciones.getOrNull()?.let { armarRanking(estado.distritos, it) } ?: estado.filas,
+                    filas = filas,
+                    duelos = duelosDeLaSemana(filas, lunes),
                     error = (posiciones.exceptionOrNull() ?: envio.exceptionOrNull())?.message
                 )
             }
@@ -94,10 +99,11 @@ class RankingLigaViewModel(
     }
 
     private suspend fun enviarResumen(): Result<Unit> {
-        val semana = resumen.observar().first()?.resumen ?: return Result.success(Unit)
+        val datos = resumen.observar().first() ?: return Result.success(Unit)
+        val semana = datos.resumen
         val litros = semana.litrosPorPersonaDia ?: return Result.success(Unit)
         val puntaje = semana.puntaje ?: return Result.success(Unit)
         val ubigeo = preferencias.ubigeo ?: return Result.success(Unit)
-        return ranking.enviar(EnvioSemanal(preferencias.token(), semana.lunes, ubigeo, litros, puntaje.total, verificado = false))
+        return ranking.enviar(EnvioSemanal(preferencias.token(), semana.lunes, ubigeo, litros, puntaje.total, datos.verificado))
     }
 }
