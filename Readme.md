@@ -154,6 +154,7 @@ AguardApp/
 │           └── 📁 feature/
 │               ├── 📁 bienvenida/         Pantalla de entrada (solo el primer uso)
 │               ├── 📁 deposito/           Depósito de agua del hogar (MVVM + DDD)
+│               ├── 📁 liga/               Liga del Agua: medición del consumo y puntaje del hogar
 │               ├── 📁 mapa/               Mapa de puntos de cisterna (Google Maps)
 │               ├── 📁 sensor/             Nivel del tanque desde el sensor IoT (Retrofit + ThingSpeak)
 │               └── 📁 ahorro/             Retos, racha, calendario e insignias (SharedPreferences)
@@ -334,6 +335,7 @@ git clone https://github.com/tu-usuario/AguardApp.git
 ## 📝 Changelog
 
 ### 2026-11-18
+- [Agregado] Liga del Agua, medición real (`feature/liga`): pantalla abierta desde el mapa donde el usuario marca cuánta agua hay en su tanque. El consumo sale de lo que bajó el nivel entre dos marcas, descartando los tramos con llenados; hacen falta al menos 24 horas medidas. Puntaje semanal del hogar: mejora frente a su propio consumo habitual (50), retos de Ahorro (30) y constancia (20). Las marcas se guardan solo en el teléfono (`liga.db`).
 - [Agregado] Mapa por distritos: límites reales de Tacna, Alto de la Alianza, Ciudad Nueva, Pocollay y Coronel Gregorio Albarracín Lanchipa en `app/src/main/assets/distritos_tacna.geojson` (OpenStreetMap, licencia ODbL, con el ubigeo del INEI). Con el mapa en pantalla completa, al tocar un distrito se muestra su tarjeta. Los distritos salen en gris porque la Liga del Agua aún no tiene datos de hogares: la app no muestra puntajes inventados. El distrito del usuario se calcula en el teléfono y la ubicación no se envía a ningún servidor.
 
 ### 2026-11-12

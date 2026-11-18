@@ -54,7 +54,7 @@ fun iniciarAplicacion(context: Context) {
     val base = AguardAppDatabase.crear(context)
     // El usuario debe existir antes de la primera pantalla; es una lectura local y rápida.
     val usuarioId = runBlocking(Dispatchers.IO) { obtenerOCrearUsuario(base) }
-    startKoin { modules(moduloApp(context, base, usuarioId), moduloRed(context), moduloViewModels) }
+    startKoin { modules(moduloApp(context, base, usuarioId), moduloRed(context), moduloViewModels, moduloLiga(context)) }
 }
 
 // Lee el usuario local o lo crea la primera vez, con un UUID que ya no cambia.

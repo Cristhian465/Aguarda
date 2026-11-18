@@ -23,6 +23,7 @@ import com.example.aguardapp.feature.deposito.presentation.QueRecortarScreen
 import com.example.aguardapp.feature.deposito.presentation.RegistrarLlenadoScreen
 import com.example.aguardapp.feature.deposito.presentation.SinAguaScreen
 import com.example.aguardapp.feature.deposito.presentation.TipoLlenado
+import com.example.aguardapp.feature.liga.presentation.LigaScreen
 import com.example.aguardapp.feature.mapa.presentation.MapaScreen
 import com.example.aguardapp.feature.represas.presentation.RepresasScreen
 
@@ -61,7 +62,13 @@ fun AppNavHost(rutaInicial: String, hayConfiguracion: Boolean) {
 
         composable(Rutas.MAPA) {
             ConBarraInferior(Pestana.MAPA, navController) {
-                MapaScreen()
+                MapaScreen(onAbrirLiga = { navController.navigate(Rutas.LIGA) })
+            }
+        }
+
+        composable(Rutas.LIGA) {
+            ConBarraDelSistema {
+                LigaScreen(onVolver = { navController.popBackStack() })
             }
         }
 

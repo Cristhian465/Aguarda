@@ -45,6 +45,9 @@ class DepositoRepositoryImpl(
             perfil?.aDominio()?.let { ArmarDeposito()(it, aHistorial(llenados, novedades), ahora()) }
         }
 
+    override fun observarMomentosDeLlenado(): Flow<List<LocalDateTime>> =
+        dao.observarLlenados(usuarioId).map { llenados -> llenados.map { LocalDateTime.parse(it.momento) } }
+
     override suspend fun litrosPorHabitanteDia(): Double? {
         val (perfil, historial) = cargar() ?: return null
         return estimar.litrosPorHabitanteDia(historial.intervalos(perfil), perfil.habitantes)
