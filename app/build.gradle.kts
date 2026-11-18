@@ -90,6 +90,7 @@ dependencies {
 
     // Mapas
     implementation(libs.maps.compose)
+    implementation(libs.mlkit.text.recognition)
 
     // Red
     implementation(libs.retrofit)
