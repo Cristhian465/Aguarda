@@ -34,6 +34,10 @@ android {
         // Canal de ThingSpeak donde el sensor del tanque (ESP32) publica el nivel.
         buildConfigField("String", "THINGSPEAK_CHANNEL_ID", "\"${clave("THINGSPEAK_CHANNEL_ID")}\"")
         buildConfigField("String", "THINGSPEAK_READ_KEY", "\"${clave("THINGSPEAK_READ_KEY")}\"")
+
+        // Proyecto de Supabase del ranking de la Liga del Agua. Vacío: el ranking queda desconectado.
+        buildConfigField("String", "SUPABASE_URL", "\"${clave("SUPABASE_URL")}\"")
+        buildConfigField("String", "SUPABASE_ANON_KEY", "\"${clave("SUPABASE_ANON_KEY")}\"")
     }
 
     buildTypes {

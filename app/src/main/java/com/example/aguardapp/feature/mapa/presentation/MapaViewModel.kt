@@ -12,6 +12,10 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
 import com.example.aguardapp.feature.deposito.domain.repository.DepositoRepository
 import com.example.aguardapp.feature.deposito.domain.usecase.CalcularDeficit
+import com.example.aguardapp.feature.liga.domain.FilaRanking
+import com.example.aguardapp.feature.liga.domain.RankingRepository
+import com.example.aguardapp.feature.liga.domain.armarRanking
+import com.example.aguardapp.feature.liga.domain.lunesDe
 import com.example.aguardapp.feature.mapa.domain.model.CisternaCercana
 import com.example.aguardapp.feature.mapa.domain.model.Coordenada
 import com.example.aguardapp.feature.mapa.domain.model.Distrito
@@ -35,7 +39,8 @@ data class MapaUiState(
     val aviso: AvisoDeAgua? = null,
     val distritos: List<Distrito> = emptyList(),
     val miDistrito: Distrito? = null,
-    val distritoElegido: Distrito? = null
+    val distritoElegido: Distrito? = null,
+    val liga: List<FilaRanking> = emptyList()
 ) {
     /** Lo que se lista: las cercanas con distancia o, si no hay ninguna, todos los puntos sin distancia. */
     val candidatas: List<CandidataCisterna>
@@ -51,6 +56,7 @@ class MapaViewModel(
     private val ubicacion: UbicacionRepository,
     private val deposito: DepositoRepository,
     private val distritos: DistritosRepository,
+    private val ranking: RankingRepository,
     private val ahora: () -> LocalDateTime,
     private val buscarCercanas: BuscarCisternasCercanas = BuscarCisternasCercanas()
 ) : ViewModel() {
@@ -108,6 +114,16 @@ class MapaViewModel(
     /** Elige el distrito tocado en el mapa; fuera de los distritos, cierra la tarjeta. */
     fun onTocarDistrito(punto: Coordenada) {
         actualizar { it.copy(distritoElegido = it.distritos.distritoDe(punto)) }
+    }
+
+    /** Trae los resultados reales de la Liga para pintar los distritos. */
+    fun onRefrescarLiga() {
+        if (!ranking.conectado) return
+        viewModelScope.launch {
+            carga.join()
+            val posiciones = ranking.ranking(lunesDe(ahora().date)).getOrNull() ?: return@launch
+            actualizar { it.copy(liga = armarRanking(it.distritos.map { d -> d.ubigeo to d.nombre }, posiciones)) }
+        }
     }
 
     fun onCerrarDistrito() {

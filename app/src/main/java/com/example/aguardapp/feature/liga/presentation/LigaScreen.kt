@@ -42,6 +42,7 @@ fun LigaScreen(onVolver: () -> Unit, viewModel: LigaViewModel = koinViewModel())
                     TarjetaConsumo(it)
                     TarjetaPuntaje(it)
                 }
+                SeccionRanking()
             }
         }
     }
