@@ -12,11 +12,12 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
 import com.example.aguardapp.feature.deposito.domain.repository.DepositoRepository
 import com.example.aguardapp.feature.deposito.domain.usecase.CalcularDeficit
-import com.example.aguardapp.feature.deposito.presentation.formatearHora
 import com.example.aguardapp.feature.mapa.domain.model.CisternaCercana
 import com.example.aguardapp.feature.mapa.domain.model.Coordenada
-import com.example.aguardapp.feature.mapa.domain.model.EstadoCisterna
+import com.example.aguardapp.feature.mapa.domain.model.Distrito
 import com.example.aguardapp.feature.mapa.domain.model.PuntoCisterna
+import com.example.aguardapp.feature.mapa.domain.model.distritoDe
+import com.example.aguardapp.feature.mapa.domain.repository.DistritosRepository
 import com.example.aguardapp.feature.mapa.domain.repository.MapaRepository
 import com.example.aguardapp.feature.mapa.domain.repository.UbicacionRepository
 import com.example.aguardapp.feature.mapa.domain.usecase.BuscarCisternasCercanas
@@ -31,7 +32,10 @@ data class MapaUiState(
     val puntos: List<PuntoCisterna> = emptyList(),
     val ubicacion: EstadoUbicacion = EstadoUbicacion.SIN_PERMISO,
     val cercanas: List<CisternaCercana> = emptyList(),
-    val aviso: AvisoDeAgua? = null
+    val aviso: AvisoDeAgua? = null,
+    val distritos: List<Distrito> = emptyList(),
+    val miDistrito: Distrito? = null,
+    val distritoElegido: Distrito? = null
 ) {
     /** Lo que se lista: las cercanas con distancia o, si no hay ninguna, todos los puntos sin distancia. */
     val candidatas: List<CandidataCisterna>
@@ -46,6 +50,7 @@ class MapaViewModel(
     private val repositorio: MapaRepository,
     private val ubicacion: UbicacionRepository,
     private val deposito: DepositoRepository,
+    private val distritos: DistritosRepository,
     private val ahora: () -> LocalDateTime,
     private val buscarCercanas: BuscarCisternasCercanas = BuscarCisternasCercanas()
 ) : ViewModel() {
@@ -57,7 +62,9 @@ class MapaViewModel(
 
     private val carga: Job = viewModelScope.launch {
         val puntos = repositorio.obtenerPuntosCisterna()
-        actualizar { it.copy(cargando = false, centro = repositorio.centroDelMapa(), puntos = puntos) }
+        // Si el archivo de límites fallara, el mapa de cisternas sigue funcionando sin distritos.
+        val limites = runCatching { distritos.obtenerDistritos() }.getOrDefault(emptyList())
+        actualizar { it.copy(cargando = false, centro = repositorio.centroDelMapa(), puntos = puntos, distritos = limites) }
     }
 
     init {
@@ -88,10 +95,23 @@ class MapaViewModel(
                 if (actual == null) {
                     estado.copy(ubicacion = EstadoUbicacion.NO_DISPONIBLE, cercanas = emptyList())
                 } else {
-                    estado.copy(ubicacion = EstadoUbicacion.ENCONTRADA, cercanas = buscarCercanas.buscar(estado.puntos, actual))
+                    estado.copy(
+                        ubicacion = EstadoUbicacion.ENCONTRADA,
+                        cercanas = buscarCercanas.buscar(estado.puntos, actual),
+                        miDistrito = estado.distritos.distritoDe(actual)
+                    )
                 }
             }
         }
+    }
+
+    /** Elige el distrito tocado en el mapa; fuera de los distritos, cierra la tarjeta. */
+    fun onTocarDistrito(punto: Coordenada) {
+        actualizar { it.copy(distritoElegido = it.distritos.distritoDe(punto)) }
+    }
+
+    fun onCerrarDistrito() {
+        actualizar { it.copy(distritoElegido = null) }
     }
 
     private fun actualizar(cambio: (MapaUiState) -> MapaUiState) {
@@ -102,19 +122,3 @@ class MapaViewModel(
     }
 }
 
-fun detalleDe(punto: PuntoCisterna): String =
-    "${formatearHora(punto.horarioInicio)} – ${formatearHora(punto.horarioFin)} · ${nombreDelEstado(punto.estado)}"
-
-fun nombreDelEstado(estado: EstadoCisterna): String = when (estado) {
-    EstadoCisterna.ACTIVO -> "Activo"
-    EstadoCisterna.EN_RUTA -> "En ruta"
-    EstadoCisterna.TERMINADO -> "Terminado"
-}
-
-/** "a 850 m" o "a 1.2 km". Por debajo de 1 km se redondea a decenas de metros. */
-fun formatearDistancia(km: Double): String {
-    val metros = (Math.round(km * 100) * 10).coerceAtLeast(10)
-    if (metros < 1000) return "a $metros m"
-    val decimas = Math.round(km * 10)
-    return "a ${decimas / 10}.${decimas % 10} km"
-}

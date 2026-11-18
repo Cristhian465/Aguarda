@@ -28,8 +28,10 @@ import com.example.aguardapp.feature.deposito.presentation.QueRecortarViewModel
 import com.example.aguardapp.feature.deposito.presentation.RegistrarLlenadoViewModel
 import com.example.aguardapp.feature.deposito.presentation.SinAguaViewModel
 import com.example.aguardapp.feature.deposito.presentation.TipoLlenado
+import com.example.aguardapp.feature.mapa.data.DistritosRepositoryImpl
 import com.example.aguardapp.feature.mapa.data.MapaRepositoryImpl
 import com.example.aguardapp.feature.mapa.data.UbicacionRepositoryImpl
+import com.example.aguardapp.feature.mapa.domain.repository.DistritosRepository
 import com.example.aguardapp.feature.mapa.domain.repository.MapaRepository
 import com.example.aguardapp.feature.mapa.domain.repository.UbicacionRepository
 import com.example.aguardapp.feature.mapa.presentation.MapaViewModel
@@ -75,6 +77,7 @@ private fun moduloApp(context: Context, base: AguardAppDatabase, usuarioId: Stri
     }
     single<MapaRepository> { MapaRepositoryImpl() }
     single<UbicacionRepository> { UbicacionRepositoryImpl(context) }
+    single<DistritosRepository> { DistritosRepositoryImpl(context) }
     single { base.presaDao() }
 }
 
@@ -114,7 +117,7 @@ private val moduloViewModels = module {
     viewModel { SinAguaViewModel(get(), get<Reloj>()::ahora) }
     // El tipo de llenado (completo o parcial) llega desde la pantalla con parametersOf(tipo).
     viewModel { (tipo: TipoLlenado) -> RegistrarLlenadoViewModel(get(), get<Reloj>()::ahora, tipo) }
-    viewModel { MapaViewModel(get(), get(), get(), get<Reloj>()::ahora) }
+    viewModel { MapaViewModel(get(), get(), get(), get(), get<Reloj>()::ahora) }
     viewModel { SensorViewModel(get(), get(), get<Reloj>()::ahora) }
     viewModel { RepresasViewModel(get()) }
 }
