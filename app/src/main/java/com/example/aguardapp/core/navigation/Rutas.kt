@@ -11,6 +11,7 @@ object Rutas {
     const val MAPA = "mapa"
     const val REPRESAS = "represas"
     const val AHORRO = "ahorro"
+    const val LIGA = "liga"
 
     // Rutas con argumentos.
     const val ARG_TIPO = "tipo"

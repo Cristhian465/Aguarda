@@ -17,6 +17,8 @@ interface DepositoRepository {
 
     fun observarDeposito(): Flow<Deposito?>
 
+    fun observarMomentosDeLlenado(): Flow<List<LocalDateTime>>
+
     suspend fun litrosPorHabitanteDia(): Double?
 
     suspend fun registrarLlenado(momento: LocalDateTime, litros: Litros): Result<Unit>
