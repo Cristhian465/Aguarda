@@ -35,10 +35,12 @@ import com.example.aguardapp.feature.mapa.domain.repository.DistritosRepository
 import com.example.aguardapp.feature.mapa.domain.repository.MapaRepository
 import com.example.aguardapp.feature.mapa.domain.repository.UbicacionRepository
 import com.example.aguardapp.feature.mapa.presentation.MapaViewModel
+import com.example.aguardapp.feature.sensor.data.PreferenciasFuga
 import com.example.aguardapp.feature.sensor.data.SensorRepositoryImpl
 import com.example.aguardapp.feature.sensor.data.local.SensorDatabase
 import com.example.aguardapp.feature.sensor.data.remote.ThingSpeakApi
 import com.example.aguardapp.feature.sensor.domain.repository.SensorRepository
+import com.example.aguardapp.feature.sensor.presentation.FugaViewModel
 import com.example.aguardapp.feature.sensor.presentation.SensorViewModel
 import com.example.aguardapp.feature.represas.data.RepresasRepositoryImpl
 import com.example.aguardapp.feature.represas.data.remote.AnaApi
@@ -93,6 +95,7 @@ private fun moduloRed(context: Context) = module {
     single<SensorRepository> {
         SensorRepositoryImpl(get(), SensorDatabase.crear(context).lecturaDao(), BuildConfig.THINGSPEAK_CHANNEL_ID, BuildConfig.THINGSPEAK_READ_KEY)
     }
+    single { PreferenciasFuga(context.getSharedPreferences("fugas", Context.MODE_PRIVATE)) }
     // la ANA demora, timeout de 30s
     single<AnaApi> {
         Retrofit.Builder()
@@ -119,5 +122,6 @@ private val moduloViewModels = module {
     viewModel { (tipo: TipoLlenado) -> RegistrarLlenadoViewModel(get(), get<Reloj>()::ahora, tipo) }
     viewModel { MapaViewModel(get(), get(), get(), get(), get(), get<Reloj>()::ahora) }
     viewModel { SensorViewModel(get(), get(), get<Reloj>()::ahora) }
+    viewModel { FugaViewModel(get(), get(), get(), get<Reloj>()::ahora) }
     viewModel { RepresasViewModel(get()) }
 }

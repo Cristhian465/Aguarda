@@ -52,6 +52,7 @@ import com.example.aguardapp.feature.deposito.presentation.componentes.BotonPrin
 import com.example.aguardapp.feature.deposito.presentation.componentes.BotonSecundario
 import com.example.aguardapp.feature.deposito.presentation.componentes.IndicadorNivelReservorio
 import com.example.aguardapp.feature.deposito.presentation.componentes.TarjetaBlanca
+import com.example.aguardapp.feature.sensor.presentation.TarjetaFuga
 import com.example.aguardapp.feature.sensor.presentation.TarjetaSensor
 
 private val MARGEN = Modifier.padding(horizontal = 24.dp)
@@ -84,6 +85,7 @@ fun DepositoScreen(
             Consumo(vista, MARGEN)
         }
         TarjetaSensor(MARGEN)
+        TarjetaFuga(MARGEN)
         BotonPrincipal("Registrar llenado completo", { onRegistrarLlenado(TipoLlenado.COMPLETO) }, MARGEN)
         BotonSecundario("Registrar llenado parcial", { onRegistrarLlenado(TipoLlenado.PARCIAL) }, MARGEN, color = Tinta)
         if (vista != null && vista.deficitLitros > 0) {
