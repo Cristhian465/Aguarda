@@ -37,6 +37,12 @@ class ReciboViewModel(
     private val _uiState = MutableStateFlow(ReciboUiState(guardado = preferencias.recibo.value, hoy = ahora().date))
     val uiState: StateFlow<ReciboUiState> = _uiState.asStateFlow()
 
+    init {
+        viewModelScope.launch {
+            preferencias.recibo.collect { recibo -> _uiState.update { it.copy(guardado = recibo) } }
+        }
+    }
+
     fun onFotoElegida(foto: Uri) {
         _uiState.update { it.copy(leyendo = true, error = null) }
         viewModelScope.launch {

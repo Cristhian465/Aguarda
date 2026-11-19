@@ -81,7 +81,8 @@ flowchart TD
 | 🗺️ **Mapa de cisternas** | Puntos de reparto de agua en Tacna sobre Google Maps, con su horario y estado, la lista de los más cercanos a tu ubicación el aviso "Antes de que se acabe", que te dice a qué cisterna ir antes de quedarte sin agua, y los límites reales de los distritos |
 | 📶 **Sensor IoT del tanque** | Lee el nivel real del tanque (ESP32 + sensor ultrasónico, simulado en Wokwi) desde ThingSpeak y lo aplica como nivel actual |
 | 🔔 **Avisos** | Alerta dentro de la app si el agua no alcanza, si queda menos del 20 % o si falta registrar un llenado |
-| 📡 **100 % local** | Los datos del hogar se guardan solo en el teléfono (SQLite) y no se copian a la nube; el mapa necesita internet para cargar |
+| 🧾 **Consulta integrada EPS (en validación)** | Vincula la cuenta, conserva la sesión cifrada y consulta el PDF del recibo mediante HTTP en la oficina virtual; extrae consumo, periodo y total con ML Kit dentro del teléfono. Validado con cuenta y recibo reales en el Samsung conectado. |
+| 📡 **Datos del hogar locales** | El depósito se guarda en el teléfono; mapa, sensor, ranking opcional y consulta EPS requieren internet. La clave EPS se envía únicamente a su portal HTTP (sin cifrado en tránsito) y no se guarda |
 
 ---
 
@@ -117,7 +118,7 @@ Según el Informe de Factibilidad **(FD01, Versión 1.0)**, el proyecto es viabl
 | **UI** | ![Jetpack Compose](https://img.shields.io/badge/Jetpack_Compose-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white) ![Material 3](https://img.shields.io/badge/Material_3-757575?style=flat-square&logo=materialdesign&logoColor=white) |
 | **Base de datos** | ![Room](https://img.shields.io/badge/Room_(SQLite)-003B57?style=flat-square&logo=sqlite&logoColor=white) |
 | **Mapas** | ![Google Maps](https://img.shields.io/badge/Google_Maps_Compose-4285F4?style=flat-square&logo=googlemaps&logoColor=white) |
-| **Red** | ![Retrofit](https://img.shields.io/badge/Retrofit-48B983?style=flat-square&logo=square&logoColor=white) ![ThingSpeak](https://img.shields.io/badge/ThingSpeak-1D6FA5?style=flat-square) |
+| **Red / HTML** | jsoup 1.24.1 · ![Retrofit](https://img.shields.io/badge/Retrofit-48B983?style=flat-square&logo=square&logoColor=white) ![ThingSpeak](https://img.shields.io/badge/ThingSpeak-1D6FA5?style=flat-square) |
 | **DI** | ![Koin](https://img.shields.io/badge/Koin-F5A623?style=flat-square) |
 | **Fechas** | ![kotlinx.datetime](https://img.shields.io/badge/kotlinx.datetime-7F52FF?style=flat-square) |
 | **Arquitectura** | ![MVVM](https://img.shields.io/badge/MVVM-purple?style=flat-square) ![DDD](https://img.shields.io/badge/DDD-darkblue?style=flat-square) ![Clean Architecture](https://img.shields.io/badge/Clean_Architecture-teal?style=flat-square) |
@@ -157,7 +158,8 @@ AguardApp/
 │               ├── 📁 liga/               Liga del Agua: medición del consumo y puntaje del hogar
 │               ├── 📁 mapa/               Mapa de puntos de cisterna (Google Maps)
 │               ├── 📁 sensor/             Nivel del tanque desde el sensor IoT (Retrofit + ThingSpeak)
-│               └── 📁 ahorro/             Retos, racha, calendario e insignias (SharedPreferences)
+│               ├── 📁 ahorro/             Retos, racha, calendario e insignias (SharedPreferences)
+│               └── 📁 eps/                Consulta del portal, sesión cifrada y OCR del PDF
 │
 ├── 📄 claves.properties                 Claves compartidas (Maps y ThingSpeak)
 ├── 📁 iot/wokwi/                          Simulación del sensor: ESP32 + HC-SR04 (diagram.json, sketch.ino)
@@ -332,9 +334,50 @@ git clone https://github.com/tu-usuario/AguardApp.git
 
 ---
 
+## 🧾 Consulta integrada de EPS Tacna — en validación
+
+En **Mapa → Liga del Agua**, la tarjeta **Tu recibo desde EPS Tacna** ofrece:
+
+1. **Vincular cuenta EPS**: ingresar el usuario y la clave impresos en el recibo. El conector lee el formulario y sus campos ocultos; envía las credenciales mediante HTTP únicamente al host exacto de la oficina virtual. La cuenta queda vinculada únicamente si la respuesta contiene evidencia de acceso y una cookie de sesión.
+2. **Actualizar recibo**: reutiliza la sesión, sigue enlaces directos del portal al PDF y extrae primero el texto digital con PDFBox Android y, si no basta, procesa hasta cuatro páginas con `PdfRenderer` y ML Kit, asociando etiquetas y cifras por posición. Guarda automáticamente mes facturado, consumo explícito en m³ y **total a pagar** (puede incluir deuda, no equivale al cargo del mes). No estima consumo a partir del importe o de las lecturas.
+3. **Desvincular cuenta**: elimina la sesión de este teléfono y conserva el último recibo. No revoca la sesión en el servidor de EPS.
+
+La contraseña no se persiste ni se añade a logs. Las cookies y el usuario se cifran con AES/GCM y una clave de Android Keystore, en `noBackupFilesDir/eps-sesion.enc`. El PDF se procesa en caché privada y se elimina al terminar o fallar. No se envía el documento a una IA externa. Un error conserva el recibo guardado; una sesión vencida obliga a vincular de nuevo. Los datos EPS se reflejan en la tarjeta de recibo existente y en la referencia de consumo de la Liga. El origen EPS cuenta como verificado si el recibo sigue vigente, sin afirmar que exista una firma digital validada.
+
+**Estado real de la integración:** se inspeccionó el HTML público del acceso oficial, que utiliza `usu` y `pas` con POST a `../controlador/login.php`. Se verificaron el acceso autenticado y la descarga de un PDF real desde el Samsung conectado; la validación de campos se describe al final de esta sección. No hay una API oficial documentada identificada. El enlace de Gob.pe usa HTTP y la prueba HTTPS falló al validar el certificado. Por solicitud del usuario se permite HTTP solo para `oficinavirtual.epstacna.com.pe`, sin subdominios y en el puerto estándar. Usuario, clave, cookies y documento viajan sin cifrado y podrían ser interceptados; la pantalla lo informa antes de vincular. HTTPS sigue validando certificados si el portal redirige allí.
+
+El descubrimiento usa enlaces HTML y el flujo AJAX observado del botón «Recibo virtual PDF»: interpreta las rutas literales y métodos de `CargarRecibo(...)` y `MostrarRecibo()`, solicita el visor y sigue su iframe, siempre en el mismo host. Envía `Referer` y `X-Requested-With` en las solicitudes AJAX. No ejecuta JavaScript arbitrario, no resuelve CAPTCHA y no inventa rutas de descarga. Si hay varios documentos, exige una etiqueta explícita de último recibo o periodos identificables para elegir el más reciente. Formularios adicionales, variantes de JavaScript distintas del flujo observado o una disposición de PDF no reconocible requieren adaptar el conector. La extracción rechaza campos ausentes o ambiguos, periodos futuros y recibos anteriores al guardado.
+
+**Dependencias nuevas:** `org.jsoup:jsoup:1.24.1` para formularios, enlaces y transporte HTTP/HTTPS, y `com.tom-roush:pdfbox-android:2.0.27.0` para texto digital del PDF. PDFBox extrae el texto digital; `PdfRenderer`, Android Keystore y ML Kit reutilizan la plataforma y dependencias existentes. No requiere claves API nuevas, servidor propio ni cambios de Supabase. El permiso `INTERNET` ya existe.
+
+**Paquete:** `feature/eps/{domain,data,presentation}`, registrado en `ModuloLiga.kt`. No cambia el esquema de Room. Los campos opcionales de origen EPS, total y fecha de actualización se guardan junto al último recibo en las preferencias existentes, con valores por defecto compatibles con instalaciones previas.
+
+```mermaid
+flowchart LR
+    UI[TarjetaEps] --> VM[EpsViewModel]
+    VM --> CP[ConsultaEpsPortal]
+    CP --> CL[ClientePortalEps + jsoup]
+    CL -->|HTTP y cookies de sesión| EPS[Oficina virtual EPS Tacna]
+    CP --> AS[AlmacenSesionEps + Android Keystore]
+    CP --> PDF[LectorPdfEps: PDFBox + PdfRenderer + ML Kit]
+    PDF --> EX[extraerReciboEps]
+    VM --> PREF[PreferenciasLiga: último recibo]
+    PREF --> REC[TarjetaRecibo y resumen de Liga]
+```
+
+**Validación ejecutada antes del ajuste HTTP (18/11/2026):** `:app:testDebugUnitTest` y `:app:assembleDebug` completaron correctamente: 77 pruebas, incluidas 18 de EPS, sin fallos. APK generado en `app/build/outputs/apk/debug/app-debug.apk`. No se realizó prueba en dispositivo ni consulta con cuenta real.
+
+**Validación reproducible:** ejecutar `sh ./gradlew :app:testDebugUnitTest :app:assembleDebug` con JDK 17 o superior compatible con Gradle y el SDK Android configurado. Las pruebas de `feature/eps` usan respuestas HTML/PDF sintéticas; no consultan datos de usuarios. Se completó la prueba con una cuenta y un recibo reales en el Samsung conectado: acceso HTTP, cookies, menú AJAX, descarga, extracción y guardado. Otros diseños de recibo o cambios del portal requieren nueva validación.
+
+---
+
 ## 📝 Changelog
 
 ### 2026-11-18
+- [Validado] Flujo EPS completo en el Samsung conectado con cuenta y recibo reales: sesión persistida, descarga del PDF, extracción de periodo/consumo/total y guardado. Se retiró el diagnóstico temporal. La lectura de casillas pequeñas usa un recorte ampliado; las cifras se asocian por posición, sin inferir consumo a partir de lecturas o importes.
+- [Corregido] Consulta EPS: navegación del menú dinámico CargarRecibo/MostrarRecibo, cabeceras AJAX/Referer y visor con iframe. Lectura del texto digital con PDFBox Android y respaldo OCR de mayor resolución con alineación de etiquetas y cifras por posición; soporte de «Volumen Fac m³», valores separados y asteriscos del importe.
+- [Cambiado] Por solicitud del usuario, acceso EPS mediante HTTP limitado a `oficinavirtual.epstacna.com.pe` (sin subdominios). Advertencia visible de credenciales y sesión sin cifrado en tránsito. Se mantiene el cifrado local, el bloqueo de destinos externos y la validación TLS de HTTPS.
+- [Agregado] Conector EPS en validación: vinculación mediante el formulario del portal, sesión AES/GCM en Android Keystore, consulta del PDF por HTTPS y extracción local de consumo, periodo y total a pagar. Incluye desvinculación, errores de sesión/certificado/formato y pruebas con respuestas sintéticas. La primera implementación requería validación real; se completó para un recibo tras adaptar el menú AJAX y el OCR. El acceso HTTP al portal fue solicitado por el usuario.
 - [Agregado] Liga del Agua, recibo verificado y duelos: la app lee los m³ de la foto del recibo dentro del teléfono con ML Kit (`com.google.mlkit:text-recognition`); la foto no se guarda ni se envía. El hogar queda "Verificado" solo si el número salió de la foto, el usuario no lo cambió y el recibo tiene hasta 2 meses; su dato pesa el doble en la mediana. Duelos semanales entre distritos que ya compiten, con rivales que rotan cada semana.
 - [Agregado] Liga del Agua, ranking real: consentimiento explícito, envío semanal anónimo (código anónimo, distrito, litros por persona y puntaje) y ranking de distritos con la mediana de sus hogares; un distrito necesita al menos 5 hogares para competir. El mapa pinta cada distrito según su puntaje real. Salir de la Liga borra los datos enviados. El servidor es Supabase: ejecutar `supabase/liga_del_agua.sql` y poner `SUPABASE_URL` y `SUPABASE_ANON_KEY` en `claves.properties`; sin esas claves el ranking queda desconectado y el resto de la app funciona igual.
 - [Agregado] Liga del Agua, medición real (`feature/liga`): pantalla abierta desde el mapa donde el usuario marca cuánta agua hay en su tanque. El consumo sale de lo que bajó el nivel entre dos marcas, descartando los tramos con llenados; hacen falta al menos 24 horas medidas. Puntaje semanal del hogar: mejora frente a su propio consumo habitual (50), retos de Ahorro (30) y constancia (20). Las marcas se guardan solo en el teléfono (`liga.db`).
@@ -377,3 +420,7 @@ Proyecto académico desarrollado en la **Universidad Privada de Tacna** — 2026
 <p align="center">
   <sub>Hecho con 💧 para los hogares de Tacna</sub>
 </p>
+
+**Validación del ajuste HTTP (18/11/2026):** `:app:testDebugUnitTest` y `:app:assembleDebug` completaron correctamente: 78 pruebas, incluidas 19 de EPS, sin fallos. Se comprobó que la política Android bloquea HTTP por defecto y lo permite solo para el host exacto de la oficina virtual. La consulta autenticada del recibo real continúa pendiente.
+
+**Validación final del conector EPS (18/11/2026):** 89 pruebas unitarias aprobadas (30 de EPS), APK Debug compilado y actualización completa verificada en el Samsung con una cuenta y un recibo reales, incluyendo el guardado desde EpsViewModel. La verificación cubre ese formato de recibo; no garantiza disponibilidad del portal ni otros diseños. Se retiraron la actividad temporal y los puntos de diagnóstico. No se incorporaron datos personales, cookies, contraseñas ni documentos reales al repositorio.

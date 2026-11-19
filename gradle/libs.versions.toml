@@ -14,6 +14,8 @@ navigation = "2.9.7"
 mapsCompose = "9.0.1"
 retrofit = "3.0.0"
 mlkitTextRecognition = "16.0.1"
+jsoup = "1.24.1"
+pdfboxAndroid = "2.0.27.0"
 
 [libraries]
 # Android y Compose
@@ -39,6 +41,8 @@ kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime",
 
 # Lectura de texto del recibo dentro del teléfono
 mlkit-text-recognition = { group = "com.google.mlkit", name = "text-recognition", version.ref = "mlkitTextRecognition" }
+jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
+pdfbox-android = { group = "com.tom-roush", name = "pdfbox-android", version.ref = "pdfboxAndroid" }
 
 # Mapas (Google Maps para Compose)
 maps-compose = { group = "com.google.maps.android", name = "maps-compose", version.ref = "mapsCompose" }

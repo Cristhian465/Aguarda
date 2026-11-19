@@ -30,13 +30,20 @@ data class MesRecibo(val anio: Int, val mes: Int) {
 }
 
 /**
- * Consumo del recibo confirmado por el usuario. Solo queda como verificado si el número
- * salió de la foto y el usuario no lo cambió. La foto no se guarda ni se envía.
+ * Consumo confirmado desde foto (sin cambios) u obtenido del portal EPS autenticado.
+ * La verificación indica origen y vigencia; no valida firmas digitales del documento.
  */
-data class ReciboGuardado(val mes: MesRecibo, val metrosCubicos: Double, val leidoDeLaFoto: Boolean) {
+data class ReciboGuardado(
+    val mes: MesRecibo,
+    val metrosCubicos: Double,
+    val leidoDeLaFoto: Boolean,
+    val leidoDeEps: Boolean = false,
+    val totalPagar: Double? = null,
+    val actualizadoEn: String? = null
+) {
     fun vigente(hoy: LocalDate): Boolean = mes.mesesHasta(hoy) in 0..MESES_DE_VIGENCIA
 
-    fun verificado(hoy: LocalDate): Boolean = leidoDeLaFoto && vigente(hoy)
+    fun verificado(hoy: LocalDate): Boolean = (leidoDeLaFoto || leidoDeEps) && vigente(hoy)
 
     fun litrosPorPersonaDia(habitantes: Int): Double = metrosCubicos * LITROS_POR_M3 / mes.dias / habitantes
 

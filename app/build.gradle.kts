@@ -91,6 +91,8 @@ dependencies {
     // Mapas
     implementation(libs.maps.compose)
     implementation(libs.mlkit.text.recognition)
+    implementation(libs.jsoup)
+    implementation(libs.pdfbox.android)
 
     // Red
     implementation(libs.retrofit)

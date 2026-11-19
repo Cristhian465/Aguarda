@@ -101,7 +101,7 @@ El documento se organiza en cuatro secciones: introducción; objetivos y restric
 
 | ID | Atributo | Descripción | Prioridad |
 |---|---|---|---|
-| RNF-01 | Disponibilidad | Gestión del depósito 100 % sin conexión, con Room como única fuente de verdad; solo el mapa y el sensor usan internet. | Alta |
+| RNF-01 | Disponibilidad | Gestión del depósito 100 % sin conexión, con Room como única fuente de verdad; mapa, sensor, ranking opcional y consulta EPS usan internet. | Alta |
 | RNF-02 | Privacidad y seguridad | Ningún dato del hogar sale del teléfono; solo se piden los permisos de internet y de ubicación (opcional); identidad con UUID local. | Alta |
 | RNF-03 | Usabilidad | Interfaz simple, una sola fuente, colores sólidos y errores claros debajo de cada campo. | Alta |
 | RNF-04 | Compatibilidad | Android 7.0 (API 24) o superior; probado contra la API 36. | Media |
@@ -818,7 +818,7 @@ flowchart LR
     MAPS -- HTTPS --> GMAPS
 ```
 
-> La aplicación solo se conecta a dos servicios externos, y únicamente para leer: Google Maps (calles del mapa) y ThingSpeak (mediciones del sensor). Ningún dato del hogar se envía fuera del teléfono.
+> Además de Google Maps y ThingSpeak, la aplicación incluye ranking opcional y un conector EPS en validación. EPS recibe las credenciales para el acceso HTTP, sin cifrado en tránsito; la contraseña no se guarda y el PDF se procesa localmente. La gestión del depósito permanece local.
 
 **Inyección de dependencias:** Koin (`core/di/AppModule.kt`) se organiza en tres módulos. `moduloApp` registra el `Reloj`, el `UsuarioDao`, el `DepositoRepository` y el `MapaRepository`; `moduloRed` registra Retrofit (con la URL de ThingSpeak), la `ThingSpeakApi` y el `SensorRepository`, que recibe el canal y la clave de lectura desde `BuildConfig`; y `moduloViewModels` registra todos los ViewModels, que cada pantalla obtiene con `koinViewModel()`. El tipo de llenado (completo o parcial) llega a `RegistrarLlenadoViewModel` con `parametersOf`. Antes de iniciar Koin, `iniciarAplicacion` crea la base de datos y el usuario local. Los casos de uso no tienen estado y cada ViewModel o el repositorio los crea directamente.
 
@@ -915,4 +915,37 @@ El dominio es Kotlin puro y no depende de Android, por lo que puede probarse con
 
 ## 4.6. Otros escenarios
 
-**Privacidad:** la aplicación solo declara en el `AndroidManifest.xml` los permisos de internet (para el mapa y el sensor) y de ubicación (para mostrar al usuario en el mapa; se pide al abrirlo y puede negarse). Ningún dato del hogar sale del dispositivo: el mapa y el sensor solo descargan información, en línea con la privacidad por diseño de la Ley N.° 29733. Las claves de Google Maps y de ThingSpeak se leen de `local.properties` y no se suben al repositorio. El respaldo automático de Android está desactivado (`allowBackup="false"`, y `backup_rules.xml` y `data_extraction_rules.xml` excluyen todos los datos), de modo que la base local no se copia a la nube ni a otro teléfono. El consentimiento de la bienvenida empieza sin marcar: el usuario debe aceptarlo de forma explícita.
+**Privacidad:** la aplicación solo declara en el `AndroidManifest.xml` los permisos de internet (para el mapa y el sensor) y de ubicación (para mostrar al usuario en el mapa; se pide al abrirlo y puede negarse). El depósito permanece local. La consulta EPS envía las credenciales únicamente a su portal HTTP (sin cifrado en tránsito) y el ranking requiere consentimiento para los datos anónimos; el documento EPS se procesa dentro del teléfono. Las claves de Google Maps y de ThingSpeak se leen de `local.properties` y no se suben al repositorio. El respaldo automático de Android está desactivado (`allowBackup="false"`, y `backup_rules.xml` y `data_extraction_rules.xml` excluyen todos los datos), de modo que la base local no se copia a la nube ni a otro teléfono. El consentimiento de la bienvenida empieza sin marcar: el usuario debe aceptarlo de forma explícita.
+
+
+## Actualización arquitectónica — 18/11/2026: conector EPS
+
+`feature/eps` añade dominio (`ConsultaEps`, `CuentaEps`, `ReciboEps`, `ErrorEps`, extracción estricta), datos (`ClientePortalEps`, transporte jsoup, `AlmacenSesionEps`, `LectorPdfEps`, `ConsultaEpsPortal`) y presentación (`EpsViewModel`, `TarjetaEps`). Koin registra la implementación en `ModuloLiga.kt`; la tarjeta aparece en `LigaScreen` antes del recibo existente. No hay cambios de esquema Room ni de Supabase.
+
+El conector usa el formulario observado y el HTML autenticado. Además de enlaces directos, interpreta las dos funciones AJAX de recibo CargarRecibo/MostrarRecibo sin ejecutar JavaScript arbitrario, y sigue el iframe al documento. No consume una API documentada ni inventa endpoints de PDF. El acceso inicial usa HTTP; admite HTTP/HTTPS únicamente en el host exacto `oficinavirtual.epstacna.com.pe` y sus puertos estándar, incluyendo todas las redirecciones. `network_security_config.xml` bloquea tráfico HTTP por defecto y lo permite únicamente para ese host, sin subdominios. No desactiva la validación TLS. El usuario, la clave y las cookies viajan sin cifrado por HTTP; la interfaz lo advierte. Guarda cookies/usuario con AES/GCM y una clave de Android Keystore en `noBackupFilesDir`; no persiste contraseñas. Un `Mutex` serializa vinculación, actualización y eliminación de sesión. El trabajo de red/PDF se ejecuta en `Dispatchers.IO`. El documento temporal se elimina en `finally`.
+
+`ReciboGuardado` añade campos opcionales `leidoDeEps`, `totalPagar` y `actualizadoEn`, persistidos en las preferencias de Liga con valores por defecto para datos antiguos. El recibo mantiene su fuente foto/EPS; solo las fuentes obtenidas y vigentes cuentan como verificadas. `ReciboViewModel` observa las preferencias para reflejar las actualizaciones externas. La eliminación de la sesión local no elimina el recibo ni invoca una revocación remota.
+
+```mermaid
+flowchart TB
+    subgraph Android
+      UI[TarjetaEps] --> VM[EpsViewModel]
+      VM --> I[ConsultaEps]
+      I --> R[ConsultaEpsPortal]
+      R --> H[ClientePortalEps / TransporteJsoupEps]
+      R --> A[AlmacenSesionEps]
+      A --> K[Android Keystore + archivo AES GCM]
+      R --> P[LectorPdfEps / PDFBox / PdfRenderer / ML Kit]
+      P --> ALC[AlinearCamposEps: etiquetas y cifras por posición]
+      ALC --> D[extraerReciboEps]
+      VM --> L[PreferenciasLiga / ReciboGuardado]
+      L --> T[TarjetaRecibo / ResumenDelHogar]
+    end
+    H -->|HTTP; cookies del mismo host| EPS[Oficina virtual EPS Tacna]
+```
+
+**Dependencias:** jsoup 1.24.1 y PDFBox Android 2.0.27.0. Se mantienen ML Kit y las APIs nativas de Android. **Validación:** se verificaron el HTML autenticado y la descarga del PDF real desde el teléfono. El conector rechaza destinos externos, ambigüedad y formatos desconocidos. HTTPS conserva la validación de certificados; el acceso HTTP solicitado permanece limitado al host de EPS.
+
+**Lectura de campos EPS:** PDFBox Android intenta obtener texto digital. Para PDFs de imagen, ML Kit procesa páginas de hasta 3200 píxeles por lado (escala máxima 3); `AlinearCamposEps` asocia las cifras con etiquetas en su fila o recuadro. Si el volumen pequeño no se reconoce, se amplía solo la casilla a la derecha de «Volumen Fac m» y se acepta únicamente una cifra inequívoca. No se calculan consumos por diferencia de lecturas. Las credenciales y el texto completo del PDF no se registran en logs. El diagnóstico temporal usado en la validación se retiró del código y de la aplicación.
+
+**Validación final del conector EPS (18/11/2026):** 89 pruebas unitarias aprobadas (30 de EPS), APK Debug compilado y actualización completa verificada en el Samsung con una cuenta y un recibo reales, incluyendo el guardado desde EpsViewModel. La verificación cubre ese formato de recibo; no garantiza disponibilidad del portal ni otros diseños. Se retiraron la actividad temporal y los puntos de diagnóstico. No se incorporaron datos personales, cookies, contraseñas ni documentos reales al repositorio.

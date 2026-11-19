@@ -72,14 +72,14 @@ El desarrollo de AguardApp se justifica por la necesidad de que cada hogar conoz
 - Mapa de los puntos de reparto de agua en cisterna de Tacna, con su horario y estado.
 - Lectura del nivel real del tanque desde un sensor IoT (ESP32 con sensor ultrasónico, prototipo simulado en Wokwi) que publica sus mediciones en ThingSpeak.
 - Pestaña Ahorro con registro local de retos diarios, racha semanal, calendario e insignias.
-- Gestión del depósito 100 % sin conexión con una base de datos local (Room / SQLite); solo el mapa y el sensor usan internet.
+- Gestión del depósito 100 % sin conexión con una base de datos local (Room / SQLite); mapa, sensor, ranking opcional y consulta EPS usan internet.
 
 **Fuera del alcance del proyecto se considera:**
 
 - La consulta del sector y de los cronogramas oficiales.
-- La digitalización de recibos, los reportes ciudadanos, la clasificación por sector y el asistente hídrico.
+- Los reportes ciudadanos, la clasificación por sector y el asistente hídrico.
 - La sincronización en la nube, el inicio de sesión con Google y las notificaciones push (los avisos solo se muestran dentro de la aplicación).
-- La versión para iOS y la integración con los sistemas de EPS Tacna.
+- La versión para iOS y los sistemas EPS distintos del conector de recibos descrito en la actualización del 18/11/2026.
 
 El proyecto se ejecuta entre agosto y diciembre de 2026, con una inversión estimada de S/ 17,720.00 cubierta con recursos propios del equipo.
 
@@ -122,7 +122,7 @@ El internet de las cosas conecta dispositivos físicos a internet para que enví
 
 ### Privacidad por diseño
 
-La Ley N.° 29733 exige proteger los datos personales. AguardApp aplica la privacidad por diseño: todos los datos del hogar se guardan en el teléfono y no se envían a ningún servidor. La aplicación solo pide internet, para descargar el mapa y la medición del sensor, y, de forma opcional, la ubicación para mostrar al usuario en el mapa.
+La Ley N.° 29733 exige proteger los datos personales. AguardApp guarda el depósito en el teléfono. Las funciones de mapa, sensor, ranking opcional y EPS requieren internet. El ranking requiere consentimiento; la consulta EPS envía las credenciales solo al portal HTTP (sin cifrado en tránsito), conserva la sesión cifrada y procesa el documento localmente. La ubicación para el mapa es opcional.
 
 ## 5. Desarrollo de la Solución
 
@@ -325,3 +325,18 @@ pie showData
 - **Anexo 02:** [Documento de Visión (FD02)](FD02-Vision.md)
 - **Anexo 03:** [Documento de Especificación de Requerimientos de Software (FD03)](FD03-SRS.md)
 - **Anexo 04:** [Documento de Arquitectura de Software (FD04)](FD04-SAD.md)
+
+
+## Actualización de desarrollo — 18/11/2026: consulta de recibo EPS
+
+Se incorpora en Liga del Agua un flujo para vincular cuenta EPS, actualizar el recibo y desvincular la sesión. El conector implementado lee el formulario público, envía el acceso por HTTP al host exacto de la oficina virtual, cifra las cookies con Android Keystore y busca enlaces HTML al PDF. El PDF se procesa con PDFBox Android (texto digital) o PdfRenderer y ML Kit (OCR con alineación de campos) en el teléfono; se guardan consumo, mes y total a pagar, conservando el recibo anterior ante errores. La contraseña no se guarda y el documento temporal se elimina. El total puede incluir deuda; no se interpreta como consumo ni como cargo exclusivo del periodo.
+
+La nueva biblioteca jsoup permite analizar formularios/enlaces y realizar las solicitudes HTTP/HTTPS al portal EPS. Se añaden pruebas unitarias con respuestas sintéticas para autenticación, sesión vencida, selección de periodo, extracción y bloqueo de redirecciones inseguras. Estas pruebas no equivalen a una certificación del servicio externo.
+
+**Resultado:** se validaron en el Samsung conectado la cuenta real, la descarga del documento, la extracción de los tres campos y su guardado mediante EpsViewModel. No se almacenaron credenciales ni PDFs en el repositorio. Después del ajuste HTTP se inspeccionó el HTML autenticado y se obtuvo el PDF real desde el Samsung conectado. La descarga requirió seguir el menú AJAX y enviar las cabeceras de navegación. La app usa HTTP por solicitud del usuario, solo en la oficina virtual, y advierte que las credenciales viajan sin cifrado. No simula resultados ni vinculación exitosa. El flujo AJAX conocido está implementado sin ejecutar JavaScript arbitrario; CAPTCHA, formularios adicionales o variantes distintas requieren adaptar el conector. No se afirma que haya una API oficial de EPS disponible.
+
+**Verificación de código (18/11/2026):** compilación Debug y 77 pruebas unitarias completadas (antes del ajuste HTTP) sin fallos, incluidas 18 del conector EPS. Se generó `app/build/outputs/apk/debug/app-debug.apk`. No se probó en dispositivo ni con cuenta real; ese resultado no confirma la disponibilidad del portal externo.
+
+**Validación del ajuste HTTP (18/11/2026):** `:app:testDebugUnitTest` y `:app:assembleDebug` completaron correctamente: 78 pruebas, incluidas 19 de EPS, sin fallos. Se comprobó que la política Android bloquea HTTP por defecto y lo permite solo para el host exacto de la oficina virtual. La consulta autenticada del recibo real continúa pendiente.
+
+**Validación final del conector EPS (18/11/2026):** 89 pruebas unitarias aprobadas (30 de EPS), APK Debug compilado y actualización completa verificada en el Samsung con una cuenta y un recibo reales, incluyendo el guardado desde EpsViewModel. La verificación cubre ese formato de recibo; no garantiza disponibilidad del portal ni otros diseños. Se retiraron la actividad temporal y los puntos de diagnóstico. No se incorporaron datos personales, cookies, contraseñas ni documentos reales al repositorio.

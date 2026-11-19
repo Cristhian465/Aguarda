@@ -45,6 +45,9 @@ fun TarjetaRecibo(viewModel: ReciboViewModel = koinViewModel()) {
                     color = if (verificado) AguaMedia else Coral
                 )
                 Detalle("Recibo de ${recibo.mes}: ${recibo.metrosCubicos} m³")
+                recibo.totalPagar?.let { Detalle("Total a pagar: S/ ${String.format(java.util.Locale.US, "%.2f", it)}") }
+                if (recibo.leidoDeEps) Detalle("Obtenido de EPS Tacna")
+                recibo.actualizadoEn?.let { Detalle("Actualizado: ${it.replace('T', ' ')}") }
             } ?: Detalle("Elige una foto de tu recibo de agua. Se lee dentro del teléfono: la foto no se guarda ni se envía.")
             BotonPrincipal(
                 if (estado.leyendo) "Leyendo el recibo…" else "Elegir foto del recibo",

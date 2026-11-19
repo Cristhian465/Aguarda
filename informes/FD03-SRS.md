@@ -80,17 +80,17 @@ La ciudad de Tacna se abastece de agua potable bajo un esquema de racionamiento,
 ### 2.3. Objetivos de Diseño
 
 - Construir una aplicación Android nativa con Kotlin y Jetpack Compose.
-- Garantizar que la gestión del depósito funcione 100 % sin conexión, con una base de datos local (Room / SQLite) como única fuente de verdad; solo el mapa de cisternas y el sensor del tanque usan internet.
+- Garantizar que la gestión del depósito funcione 100 % sin conexión, con una base de datos local (Room / SQLite) como única fuente de verdad; las funciones de mapa, sensor, ranking opcional y consulta EPS usan internet.
 - Aplicar el patrón MVVM en la presentación y una organización por dominio (DDD), con el dominio independiente de Android.
-- Proteger la privacidad: todos los datos del hogar quedan en el teléfono; la aplicación solo pide internet (mapa y sensor) y, de forma opcional, la ubicación para el mapa.
+- Proteger la privacidad: todos los datos del hogar quedan en el teléfono; la aplicación solo pide internet (mapa, sensor, ranking y EPS) y, de forma opcional, la ubicación para el mapa.
 
 ### 2.4. Alcance del proyecto
 
 El sistema comprende la configuración del hogar (tipo y capacidad del depósito, habitantes, hábitos de consumo y hora habitual de llegada del agua), el registro de llenados completos o parciales, el cálculo del nivel actual del depósito, la proyección de la hora de agotamiento, el cálculo del déficit de litros hasta el próximo llenado, las recomendaciones de recorte de consumo, la declaración de "me quedé sin agua", con la que la aplicación aprende el consumo real del hogar, y una pantalla de avisos que alerta dentro de la aplicación sobre el déficit, el nivel bajo o la falta de un llenado registrado. Además, incluye un mapa con los puntos de reparto de agua en cisterna de Tacna y la lectura del nivel real del tanque desde un sensor IoT (ESP32 con sensor ultrasónico) que publica sus mediciones en ThingSpeak.
 
-La aplicación es nativa para Android y se desarrolla con Kotlin, Jetpack Compose, Room, Koin, Navigation Compose, Google Maps Compose y Retrofit. Todos los datos del hogar se guardan en una base de datos SQLite local y no se necesitan cuentas de usuario; solo el mapa y el sensor requieren conexión a internet.
+La aplicación es nativa para Android y se desarrolla con Kotlin, Jetpack Compose, Room, Koin, Navigation Compose, Google Maps Compose y Retrofit. Todos los datos del hogar se guardan en una base de datos SQLite local y no se necesita una cuenta para gestionar el depósito; la consulta EPS requiere vincular su cuenta externa; mapa, sensor, ranking opcional y consulta EPS requieren conexión a internet.
 
-Quedan fuera del alcance de esta versión: la consulta del sector y del cronograma oficial, la confirmación colaborativa de horarios, la digitalización de recibos, los reportes ciudadanos, la clasificación por sector, el asistente hídrico, la sincronización en la nube, el inicio de sesión con Google, las notificaciones push (los avisos solo se muestran dentro de la aplicación) y la versión para iOS.
+Quedan fuera del alcance de esta versión: la consulta del sector y del cronograma oficial, la confirmación colaborativa de horarios, los reportes ciudadanos, la clasificación por sector, el asistente hídrico, la sincronización en la nube, el inicio de sesión con Google, las notificaciones push (los avisos solo se muestran dentro de la aplicación) y la versión para iOS.
 
 ### 2.5. Viabilidad del Sistema
 
@@ -179,7 +179,7 @@ flowchart TD
 |---|---|---|
 | RNF-01 | Disponibilidad | La gestión del depósito opera al 100 % sin conexión, con la base de datos local (Room / SQLite) como única fuente de verdad. Sin internet, el mapa y el sensor muestran el motivo y el resto de la aplicación sigue funcionando. |
 | RNF-02 | Rendimiento | Las pantallas deben responder en un máximo de 2 segundos en condiciones normales; los cálculos se hacen en el dispositivo sin esperar a la red. |
-| RNF-03 | Privacidad y seguridad | Ningún dato del hogar sale del teléfono: el respaldo automático de Android está desactivado, tanto a la nube como al pasar a otro teléfono. La aplicación solo declara los permisos de internet (para el mapa y el sensor, que únicamente descargan datos) y de ubicación, que se pide al abrir el mapa y puede negarse. Las claves de Google Maps y de ThingSpeak se leen de `local.properties` y no se guardan en el repositorio. El usuario se identifica con un UUID local. |
+| RNF-03 | Privacidad y seguridad | El depósito permanece local y el respaldo automático de Android está desactivado. La consulta EPS envía credenciales al portal HTTP (sin cifrado en tránsito) sin guardarlas y el ranking opcional envía datos anónimos con consentimiento. La aplicación solo declara los permisos de internet (para el mapa y el sensor, que únicamente descargan datos) y de ubicación, que se pide al abrir el mapa y puede negarse. Las claves de Google Maps y de ThingSpeak se leen de `local.properties` y no se guardan en el repositorio. El usuario se identifica con un UUID local. |
 | RNF-04 | Usabilidad y accesibilidad | Interfaz con textos legibles, una sola fuente tipográfica, colores sólidos, botones a lo ancho de la pantalla y mensajes de error claros debajo de cada campo. |
 | RNF-05 | Compatibilidad | Android 7.0 (API 24) o superior; probado contra la API 36. |
 | RNF-06 | Mantenibilidad | Arquitectura MVVM + DDD: dominio en Kotlin puro, independiente de Android; cada pantalla con un Screen y un ViewModel; sin capas innecesarias. |
@@ -229,7 +229,7 @@ Tras el análisis se mantuvieron los requerimientos iniciales, se precisaron sus
 |---|---|---|
 | Jefe de hogar | Persona que administra el agua de la casa | Configurar el hogar, registrar llenados, consultar el depósito y el déficit, ver qué recortar, declarar que se quedó sin agua, consultar los avisos, el mapa de cisternas y el nivel del sensor |
 
-> La aplicación tiene un único perfil: no hay cuentas ni roles, y cada teléfono guarda los datos de un hogar.
+> La gestión local tiene un único perfil por teléfono, sin roles. La consulta integrada de recibos requiere vincular opcionalmente una cuenta externa de EPS Tacna.
 
 ### 5.2. Modelo Conceptual
 
@@ -663,3 +663,44 @@ classDiagram
 - Documentación de Retrofit: <https://square.github.io/retrofit/>
 - Documentación de ThingSpeak: <https://www.mathworks.com/help/thingspeak/>
 - Documentación de Mermaid: <https://mermaid.js.org/>
+
+
+## Actualización de alcance — 18/11/2026: recibo integrado EPS (en validación)
+
+- **RF-EPS-01:** vincular la cuenta del usuario con el formulario real de EPS Tacna mediante HTTP, limitado al host de la oficina virtual. La contraseña no se guarda; se conserva solo la sesión cifrada en el teléfono y la cuenta se vincula tras confirmar el acceso.
+- **RF-EPS-02:** consultar el recibo con «Actualizar recibo», sin abrir la web ni descargar manualmente. El conector interpreta el flujo AJAX de recibo observado en el portal, sigue el iframe del visor al PDF y obtiene mes facturado, consumo explícito en m³ y total a pagar mediante texto digital y OCR local con alineación por posición. El total puede incluir deuda y no debe presentarse como cargo exclusivo del mes.
+- **RF-EPS-03:** desvincular eliminando la sesión local, conservando el último recibo. La operación no revoca sesiones del servidor EPS.
+- **RN-EPS-01 (actualizada por solicitud del usuario):** permitir HTTP únicamente al host exacto `oficinavirtual.epstacna.com.pe`, puerto estándar y sin subdominios. Informar antes de vincular que usuario, clave y sesión viajan sin cifrado y pueden ser interceptados. Bloquear otros destinos y no reenviar POST por redirecciones 307/308. Mantener validación TLS para HTTPS.
+- **RN-EPS-02:** guardar automáticamente solo si consumo, periodo e importe son inequívocos. Ante error, conservar el recibo anterior. No aceptar periodos futuros o anteriores al guardado, ni deducir consumo de importes/lecturas.
+- **RN-EPS-03:** el recibo obtenido de EPS puede figurar como verificado por origen y vigencia (hasta dos meses); no significa validación de firma digital. La lectura de fotos previa se conserva.
+- **RNF-EPS-01:** procesamiento fuera del hilo principal, PDF de menos de 8 MB y entre una y cuatro páginas; caché privada temporal y sesión cifrada con Android Keystore, excluida de copias.
+
+**Estado:** acceso, descarga, extracción de campos y guardado validados con una sesión y un recibo reales en el Samsung conectado; además, hay pruebas unitarias sintéticas. El enlace oficial usa HTTP y no se logró validar HTTPS; el usuario autorizó el acceso HTTP limitado a la oficina virtual. La aplicación muestra el riesgo antes de enviar los datos. No se afirma que exista una API oficial disponible. Se soporta el flujo AJAX observado de CargarRecibo/MostrarRecibo; CAPTCHA, formularios adicionales y variantes desconocidas siguen fuera del conector.
+
+```mermaid
+sequenceDiagram
+    actor U as Usuario
+    participant V as TarjetaEps / EpsViewModel
+    participant C as ConsultaEpsPortal
+    participant E as Portal EPS (HTTP)
+    participant P as PdfRenderer / ML Kit / extractor
+    participant L as PreferenciasLiga
+    U->>V: Vincular usuario y clave
+    V->>C: vincular
+    C->>E: Leer formulario y POST HTTP
+    E-->>C: Sesión y evidencia de acceso
+    C->>C: Guardar sesión cifrada, sin contraseña
+    U->>V: Actualizar recibo
+    V->>C: actualizar
+    C->>E: Consultar enlaces con sesión
+    E-->>C: PDF
+    C->>P: Extraer texto y campos
+    alt Campos inequívocos y periodo válido
+        P-->>V: Consumo, mes y total
+        V->>L: Guardar último recibo
+    else Error o datos incompletos
+        C-->>V: Error visible; conservar recibo anterior
+    end
+```
+
+**Validación final del conector EPS (18/11/2026):** 89 pruebas unitarias aprobadas (30 de EPS), APK Debug compilado y actualización completa verificada en el Samsung con una cuenta y un recibo reales, incluyendo el guardado desde EpsViewModel. La verificación cubre ese formato de recibo; no garantiza disponibilidad del portal ni otros diseños. Se retiraron la actividad temporal y los puntos de diagnóstico. No se incorporaron datos personales, cookies, contraseñas ni documentos reales al repositorio.
