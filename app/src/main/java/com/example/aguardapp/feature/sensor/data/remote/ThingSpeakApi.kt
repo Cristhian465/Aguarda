@@ -11,10 +11,23 @@ interface ThingSpeakApi {
         @Path("canal") canal: String,
         @Query("api_key") claveLectura: String?
     ): EntradaThingSpeakDto
+
+    /** Entradas del canal entre dos fechas en UTC, con el formato "AAAA-MM-DD HH:MM:SS". */
+    @GET("channels/{canal}/feeds.json")
+    suspend fun historial(
+        @Path("canal") canal: String,
+        @Query("api_key") claveLectura: String?,
+        @Query("start") desde: String,
+        @Query("end") hasta: String
+    ): HistorialThingSpeakDto
 }
 
 data class EntradaThingSpeakDto(
     @SerializedName("created_at") val creadaEn: String?,
     @SerializedName("field1") val porcentaje: String?,
     @SerializedName("field2") val distanciaCm: String?
+)
+
+data class HistorialThingSpeakDto(
+    @SerializedName("feeds") val entradas: List<EntradaThingSpeakDto>?
 )
