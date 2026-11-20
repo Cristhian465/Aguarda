@@ -34,15 +34,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.aguardapp.R
+import com.example.aguardapp.core.ui.theme.AguaOla
 import com.example.aguardapp.core.ui.theme.AguaSuave
-import com.example.aguardapp.core.ui.theme.Agua
 import com.example.aguardapp.core.ui.theme.AguaClara
 import com.example.aguardapp.core.ui.theme.AguaMedia
 import com.example.aguardapp.core.ui.theme.AguaProfunda
@@ -97,10 +96,16 @@ fun InicioScreen(
             Text("Inicio", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.ExtraBold)
             Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(AguaProfunda)) {
                 Canvas(Modifier.matchParentSize()) {
-                    val centro = Offset(size.width - 26.dp.toPx(), size.height - 16.dp.toPx())
-                    drawCircle(AguaSuave.copy(alpha = .45f), 105.dp.toPx(), centro)
-                    drawCircle(Agua, 81.dp.toPx(), centro, style = Stroke(1.dp.toPx()))
-                    drawCircle(Agua.copy(alpha = .28f), 60.dp.toPx(), centro)
+                    val x = size.width / 300f
+                    val y = size.height / 150f
+                    drawPath(Path().apply {
+                        moveTo(300 * x, 55 * y); cubicTo(262 * x, 62 * y, 250 * x, 118 * y, 170 * x, 150 * y)
+                        lineTo(300 * x, 150 * y); close()
+                    }, AguaOla.copy(alpha = 0.25f))
+                    drawPath(Path().apply {
+                        moveTo(300 * x, 100 * y); cubicTo(272 * x, 104 * y, 250 * x, 138 * y, 215 * x, 150 * y)
+                        lineTo(300 * x, 150 * y); close()
+                    }, AguaOla.copy(alpha = 0.19f))
                 }
                 Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Mi depósito", style = MaterialTheme.typography.titleMedium, color = Blanco, fontWeight = FontWeight.Bold)

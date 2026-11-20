@@ -375,6 +375,7 @@ flowchart LR
 ## 📝 Changelog
 
 ### 2026-11-20
+- [Cambiado] La tarjeta "Mi depósito" de Inicio usa las mismas dos olas del fondo del widget (`AguaOla` `#80AAD3` con transparencia) en lugar de los círculos decorativos.
 - [Cambiado] Los fondos que usaban `#000F22` (tarjeta de Mi depósito en Inicio y widget) pasan a `#1B3554`; el texto principal (`Tinta`) se mantiene en `#000F22`. Los elementos que iban sobre fondos `#1B3554` (botón de ajustes de Mi depósito, logo, tarjeta y casilla de la bienvenida, círculo de Inicio, pastilla y círculo del widget) usan `AguaSuave` `#3F6593` para seguir viéndose.
 - [Cambiado] Las barras superiores (`BarraSuperior`: Mapa, Represas, Liga del Agua, Recibos EPS, Avisos, Configurar, Registrar llenado, Sin agua y Qué recortar) y el encabezado "Aguarda" de Inicio son `#1B3554` hasta la barra de estado, con título blanco, subtítulo `#C0E6FD` e íconos de estado claros.
 - [Cambiado] El agua de los tres tanques (widget, Mi depósito y Registrar llenado completo/parcial) pasa a un cian apagado (`#51AFBC`) para que no resalte tanto sobre la paleta azul.
