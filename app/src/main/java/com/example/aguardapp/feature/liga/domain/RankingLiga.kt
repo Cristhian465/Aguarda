@@ -28,6 +28,10 @@ data class FilaRanking(
     val puntaje: Double?
 )
 
+const val HOGARES_MINIMOS = 5
+
+val FilaRanking.hogaresQueFaltan: Int get() = (HOGARES_MINIMOS - hogares).coerceAtLeast(0)
+
 interface RankingRepository {
     suspend fun enviar(envio: EnvioSemanal): Result<Unit>
 

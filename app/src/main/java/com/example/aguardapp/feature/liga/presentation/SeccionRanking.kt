@@ -31,6 +31,8 @@ import com.example.aguardapp.feature.deposito.presentation.componentes.BotonPrin
 import com.example.aguardapp.feature.deposito.presentation.componentes.BotonSecundario
 import com.example.aguardapp.feature.deposito.presentation.componentes.TarjetaBlanca
 import com.example.aguardapp.feature.liga.domain.FilaRanking
+import com.example.aguardapp.feature.liga.domain.HOGARES_MINIMOS
+import com.example.aguardapp.feature.liga.domain.hogaresQueFaltan
 
 private const val REFRESCO_MS = 30_000L
 
@@ -80,10 +82,10 @@ private fun TarjetaConsentimiento(estado: RankingLigaUiState, onElegir: (String)
 private fun TarjetaRanking(estado: RankingLigaUiState, onSalir: () -> Unit) {
     TarjetaBlanca {
         Titulo("Ranking de distritos")
-        Detalle("Cada distrito necesita al menos 5 hogares para competir.")
+        Detalle("Cada distrito necesita al menos $HOGARES_MINIMOS hogares para competir.")
         estado.filas.forEach { FilaDeRanking(it, it.ubigeo == estado.ubigeoElegido) }
         estado.error?.let { Text(it, fontFamily = FuenteTexto, fontSize = 13.sp, color = Coral) }
-        BotonSecundario("Dejar de participar y borrar mis datos", onSalir, Modifier.padding(top = 8.dp))
+        BotonSecundario("Salir y borrar mis datos", onSalir, Modifier.padding(top = 8.dp))
     }
 }
 
@@ -103,13 +105,23 @@ private fun FilaDeRanking(fila: FilaRanking, esMiDistrito: Boolean) {
             Text(textoHogares(fila.hogares, fila.verificados), fontFamily = FuenteTexto, fontSize = 12.sp, color = TintaSuave)
         }
         Text(
-            fila.puntaje?.let { "${it.roundToInt()} pts" } ?: "Sin datos",
+            fila.puntaje?.let { "${it.roundToInt()} pts" } ?: textoHogaresQueFaltan(fila.hogaresQueFaltan),
             fontFamily = FuenteTexto, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TintaSuave
         )
     }
 }
 
 internal fun textoHogares(hogares: Int, verificados: Int): String {
-    val total = if (hogares == 1) "1 hogar" else "$hogares hogares"
+    val total = when (hogares) {
+        0 -> "Aún sin hogares"
+        1 -> "1 hogar"
+        else -> "$hogares hogares"
+    }
     return if (verificados > 0) "$total · $verificados verificados" else total
+}
+
+internal fun textoHogaresQueFaltan(faltan: Int): String = when (faltan) {
+    0 -> "Calculando"
+    1 -> "Falta 1 hogar"
+    else -> "Faltan $faltan hogares"
 }

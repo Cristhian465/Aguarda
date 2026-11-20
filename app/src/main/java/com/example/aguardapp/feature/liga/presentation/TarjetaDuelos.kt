@@ -14,13 +14,14 @@ import com.example.aguardapp.core.ui.theme.FuenteTexto
 import com.example.aguardapp.core.ui.theme.Tinta
 import com.example.aguardapp.feature.deposito.presentation.componentes.TarjetaBlanca
 import com.example.aguardapp.feature.liga.domain.Duelo
+import com.example.aguardapp.feature.liga.domain.HOGARES_MINIMOS
 
 @Composable
 fun TarjetaDuelos(duelos: List<Duelo>) {
     TarjetaBlanca {
         Titulo("Duelos de la semana")
         if (duelos.isEmpty()) {
-            Detalle("Los duelos empiezan cuando dos distritos lleguen a 5 hogares.")
+            Detalle("Los duelos empiezan cuando dos distritos lleguen a $HOGARES_MINIMOS hogares.")
         }
         duelos.forEach { duelo -> FilaDuelo(duelo) }
     }
