@@ -200,7 +200,7 @@ Tras el análisis se mantuvieron los requerimientos iniciales, se precisaron sus
 | RF-07 | Declarar que se quedó sin agua | Opciones "Se acabó ahora" o "Se acabó antes, a las HH:mm" (4 números en formato de 24 h; el ":" se agrega solo). Una hora posterior a la actual se toma como del día anterior. La hora debe estar completa, existir (00:00 a 23:59) y quedar después del último llenado; cada caso tiene su propio mensaje, y si la hora escrita aún no llega hoy y tampoco sirve como de ayer, se avisa "Esa hora todavía no llega". Antes de registrar se muestra lo proyectado frente a lo ocurrido, y la comparación se actualiza con la hora escrita. El botón Registrar no permite registros duplicados. | Media |
 | RF-08 | Operar sin conexión | Todas las funciones del depósito trabajan con la base local. El mapa y el sensor necesitan internet; sin conexión, el resto de la aplicación funciona igual. | Alta |
 | RF-09 | Consultar avisos | Se abre desde "Ver avisos" en Mi depósito. Los avisos se generan según RN-11, cada tipo con su color; al tocar uno se navega a Qué recortar, a Registrar llenado completo o de vuelta a Mi depósito. Sin avisos se indica que el depósito alcanza hasta el próximo llenado. | Media |
-| RF-10 | Consultar el mapa de cisternas | Se abre desde la pestaña "Mapa" de la barra inferior. Muestra sobre Google Maps los puntos de reparto de Tacna con un marcador por punto, coloreado según su estado (azul: activo, naranja: en ruta, rojo: terminado); al tocarlo se ve el nombre, el horario y el estado. Al abrir el mapa se pide el permiso de ubicación: si se concede, se muestra la ubicación del usuario y el botón para centrarla; si se niega, el mapa funciona igual. Mientras no haya puntos oficiales, se usan puntos de prueba. | Media |
+| RF-10 | Consultar el mapa de cisternas | Se abre desde la tarjeta «Mapa» de Inicio. Muestra sobre Google Maps los puntos de reparto de Tacna con un marcador por punto, coloreado según su estado (azul: activo, naranja: en ruta, rojo: terminado); al tocarlo se ve el nombre, el horario y el estado. Al abrir el mapa se pide el permiso de ubicación: si se concede, se muestra la ubicación del usuario y el botón para centrarla; si se niega, el mapa funciona igual. Mientras no haya puntos oficiales, se usan puntos de prueba. | Media |
 | RF-11 | Consultar el nivel del sensor | La tarjeta "Sensor del tanque" aparece en Mi depósito solo si está configurado el canal de ThingSpeak. Mientras la pantalla está visible, consulta el último dato cada 20 s y muestra el porcentaje, los litros (porcentaje × capacidad) y la antigüedad de la lectura ("hace 30 s"). Una lectura más reciente que el último nivel registrado se aplica sola como nivel actual del depósito (RN-12); el botón "Usar esta medición como nivel actual" la vuelve a aplicar. Si no hay conexión o el canal no tiene datos, la tarjeta muestra el motivo ("Sin conexión con el sensor" o "El sensor aún no envió datos"). | Media |
 | RF-12 | Registrar y consultar el progreso de ahorro | La pestaña Ahorro permite marcar y desmarcar los retos del día. Un día cuenta para la racha y el calendario si tiene al menos un reto marcado. Las insignias se calculan con el historial local. | Media |
 
@@ -327,7 +327,7 @@ flowchart LR
 |---|---|
 | **Actor** | Jefe de hogar |
 | **Precondición** | Es la primera vez que se abre la aplicación. |
-| **Flujo principal** | 1) La aplicación muestra qué hace y la casilla de consentimiento, sin marcar. 2) El usuario marca la casilla (recién entonces se habilita "Empezar") y toca "Empezar". 3) El sistema guarda que la bienvenida fue completada. 4) Navega a Configurar hogar (o a Mi depósito si el hogar ya estaba configurado). |
+| **Flujo principal** | 1) La aplicación muestra qué hace y la casilla de consentimiento, sin marcar. 2) El usuario marca la casilla (recién entonces se habilita "Empezar") y toca "Empezar". 3) El sistema guarda que la bienvenida fue completada. 4) Navega a Configurar hogar (o a Inicio si el hogar ya estaba configurado). |
 | **Postcondición** | La bienvenida no vuelve a mostrarse. |
 
 | CU-02 | Configurar el hogar |
@@ -381,7 +381,7 @@ flowchart LR
 |---|---|
 | **Actor** | Jefe de hogar |
 | **Precondición** | El hogar está configurado y el teléfono tiene conexión a internet. |
-| **Flujo principal** | 1) El usuario toca la pestaña "Mapa" de la barra inferior. 2) El sistema pide el permiso de ubicación si aún no lo tiene. 3) Obtiene los puntos de cisterna y centra el mapa en Tacna. 4) Muestra un marcador por punto, con el color de su estado. 5) El usuario toca un marcador y ve el nombre, el horario y el estado del punto. |
+| **Flujo principal** | 1) El usuario toca la tarjeta «Mapa» de Inicio. 2) El sistema pide el permiso de ubicación si aún no lo tiene. 3) Obtiene los puntos de cisterna y centra el mapa en Tacna. 4) Muestra un marcador por punto, con el color de su estado. 5) El usuario toca un marcador y ve el nombre, el horario y el estado del punto. |
 | **Flujo alternativo** | Si el usuario niega el permiso de ubicación, el mapa se muestra igual, sin su ubicación. Sin conexión, el mapa no carga sus calles. |
 | **Postcondición** | El usuario sabe dónde y en qué horario reparten agua las cisternas. |
 
@@ -684,7 +684,7 @@ sequenceDiagram
     participant C as ConsultaEpsPortal
     participant E as Portal EPS (HTTP)
     participant P as PdfRenderer / ML Kit / extractor
-    participant L as PreferenciasLiga
+    participant L as RecibosLocales
     U->>V: Vincular usuario y clave
     V->>C: vincular
     C->>E: Leer formulario y POST HTTP
@@ -704,3 +704,10 @@ sequenceDiagram
 ```
 
 **Validación final del conector EPS (18/11/2026):** 89 pruebas unitarias aprobadas (30 de EPS), APK Debug compilado y actualización completa verificada en el Samsung con una cuenta y un recibo reales, incluyendo el guardado desde EpsViewModel. La verificación cubre ese formato de recibo; no garantiza disponibilidad del portal ni otros diseños. Se retiraron la actividad temporal y los puntos de diagnóstico. No se incorporaron datos personales, cookies, contraseñas ni documentos reales al repositorio.
+
+
+## Inicio y Recibos EPS — 20/11/2026
+
+Inicio reúne Mi depósito, Mapa, Represas, Ahorro, Liga del Agua y Recibos EPS. El nivel del depósito viene del mismo estado que usa Mi depósito y el acceso a llenado permite elegir completo o parcial. Cada pantalla tiene un acceso de regreso. La interfaz adopta la paleta azul.
+
+Recibos EPS tiene ruta propia y agrupa vinculación, actualización y lectura por foto. `RecibosLocales` conserva las claves del último recibo y Liga del Agua consume ese dato para su resumen, sin presentar la vinculación de EPS dentro de Liga.

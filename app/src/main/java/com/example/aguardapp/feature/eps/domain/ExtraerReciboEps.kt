@@ -1,6 +1,6 @@
 package com.example.aguardapp.feature.eps.domain
 
-import com.example.aguardapp.feature.liga.domain.leerMesDelRecibo
+import com.example.aguardapp.feature.eps.domain.leerMesDelRecibo
 import java.text.Normalizer
 
 /** Solo acepta datos explícitos del documento; una lectura de medidor no es consumo facturado. */

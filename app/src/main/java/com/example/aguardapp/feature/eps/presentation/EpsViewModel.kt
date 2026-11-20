@@ -5,8 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.aguardapp.feature.eps.domain.ConsultaEps
 import com.example.aguardapp.feature.eps.domain.CuentaEps
 import com.example.aguardapp.feature.eps.domain.ErrorEps
-import com.example.aguardapp.feature.liga.data.PreferenciasLiga
-import com.example.aguardapp.feature.liga.domain.ReciboGuardado
+import com.example.aguardapp.feature.eps.data.RecibosLocales
+import com.example.aguardapp.feature.eps.domain.ReciboGuardado
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,7 +24,7 @@ data class EpsUiState(
 
 class EpsViewModel(
     private val consulta: ConsultaEps,
-    private val preferencias: PreferenciasLiga,
+    private val recibos: RecibosLocales,
     private val ahora: () -> LocalDateTime
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(EpsUiState(cuenta = consulta.cuenta()))
@@ -43,12 +43,12 @@ class EpsViewModel(
     fun actualizar() = ejecutar {
         val recibido = consulta.actualizar()
         val fecha = ahora()
-        val anterior = preferencias.recibo.value
+        val anterior = recibos.recibo.value
         if (recibido.mes.mesesHasta(fecha.date) < 0 ||
             (anterior != null && recibido.mes.anio * 12 + recibido.mes.mes < anterior.mes.anio * 12 + anterior.mes.mes)) {
             throw ErrorEps("EPS devolvió un periodo futuro o anterior al que ya guardaste. Conservamos tu recibo actual.")
         }
-        preferencias.guardarRecibo(ReciboGuardado(recibido.mes, recibido.metrosCubicos,
+        recibos.guardarRecibo(ReciboGuardado(recibido.mes, recibido.metrosCubicos,
             leidoDeLaFoto = false, leidoDeEps = true, totalPagar = recibido.totalPagar, actualizadoEn = fecha.toString()))
         _uiState.update { it.copy(mensaje = "Recibo actualizado desde EPS. Los datos se guardaron en este teléfono.") }
     }

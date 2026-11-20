@@ -59,23 +59,6 @@ fun BotonVolverALaLista(modifier: Modifier = Modifier, onClick: () -> Unit) {
     )
 }
 
-/** Acceso a la Liga del Agua desde el mapa. */
-@Composable
-fun BotonLigaDelAgua(modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Text(
-        "Liga del Agua",
-        modifier = modifier
-            .clip(RoundedCornerShape(50))
-            .background(AguaMedia)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        fontFamily = FuenteTexto,
-        fontSize = 13.sp,
-        fontWeight = FontWeight.Bold,
-        color = Blanco
-    )
-}
-
 fun subtituloDe(cantidad: Int): String = when (cantidad) {
     0 -> "Sin puntos de reparto por ahora"
     1 -> "1 punto de reparto en Tacna"

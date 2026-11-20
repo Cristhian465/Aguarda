@@ -45,11 +45,11 @@ import com.example.aguardapp.feature.represas.domain.model.Presa
 private val SIERRA_DE_TACNA = LatLng(-17.4, -70.1)
 
 @Composable
-fun RepresasScreen(viewModel: RepresasViewModel = koinViewModel()) {
+fun RepresasScreen(onVolver: () -> Unit, viewModel: RepresasViewModel = koinViewModel()) {
     val presas by viewModel.presas.collectAsStateWithLifecycle()
     IconosClarosEnBarraDeEstado(claros = false)
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        BarraSuperior("Represas de Tacna", "Datos de la Autoridad Nacional del Agua", onVolver = null)
+        BarraSuperior("Represas de Tacna", "Datos de la Autoridad Nacional del Agua", onVolver = onVolver)
         when {
             presas.isNotEmpty() -> ListaDeRepresas(presas, viewModel.sinConexion)
             viewModel.cargando -> Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }

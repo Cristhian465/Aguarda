@@ -1,6 +1,6 @@
 package com.example.aguardapp.feature.eps.domain
 
-import com.example.aguardapp.feature.liga.domain.MesRecibo
+import com.example.aguardapp.feature.eps.domain.MesRecibo
 
 data class CuentaEps(val usuario: String)
 

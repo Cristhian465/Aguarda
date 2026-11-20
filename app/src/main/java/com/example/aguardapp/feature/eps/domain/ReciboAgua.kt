@@ -1,4 +1,4 @@
-package com.example.aguardapp.feature.liga.domain
+package com.example.aguardapp.feature.eps.domain
 
 import java.text.Normalizer
 import kotlinx.datetime.DateTimeUnit

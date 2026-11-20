@@ -1,4 +1,4 @@
-package com.example.aguardapp.feature.liga.presentation
+package com.example.aguardapp.feature.eps.presentation
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -33,7 +33,7 @@ fun TarjetaRecibo(viewModel: ReciboViewModel = koinViewModel()) {
         foto?.let(viewModel::onFotoElegida)
     }
     TarjetaBlanca {
-        Titulo("Verifica tu consumo con el recibo")
+        Text("Recibo guardado o lectura por foto", fontWeight = FontWeight.Bold)
         if (estado.revisando) {
             FormularioRecibo(estado, viewModel)
         } else {
@@ -44,11 +44,11 @@ fun TarjetaRecibo(viewModel: ReciboViewModel = koinViewModel()) {
                     fontFamily = FuenteTexto, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold,
                     color = if (verificado) AguaMedia else Coral
                 )
-                Detalle("Recibo de ${recibo.mes}: ${recibo.metrosCubicos} m³")
-                recibo.totalPagar?.let { Detalle("Total a pagar: S/ ${String.format(java.util.Locale.US, "%.2f", it)}") }
-                if (recibo.leidoDeEps) Detalle("Obtenido de EPS Tacna")
-                recibo.actualizadoEn?.let { Detalle("Actualizado: ${it.replace('T', ' ')}") }
-            } ?: Detalle("Elige una foto de tu recibo de agua. Se lee dentro del teléfono: la foto no se guarda ni se envía.")
+                Text("Recibo de ${recibo.mes}: ${recibo.metrosCubicos} m³")
+                recibo.totalPagar?.let { Text("Total a pagar: S/ ${String.format(java.util.Locale.US, "%.2f", it)}") }
+                if (recibo.leidoDeEps) Text("Obtenido de EPS Tacna")
+                recibo.actualizadoEn?.let { Text("Actualizado: ${it.replace('T', ' ')}") }
+            } ?: Text("Elige una foto de tu recibo de agua. Se lee dentro del teléfono: la foto no se guarda ni se envía.")
             BotonPrincipal(
                 if (estado.leyendo) "Leyendo el recibo…" else "Elegir foto del recibo",
                 { elegirFoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
@@ -62,7 +62,7 @@ fun TarjetaRecibo(viewModel: ReciboViewModel = koinViewModel()) {
 @Composable
 private fun FormularioRecibo(estado: ReciboUiState, viewModel: ReciboViewModel) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Detalle("Revisa que los datos coincidan con tu recibo.")
+        Text("Revisa que los datos coincidan con tu recibo.")
         OutlinedTextField(
             value = estado.metrosTexto,
             onValueChange = viewModel::onCambiarMetros,

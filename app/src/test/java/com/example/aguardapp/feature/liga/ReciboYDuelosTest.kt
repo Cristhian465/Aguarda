@@ -1,11 +1,11 @@
 package com.example.aguardapp.feature.liga
 
 import com.example.aguardapp.feature.liga.domain.FilaRanking
-import com.example.aguardapp.feature.liga.domain.MesRecibo
-import com.example.aguardapp.feature.liga.domain.ReciboGuardado
+import com.example.aguardapp.feature.eps.domain.MesRecibo
+import com.example.aguardapp.feature.eps.domain.ReciboGuardado
 import com.example.aguardapp.feature.liga.domain.duelosDeLaSemana
-import com.example.aguardapp.feature.liga.domain.leerConsumoDelRecibo
-import com.example.aguardapp.feature.liga.domain.leerMesDelRecibo
+import com.example.aguardapp.feature.eps.domain.leerConsumoDelRecibo
+import com.example.aguardapp.feature.eps.domain.leerMesDelRecibo
 import kotlinx.datetime.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

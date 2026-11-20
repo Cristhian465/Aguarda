@@ -16,7 +16,7 @@ data class InicioUiState(
     val hayConfiguracion: Boolean = false
 )
 
-/** Decide la primera pantalla: la bienvenida, configurar el hogar o directamente Mi depósito. */
+/** Decide la primera pantalla: la bienvenida, configurar el hogar o directamente Inicio. */
 class InicioViewModel(
     private val usuarioDao: UsuarioDao,
     private val repositorio: DepositoRepository
@@ -36,6 +36,6 @@ class InicioViewModel(
     private fun rutaInicial(bienvenidaCompletada: Boolean, hayConfiguracion: Boolean): String = when {
         !bienvenidaCompletada -> Rutas.BIENVENIDA
         !hayConfiguracion -> Rutas.CONFIGURAR_HOGAR
-        else -> Rutas.MI_DEPOSITO
+        else -> Rutas.INICIO
     }
 }

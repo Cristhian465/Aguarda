@@ -163,7 +163,7 @@ flowchart TB
   subgraph APP[Aplicación AguardApp - módulo app]
     MAIN[AguardApplication / MainActivity / App]
     subgraph CORE[core]
-      NAV[navigation: Rutas, AppNavHost, BarraInferior, InicioViewModel]
+      NAV[navigation: Rutas, AppNavHost, InicioScreen, InicioViewModel]
       DI[di: AppModule]
       DB[db: AguardAppDatabase]
       DATA[data: Usuario]
@@ -268,7 +268,7 @@ sequenceDiagram
     DAO-->>VM: OK
     VM-->>S: uiState.listo = true
     S->>NAV: onListo()
-    NAV-->>U: Configurar hogar (o Mi depósito si ya había perfil)
+    NAV-->>U: Configurar hogar (o Inicio si ya había perfil)
 ```
 
 #### Módulo 2: Depósito
@@ -463,14 +463,14 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor U as Usuario
-    participant BI as BarraInferior
+    participant HOME as InicioScreen
     participant NAV as AppNavHost
     participant S as MapaScreen
     participant VM as MapaViewModel
     participant R as MapaRepositoryImpl
     participant GM as Google Maps
-    U->>BI: Toca la pestaña "Mapa"
-    BI->>NAV: navigate(mapa)
+    U->>HOME: Abre Mapa desde Inicio
+    HOME->>NAV: navigate(mapa)
     NAV->>S: MapaScreen(koinViewModel())
     S->>VM: collectAsStateWithLifecycle()
     VM->>R: obtenerPuntosCisterna() y centroDelMapa()
@@ -766,7 +766,7 @@ app/src/main/java/com/example/aguardapp/
 │   ├── data/Usuario.kt            (entidad y DAO del usuario local)
 │   ├── db/AguardAppDatabase.kt    (Room)
 │   ├── di/AppModule.kt            (Koin: moduloApp, moduloRed y moduloViewModels)
-│   ├── navigation/                (Rutas, AppNavHost, BarraInferior, InicioViewModel)
+│   ├── navigation/                (Rutas, AppNavHost, InicioScreen, InicioViewModel)
 │   ├── ui/theme/                  (colores, tema, tipografía, barra de estado)
 │   └── util/Reloj.kt              (hora actual y UUID)
 └── feature/
@@ -844,7 +844,7 @@ flowchart TD
     K -- Sin agua --> M[Guardar novedad y nuevo consumo]
     K -- Qué recortar --> N[Mostrar recomendaciones y guardar el plan marcado]
     K -- Ver avisos --> O[Mostrar avisos: déficit, nivel bajo o sin llenado]
-    K -- Pestaña Mapa --> P[Mostrar los puntos de cisterna en Google Maps]
+    K -- Tarjeta Mapa --> P[Mostrar los puntos de cisterna en Google Maps]
     K -- Editar hogar --> F
     K -- Ninguna, pasa un minuto --> H
     G -. en paralelo, cada 20 s .-> S1[Consultar el sensor en ThingSpeak]
@@ -920,7 +920,7 @@ El dominio es Kotlin puro y no depende de Android, por lo que puede probarse con
 
 ## Actualización arquitectónica — 18/11/2026: conector EPS
 
-`feature/eps` añade dominio (`ConsultaEps`, `CuentaEps`, `ReciboEps`, `ErrorEps`, extracción estricta), datos (`ClientePortalEps`, transporte jsoup, `AlmacenSesionEps`, `LectorPdfEps`, `ConsultaEpsPortal`) y presentación (`EpsViewModel`, `TarjetaEps`). Koin registra la implementación en `ModuloLiga.kt`; la tarjeta aparece en `LigaScreen` antes del recibo existente. No hay cambios de esquema Room ni de Supabase.
+`feature/eps` añade dominio (`ConsultaEps`, `CuentaEps`, `ReciboEps`, `ErrorEps`, extracción estricta), datos (`ClientePortalEps`, transporte jsoup, `AlmacenSesionEps`, `LectorPdfEps`, `ConsultaEpsPortal`) y presentación (`EpsViewModel`, `TarjetaEps`). Koin registra la implementación en `ModuloRecibos.kt`; `RecibosEpsScreen` se abre desde Inicio y contiene la tarjeta EPS y la lectura por foto. No hay cambios de esquema Room ni de Supabase.
 
 El conector usa el formulario observado y el HTML autenticado. Además de enlaces directos, interpreta las dos funciones AJAX de recibo CargarRecibo/MostrarRecibo sin ejecutar JavaScript arbitrario, y sigue el iframe al documento. No consume una API documentada ni inventa endpoints de PDF. El acceso inicial usa HTTP; admite HTTP/HTTPS únicamente en el host exacto `oficinavirtual.epstacna.com.pe` y sus puertos estándar, incluyendo todas las redirecciones. `network_security_config.xml` bloquea tráfico HTTP por defecto y lo permite únicamente para ese host, sin subdominios. No desactiva la validación TLS. El usuario, la clave y las cookies viajan sin cifrado por HTTP; la interfaz lo advierte. Guarda cookies/usuario con AES/GCM y una clave de Android Keystore en `noBackupFilesDir`; no persiste contraseñas. Un `Mutex` serializa vinculación, actualización y eliminación de sesión. El trabajo de red/PDF se ejecuta en `Dispatchers.IO`. El documento temporal se elimina en `finally`.
 
@@ -938,7 +938,7 @@ flowchart TB
       R --> P[LectorPdfEps / PDFBox / PdfRenderer / ML Kit]
       P --> ALC[AlinearCamposEps: etiquetas y cifras por posición]
       ALC --> D[extraerReciboEps]
-      VM --> L[PreferenciasLiga / ReciboGuardado]
+      VM --> L[RecibosLocales / ReciboGuardado]
       L --> T[TarjetaRecibo / ResumenDelHogar]
     end
     H -->|HTTP; cookies del mismo host| EPS[Oficina virtual EPS Tacna]
@@ -949,3 +949,10 @@ flowchart TB
 **Lectura de campos EPS:** PDFBox Android intenta obtener texto digital. Para PDFs de imagen, ML Kit procesa páginas de hasta 3200 píxeles por lado (escala máxima 3); `AlinearCamposEps` asocia las cifras con etiquetas en su fila o recuadro. Si el volumen pequeño no se reconoce, se amplía solo la casilla a la derecha de «Volumen Fac m» y se acepta únicamente una cifra inequívoca. No se calculan consumos por diferencia de lecturas. Las credenciales y el texto completo del PDF no se registran en logs. El diagnóstico temporal usado en la validación se retiró del código y de la aplicación.
 
 **Validación final del conector EPS (18/11/2026):** 89 pruebas unitarias aprobadas (30 de EPS), APK Debug compilado y actualización completa verificada en el Samsung con una cuenta y un recibo reales, incluyendo el guardado desde EpsViewModel. La verificación cubre ese formato de recibo; no garantiza disponibilidad del portal ni otros diseños. Se retiraron la actividad temporal y los puntos de diagnóstico. No se incorporaron datos personales, cookies, contraseñas ni documentos reales al repositorio.
+
+
+## Inicio y Recibos EPS — 20/11/2026
+
+Inicio reúne Mi depósito, Mapa, Represas, Ahorro, Liga del Agua y Recibos EPS. El nivel del depósito viene del mismo estado que usa Mi depósito y el acceso a llenado permite elegir completo o parcial. Cada pantalla tiene un acceso de regreso. La interfaz adopta la paleta azul.
+
+Recibos EPS tiene ruta propia y agrupa vinculación, actualización y lectura por foto. `RecibosLocales` conserva las claves del último recibo y Liga del Agua consume ese dato para su resumen, sin presentar la vinculación de EPS dentro de Liga.

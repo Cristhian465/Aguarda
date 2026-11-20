@@ -6,6 +6,7 @@ import kotlinx.datetime.LocalDateTime
 import kotlin.math.roundToInt
 import com.example.aguardapp.feature.ahorro.data.AhorroLocal
 import com.example.aguardapp.feature.deposito.domain.repository.DepositoRepository
+import com.example.aguardapp.feature.eps.data.RecibosLocales
 import com.example.aguardapp.feature.liga.domain.CalcularPuntaje
 import com.example.aguardapp.feature.liga.domain.LigaRepository
 import com.example.aguardapp.feature.liga.domain.ResumenSemanal
@@ -17,12 +18,12 @@ class ResumenDelHogar(
     private val liga: LigaRepository,
     private val deposito: DepositoRepository,
     private val ahorro: AhorroLocal,
-    private val preferencias: PreferenciasLiga,
+    private val recibos: RecibosLocales,
     private val ahora: () -> LocalDateTime,
     private val calcular: CalcularPuntaje = CalcularPuntaje()
 ) {
     fun observar(): Flow<DatosDelHogar?> = combine(
-        liga.observarMarcas(), deposito.observarMomentosDeLlenado(), deposito.observarPerfil(), preferencias.recibo
+        liga.observarMarcas(), deposito.observarMomentosDeLlenado(), deposito.observarPerfil(), recibos.recibo
     ) { marcas, llenados, perfil, recibo ->
         perfil?.let {
             val hoy = ahora().date

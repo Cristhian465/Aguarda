@@ -20,7 +20,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.viewmodel.koinViewModel
 import com.example.aguardapp.core.ui.theme.IconosClarosEnBarraDeEstado
 import com.example.aguardapp.feature.deposito.presentation.componentes.BarraSuperior
-import com.example.aguardapp.feature.eps.presentation.TarjetaEps
 
 @Composable
 fun LigaScreen(onVolver: () -> Unit, viewModel: LigaViewModel = koinViewModel()) {
@@ -43,8 +42,6 @@ fun LigaScreen(onVolver: () -> Unit, viewModel: LigaViewModel = koinViewModel())
                     TarjetaConsumo(it)
                     TarjetaPuntaje(it)
                 }
-                TarjetaEps()
-                TarjetaRecibo()
                 SeccionRanking()
             }
         }

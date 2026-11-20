@@ -189,7 +189,7 @@ Las pantallas implementadas y sus rutas de navegación son:
 | `que_recortar` | Qué recortar | Recomendaciones con litros según el hogar; lo marcado se guarda hasta el próximo llenado y se refleja en Mi depósito y Avisos. |
 | `me_quede_sin_agua` | Me quedé sin agua | "Se acabó ahora" o "Se acabó antes, a las HH:mm" (hora escrita; si es posterior a la actual, se toma como de ayer). |
 | `avisos` | Avisos | Alertas de déficit (descontando los recortes elegidos), nivel bajo (menos del 20 %) o sin llenado; cada aviso lleva a la pantalla que lo resuelve. |
-| `mapa` | Puntos de cisterna | Mapa de Google con los puntos de reparto de Tacna, su horario y su estado; se abre desde la barra inferior. |
+| `mapa` | Puntos de cisterna | Mapa de Google con los puntos de reparto de Tacna, su horario y su estado; se abre desde Inicio. |
 
 ### 5.3. Metodología de implementación (Documento de VISIÓN, SRS, SAD)
 
@@ -340,3 +340,10 @@ La nueva biblioteca jsoup permite analizar formularios/enlaces y realizar las so
 **Validación del ajuste HTTP (18/11/2026):** `:app:testDebugUnitTest` y `:app:assembleDebug` completaron correctamente: 78 pruebas, incluidas 19 de EPS, sin fallos. Se comprobó que la política Android bloquea HTTP por defecto y lo permite solo para el host exacto de la oficina virtual. La consulta autenticada del recibo real continúa pendiente.
 
 **Validación final del conector EPS (18/11/2026):** 89 pruebas unitarias aprobadas (30 de EPS), APK Debug compilado y actualización completa verificada en el Samsung con una cuenta y un recibo reales, incluyendo el guardado desde EpsViewModel. La verificación cubre ese formato de recibo; no garantiza disponibilidad del portal ni otros diseños. Se retiraron la actividad temporal y los puntos de diagnóstico. No se incorporaron datos personales, cookies, contraseñas ni documentos reales al repositorio.
+
+
+## Inicio y Recibos EPS — 20/11/2026
+
+Inicio reúne Mi depósito, Mapa, Represas, Ahorro, Liga del Agua y Recibos EPS. El nivel del depósito viene del mismo estado que usa Mi depósito y el acceso a llenado permite elegir completo o parcial. Cada pantalla tiene un acceso de regreso. La interfaz adopta la paleta azul.
+
+Recibos EPS tiene ruta propia y agrupa vinculación, actualización y lectura por foto. `RecibosLocales` conserva las claves del último recibo y Liga del Agua consume ese dato para su resumen, sin presentar la vinculación de EPS dentro de Liga.

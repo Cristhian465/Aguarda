@@ -50,7 +50,7 @@ private const val ZOOM_INICIAL = 12.5f
 private const val ZOOM_PUNTO = 15f
 
 @Composable
-fun MapaScreen(onAbrirLiga: () -> Unit, viewModel: MapaViewModel = koinViewModel()) {
+fun MapaScreen(onVolver: () -> Unit, viewModel: MapaViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val permisoConcedido = rememberPermisoDeUbicacion()
     LaunchedEffect(permisoConcedido) { viewModel.onPermisoDeUbicacion(permisoConcedido) }
@@ -67,7 +67,7 @@ fun MapaScreen(onAbrirLiga: () -> Unit, viewModel: MapaViewModel = koinViewModel
     }
     BackHandler(enabled = pantallaCompleta, onBack = salirDePantallaCompleta)
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        if (!pantallaCompleta) BarraSuperior("Puntos de cisterna", subtituloDe(uiState.puntos.size), onVolver = null)
+        if (!pantallaCompleta) BarraSuperior("Puntos de cisterna", subtituloDe(uiState.puntos.size), onVolver = onVolver)
         val centro = uiState.centro
         if (uiState.cargando || centro == null) {
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
@@ -86,7 +86,6 @@ fun MapaScreen(onAbrirLiga: () -> Unit, viewModel: MapaViewModel = koinViewModel
                 }
                 val bajoLaBarraDeEstado = if (pantallaCompleta) Modifier.statusBarsPadding() else Modifier
                 LeyendaDeEstados(Modifier.align(Alignment.TopStart).then(bajoLaBarraDeEstado).padding(12.dp))
-                if (!pantallaCompleta) BotonLigaDelAgua(Modifier.align(Alignment.BottomStart).padding(start = 12.dp, bottom = 36.dp), onAbrirLiga)
                 if (pantallaCompleta) {
                     Column(
                         Modifier.align(Alignment.BottomCenter).padding(start = 16.dp, end = 72.dp, bottom = 20.dp),

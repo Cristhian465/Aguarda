@@ -2,8 +2,8 @@ package com.example.aguardapp.feature.eps
 
 import com.example.aguardapp.feature.eps.domain.ErrorEps
 import com.example.aguardapp.feature.eps.domain.extraerReciboEps
-import com.example.aguardapp.feature.liga.domain.MesRecibo
-import com.example.aguardapp.feature.liga.domain.ReciboGuardado
+import com.example.aguardapp.feature.eps.domain.MesRecibo
+import com.example.aguardapp.feature.eps.domain.ReciboGuardado
 import kotlinx.datetime.LocalDate
 import org.junit.Assert.*
 import org.junit.Test

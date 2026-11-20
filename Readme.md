@@ -148,7 +148,7 @@ AguardApp/
 │           │   ├── 📁 data/               Usuario local (UUID) y DAO
 │           │   ├── 📁 db/                 AguardAppDatabase (Room)
 │           │   ├── 📁 di/                 Koin: base de datos, repositorios y ViewModels
-│           │   ├── 📁 navigation/         Rutas, NavHost, barra inferior y pantalla inicial
+│           │   ├── 📁 navigation/         Rutas, NavHost y cuadrícula de Inicio
 │           │   ├── 📁 ui/theme/           Colores, tipografías y tema
 │           │   └── 📁 util/               Reloj y UUID
 │           │
@@ -336,7 +336,7 @@ git clone https://github.com/tu-usuario/AguardApp.git
 
 ## 🧾 Consulta integrada de EPS Tacna — en validación
 
-En **Mapa → Liga del Agua**, la tarjeta **Tu recibo desde EPS Tacna** ofrece:
+En **Inicio → Recibos EPS**, la tarjeta **Tu recibo desde EPS Tacna** ofrece:
 
 1. **Vincular cuenta EPS**: ingresar el usuario y la clave impresos en el recibo. El conector lee el formulario y sus campos ocultos; envía las credenciales mediante HTTP únicamente al host exacto de la oficina virtual. La cuenta queda vinculada únicamente si la respuesta contiene evidencia de acceso y una cookie de sesión.
 2. **Actualizar recibo**: reutiliza la sesión, sigue enlaces directos del portal al PDF y extrae primero el texto digital con PDFBox Android y, si no basta, procesa hasta cuatro páginas con `PdfRenderer` y ML Kit, asociando etiquetas y cifras por posición. Guarda automáticamente mes facturado, consumo explícito en m³ y **total a pagar** (puede incluir deuda, no equivale al cargo del mes). No estima consumo a partir del importe o de las lecturas.
@@ -350,7 +350,7 @@ El descubrimiento usa enlaces HTML y el flujo AJAX observado del botón «Recibo
 
 **Dependencias nuevas:** `org.jsoup:jsoup:1.24.1` para formularios, enlaces y transporte HTTP/HTTPS, y `com.tom-roush:pdfbox-android:2.0.27.0` para texto digital del PDF. PDFBox extrae el texto digital; `PdfRenderer`, Android Keystore y ML Kit reutilizan la plataforma y dependencias existentes. No requiere claves API nuevas, servidor propio ni cambios de Supabase. El permiso `INTERNET` ya existe.
 
-**Paquete:** `feature/eps/{domain,data,presentation}`, registrado en `ModuloLiga.kt`. No cambia el esquema de Room. Los campos opcionales de origen EPS, total y fecha de actualización se guardan junto al último recibo en las preferencias existentes, con valores por defecto compatibles con instalaciones previas.
+**Paquete:** `feature/eps/{domain,data,presentation}`, registrado en `ModuloRecibos.kt`. No cambia el esquema de Room. Los campos opcionales de origen EPS, total y fecha de actualización se guardan junto al último recibo en las preferencias existentes, con valores por defecto compatibles con instalaciones previas.
 
 ```mermaid
 flowchart LR
@@ -361,7 +361,7 @@ flowchart LR
     CP --> AS[AlmacenSesionEps + Android Keystore]
     CP --> PDF[LectorPdfEps: PDFBox + PdfRenderer + ML Kit]
     PDF --> EX[extraerReciboEps]
-    VM --> PREF[PreferenciasLiga: último recibo]
+    VM --> PREF[RecibosLocales: último recibo]
     PREF --> REC[TarjetaRecibo y resumen de Liga]
 ```
 
@@ -372,6 +372,10 @@ flowchart LR
 ---
 
 ## 📝 Changelog
+
+### 2026-11-20
+- Inicio reemplaza la barra inferior y muestra el nivel del depósito, un acceso a llenado y tarjetas independientes para Mapa, Represas, Ahorro, Liga del Agua y Recibos EPS.
+- Se aplica la paleta azul al tema. Recibos EPS agrupa la consulta en línea y la lectura por foto. Liga usa el recibo guardado como referencia de consumo sin gestionar la cuenta EPS. Se reutilizan las claves locales para conservar los recibos anteriores.
 
 ### 2026-11-18
 - [Validado] Flujo EPS completo en el Samsung conectado con cuenta y recibo reales: sesión persistida, descarga del PDF, extracción de periodo/consumo/total y guardado. Se retiró el diagnóstico temporal. La lectura de casillas pequeñas usa un recorte ampliado; las cifras se asocian por posición, sin inferir consumo a partir de lecturas o importes.

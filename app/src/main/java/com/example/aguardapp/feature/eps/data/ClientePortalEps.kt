@@ -1,7 +1,7 @@
 package com.example.aguardapp.feature.eps.data
 
 import com.example.aguardapp.feature.eps.domain.ErrorEps
-import com.example.aguardapp.feature.liga.domain.leerMesDelRecibo
+import com.example.aguardapp.feature.eps.domain.leerMesDelRecibo
 import java.net.URI
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document

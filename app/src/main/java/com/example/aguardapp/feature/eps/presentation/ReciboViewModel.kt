@@ -1,4 +1,4 @@
-package com.example.aguardapp.feature.liga.presentation
+package com.example.aguardapp.feature.eps.presentation
 
 import android.net.Uri
 import androidx.lifecycle.ViewModel
@@ -11,12 +11,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
-import com.example.aguardapp.feature.liga.data.LectorDeRecibo
-import com.example.aguardapp.feature.liga.data.PreferenciasLiga
-import com.example.aguardapp.feature.liga.domain.MesRecibo
-import com.example.aguardapp.feature.liga.domain.ReciboGuardado
-import com.example.aguardapp.feature.liga.domain.leerConsumoDelRecibo
-import com.example.aguardapp.feature.liga.domain.leerMesDelRecibo
+import com.example.aguardapp.feature.eps.data.LectorDeRecibo
+import com.example.aguardapp.feature.eps.data.RecibosLocales
+import com.example.aguardapp.feature.eps.domain.MesRecibo
+import com.example.aguardapp.feature.eps.domain.ReciboGuardado
+import com.example.aguardapp.feature.eps.domain.leerConsumoDelRecibo
+import com.example.aguardapp.feature.eps.domain.leerMesDelRecibo
 
 data class ReciboUiState(
     val leyendo: Boolean = false,
@@ -31,15 +31,15 @@ data class ReciboUiState(
 
 class ReciboViewModel(
     private val lector: LectorDeRecibo,
-    private val preferencias: PreferenciasLiga,
+    private val recibos: RecibosLocales,
     ahora: () -> LocalDateTime
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(ReciboUiState(guardado = preferencias.recibo.value, hoy = ahora().date))
+    private val _uiState = MutableStateFlow(ReciboUiState(guardado = recibos.recibo.value, hoy = ahora().date))
     val uiState: StateFlow<ReciboUiState> = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
-            preferencias.recibo.collect { recibo -> _uiState.update { it.copy(guardado = recibo) } }
+            recibos.recibo.collect { recibo -> _uiState.update { it.copy(guardado = recibo) } }
         }
     }
 
@@ -78,7 +78,7 @@ class ReciboViewModel(
         // Si el usuario cambió el número leído, el recibo ya no cuenta como verificado.
         val igualALaFoto = estado.metrosLeidos?.let { abs(it - metros) < 0.001 } == true
         val recibo = ReciboGuardado(mes, metros, igualALaFoto)
-        preferencias.guardarRecibo(recibo)
+        recibos.guardarRecibo(recibo)
         _uiState.update { it.copy(revisando = false, guardado = recibo, error = null) }
     }
 }

@@ -2,7 +2,6 @@ package com.example.aguardapp.core.navigation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +22,7 @@ import com.example.aguardapp.feature.deposito.presentation.QueRecortarScreen
 import com.example.aguardapp.feature.deposito.presentation.RegistrarLlenadoScreen
 import com.example.aguardapp.feature.deposito.presentation.SinAguaScreen
 import com.example.aguardapp.feature.deposito.presentation.TipoLlenado
+import com.example.aguardapp.feature.eps.presentation.RecibosEpsScreen
 import com.example.aguardapp.feature.liga.presentation.LigaScreen
 import com.example.aguardapp.feature.mapa.presentation.MapaScreen
 import com.example.aguardapp.feature.represas.presentation.RepresasScreen
@@ -48,9 +48,23 @@ fun AppNavHost(rutaInicial: String, hayConfiguracion: Boolean) {
             }
         }
 
+        composable(Rutas.INICIO) {
+            ConBarraDelSistema {
+                InicioScreen(
+                    onAbrir = { ruta -> navController.navigate(ruta) { launchSingleTop = true } },
+                    onLlenado = { tipo -> navController.navigate(Rutas.registrarLlenado(tipo.ruta)) }
+                )
+            }
+        }
+
+        composable(Rutas.RECIBOS_EPS) {
+            ConBarraDelSistema { RecibosEpsScreen(onVolver = { navController.popBackStack() }) }
+        }
+
         composable(Rutas.MI_DEPOSITO) {
-            ConBarraInferior(Pestana.DEPOSITO, navController) {
+            ConBarraDelSistema {
                 DepositoScreen(
+                    onVolver = { navController.popBackStack() },
                     onRegistrarLlenado = { tipo -> navController.navigate(Rutas.registrarLlenado(tipo.ruta)) },
                     onQueRecortar = { navController.navigate(Rutas.QUE_RECORTAR) },
                     onSinAgua = { navController.navigate(Rutas.ME_QUEDE_SIN_AGUA) },
@@ -61,8 +75,8 @@ fun AppNavHost(rutaInicial: String, hayConfiguracion: Boolean) {
         }
 
         composable(Rutas.MAPA) {
-            ConBarraInferior(Pestana.MAPA, navController) {
-                MapaScreen(onAbrirLiga = { navController.navigate(Rutas.LIGA) })
+            ConBarraDelSistema {
+                MapaScreen(onVolver = { navController.popBackStack() })
             }
         }
 
@@ -73,14 +87,14 @@ fun AppNavHost(rutaInicial: String, hayConfiguracion: Boolean) {
         }
 
         composable(Rutas.REPRESAS) {
-            ConBarraInferior(Pestana.REPRESAS, navController) {
-                RepresasScreen()
+            ConBarraDelSistema {
+                RepresasScreen(onVolver = { navController.popBackStack() })
             }
         }
 
         composable(Rutas.AHORRO) {
-            ConBarraInferior(Pestana.AHORRO, navController) {
-                AhorroScreen()
+            ConBarraDelSistema {
+                AhorroScreen(onVolver = { navController.popBackStack() })
             }
         }
 
@@ -122,38 +136,18 @@ fun AppNavHost(rutaInicial: String, hayConfiguracion: Boolean) {
     }
 }
 
-// Tras la bienvenida: configurar el hogar, o Mi depósito si ya estaba configurado. La bienvenida no queda atrás.
+// Tras la bienvenida: configurar el hogar, o Inicio si ya estaba configurado. La bienvenida no queda atrás.
 private fun irDespuesDeLaBienvenida(navController: NavHostController, hayConfiguracion: Boolean) {
-    val destino = if (hayConfiguracion) Rutas.MI_DEPOSITO else Rutas.CONFIGURAR_HOGAR
+    val destino = if (hayConfiguracion) Rutas.INICIO else Rutas.CONFIGURAR_HOGAR
     navController.navigate(destino) { popUpTo(Rutas.BIENVENIDA) { inclusive = true } }
 }
 
-// Al guardar: si se estaba editando se vuelve atrás; la primera vez se va a Mi depósito.
+// Al guardar: si se estaba editando se vuelve atrás; la primera vez se va a Inicio.
 private fun irDespuesDeConfigurar(navController: NavHostController, editando: Boolean) {
     if (editando) {
         navController.popBackStack()
     } else {
-        navController.navigate(Rutas.MI_DEPOSITO) { popUpTo(Rutas.CONFIGURAR_HOGAR) { inclusive = true } }
-    }
-}
-
-/** Muestra la barra inferior en las pantallas principales. */
-@Composable
-private fun ConBarraInferior(actual: Pestana, navController: NavHostController, contenido: @Composable () -> Unit) {
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        Box(Modifier.weight(1f)) { contenido() }
-        BarraInferior(actual) { pestana -> irAPestana(navController, pestana) }
-    }
-}
-
-// Mi depósito queda siempre en la base: las otras pestañas se apilan encima y "atrás" vuelve a Mi depósito.
-private fun irAPestana(navController: NavHostController, pestana: Pestana) {
-    when (pestana) {
-        Pestana.DEPOSITO -> navController.popBackStack(Rutas.MI_DEPOSITO, inclusive = false)
-        else -> navController.navigate(pestana.ruta) {
-            popUpTo(Rutas.MI_DEPOSITO)
-            launchSingleTop = true
-        }
+        navController.navigate(Rutas.INICIO) { popUpTo(Rutas.CONFIGURAR_HOGAR) { inclusive = true } }
     }
 }
 

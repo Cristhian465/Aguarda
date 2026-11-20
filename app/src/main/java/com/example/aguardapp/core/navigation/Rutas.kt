@@ -4,6 +4,8 @@ package com.example.aguardapp.core.navigation
 object Rutas {
     const val BIENVENIDA = "bienvenida"
     const val CONFIGURAR_HOGAR = "configurar_hogar"
+    const val INICIO = "inicio"
+    const val RECIBOS_EPS = "recibos_eps"
     const val MI_DEPOSITO = "mi_deposito"
     const val ME_QUEDE_SIN_AGUA = "me_quede_sin_agua"
     const val AVISOS = "avisos"

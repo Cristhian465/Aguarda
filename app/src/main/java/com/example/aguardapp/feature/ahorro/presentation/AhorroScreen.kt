@@ -35,16 +35,17 @@ import com.example.aguardapp.core.ui.theme.AguaProfunda
 import com.example.aguardapp.core.ui.theme.Blanco
 import com.example.aguardapp.core.ui.theme.Fondo
 import com.example.aguardapp.core.ui.theme.IconosClarosEnBarraDeEstado
+import com.example.aguardapp.feature.deposito.presentation.VolverAlInicio
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun AhorroScreen(viewModel: AhorroViewModel = koinViewModel()) {
+fun AhorroScreen(onVolver: () -> Unit, viewModel: AhorroViewModel = koinViewModel()) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.actualizarFecha() }
     IconosClarosEnBarraDeEstado(claros = true)
 
     Column(Modifier.fillMaxSize().background(Fondo).verticalScroll(rememberScrollState())) {
-        CabeceraAhorro(estado.diasDeRacha)
+        CabeceraAhorro(estado.diasDeRacha, onVolver)
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp)) {
             RachaSemanal(estado.diasDeRacha, estado.hoy, estado.diasCumplidos)
             CalendarioAhorro(estado.hoy, estado.diasCumplidos)
@@ -57,7 +58,7 @@ fun AhorroScreen(viewModel: AhorroViewModel = koinViewModel()) {
 }
 
 @Composable
-private fun CabeceraAhorro(dias: Int) {
+private fun CabeceraAhorro(dias: Int, onVolver: () -> Unit) {
     Box(
         Modifier.fillMaxWidth().clipToBounds()
             .background(Brush.horizontalGradient(listOf(AguaProfunda, Agua)))
@@ -69,6 +70,7 @@ private fun CabeceraAhorro(dias: Int) {
             )
         }
         Column(Modifier.statusBarsPadding().padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 20.dp)) {
+            VolverAlInicio(onVolver)
             Text("Tu ahorro", color = Blanco, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             Text("Esta semana · actualiza tus retos de hoy", color = Blanco.copy(alpha = 0.85f), fontSize = 11.sp)
             Row(

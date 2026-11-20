@@ -20,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -59,6 +60,7 @@ private val MARGEN = Modifier.padding(horizontal = 24.dp)
 
 @Composable
 fun DepositoScreen(
+    onVolver: () -> Unit,
     onRegistrarLlenado: (TipoLlenado) -> Unit,
     onQueRecortar: () -> Unit,
     onSinAgua: () -> Unit,
@@ -78,9 +80,9 @@ fun DepositoScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         if (vista == null) {
-            SinDatos(onEditarHogar)
+            SinDatos(onEditarHogar, onVolver)
         } else {
-            Encabezado(vista, onEditarHogar)
+            Encabezado(vista, onEditarHogar, onVolver)
             Proyeccion(vista, MARGEN)
             Consumo(vista, MARGEN)
         }
@@ -103,8 +105,9 @@ fun DepositoScreen(
 }
 
 @Composable
-private fun SinDatos(onEditarHogar: () -> Unit) {
+private fun SinDatos(onEditarHogar: () -> Unit, onVolver: () -> Unit) {
     Column(Modifier.fillMaxWidth().statusBarsPadding().padding(24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        VolverAlInicio(onVolver, tint = Tinta)
         Text("Mi depósito", fontFamily = FuenteTexto, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold)
         Text("Aún no tenemos datos de tu depósito. Registra tu primer llenado para ver cuánto te queda.", fontFamily = FuenteTexto, color = TintaSuave)
         TextButton(onEditarHogar) { Text("Editar mi hogar", fontFamily = FuenteTexto, color = AguaMedia) }
@@ -112,7 +115,7 @@ private fun SinDatos(onEditarHogar: () -> Unit) {
 }
 
 @Composable
-private fun Encabezado(vista: DepositoVista, onEditarHogar: () -> Unit) {
+private fun Encabezado(vista: DepositoVista, onEditarHogar: () -> Unit, onVolver: () -> Unit) {
     Column(
         Modifier.fillMaxWidth()
             .clip(RoundedCornerShape(bottomStart = 36.dp, bottomEnd = 36.dp))
@@ -121,6 +124,7 @@ private fun Encabezado(vista: DepositoVista, onEditarHogar: () -> Unit) {
             .padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 40.dp)
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            VolverAlInicio(onVolver)
             Column(Modifier.weight(1f).padding(end = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(vista.saludo, fontFamily = FuenteTexto, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Blanco)
                 Text(vista.subtituloHogar, fontFamily = FuenteTexto, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Blanco, maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -187,5 +191,12 @@ private fun RowScope.Cifra(cifra: String, unidad: String, descripcion: String) {
             Text(unidad, Modifier.padding(bottom = 4.dp), fontFamily = FuenteTexto, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TintaTenue)
         }
         Text(descripcion, fontFamily = FuenteTexto, fontSize = 11.sp, fontWeight = FontWeight.Medium, color = TintaSuave)
+    }
+}
+
+@Composable
+internal fun VolverAlInicio(onVolver: () -> Unit, tint: androidx.compose.ui.graphics.Color = Blanco) {
+    IconButton(onClick = onVolver) {
+        Icon(painterResource(R.drawable.ic_atras), contentDescription = "Volver a Inicio", tint = tint)
     }
 }
