@@ -9,7 +9,6 @@ import com.example.aguardapp.feature.deposito.domain.model.horasEntre
 import kotlin.math.roundToInt
 
 class CalcularDeficit {
-
     fun proximoLlenado(hora: LocalTime, ahora: LocalDateTime): LocalDateTime {
         val hoy = LocalDateTime(ahora.date, hora)
         return if (hoy > ahora) hoy else LocalDateTime(ahora.date.plus(1, DateTimeUnit.DAY), hora)

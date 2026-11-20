@@ -44,7 +44,6 @@ class SinAguaViewModel(
     private val repositorio: DepositoRepository,
     private val ahora: () -> LocalDateTime
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow(SinAguaUiState())
     val uiState: StateFlow<SinAguaUiState> = _uiState.asStateFlow()
 

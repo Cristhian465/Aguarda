@@ -31,10 +31,8 @@ import com.example.aguardapp.feature.mapa.domain.model.Distrito
 private val RellenoSinDatos = Color(0x339AAAAE)
 private val BordeSinDatos = Color(0xCC9AAAAE)
 
-/** Intensidad del color según el puntaje real del distrito (de 0 a 100). */
 internal fun opacidadDelPuntaje(puntaje: Double): Float = (0.15 + puntaje.coerceIn(0.0, 100.0) / 100 * 0.55).toFloat()
 
-/** Pinta cada distrito según su puntaje real; sin datos suficientes queda en gris. */
 @Composable
 @GoogleMapComposable
 fun CapaDistritos(distritos: List<Distrito>, elegido: Distrito?, liga: List<FilaRanking>) {
@@ -55,10 +53,8 @@ fun CapaDistritos(distritos: List<Distrito>, elegido: Distrito?, liga: List<Fila
     }
 }
 
-/** Tarjeta del distrito tocado. Solo muestra datos que existen. */
 @Composable
 fun TarjetaDistrito(distrito: Distrito, esMiDistrito: Boolean, fila: FilaRanking?, modifier: Modifier = Modifier) {
-    // pointerInput evita que un toque sobre la tarjeta llegue al mapa que está debajo.
     Column(modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Blanco).pointerInput(Unit) {}.padding(16.dp)) {
         if (esMiDistrito) {
             Text("Tu distrito", fontFamily = FuenteTexto, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = AguaMedia)

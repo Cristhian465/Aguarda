@@ -27,7 +27,6 @@ import com.example.aguardapp.feature.mapa.domain.repository.UbicacionRepository
 import com.example.aguardapp.feature.mapa.domain.usecase.BuscarCisternasCercanas
 import com.example.aguardapp.feature.mapa.domain.usecase.CandidataCisterna
 
-/** Cómo va la búsqueda de la ubicación del usuario. */
 enum class EstadoUbicacion { SIN_PERMISO, BUSCANDO, ENCONTRADA, NO_DISPONIBLE }
 
 data class MapaUiState(
@@ -42,7 +41,6 @@ data class MapaUiState(
     val distritoElegido: Distrito? = null,
     val liga: List<FilaRanking> = emptyList()
 ) {
-    /** Lo que se lista: las cercanas con distancia o, si no hay ninguna, todos los puntos sin distancia. */
     val candidatas: List<CandidataCisterna>
         get() = if (ubicacion == EstadoUbicacion.ENCONTRADA && cercanas.isNotEmpty()) {
             cercanas.map { CandidataCisterna(it.punto, it.distanciaKm) }
@@ -68,13 +66,11 @@ class MapaViewModel(
 
     private val carga: Job = viewModelScope.launch {
         val puntos = repositorio.obtenerPuntosCisterna()
-        // Si el archivo de límites fallara, el mapa de cisternas sigue funcionando sin distritos.
         val limites = runCatching { distritos.obtenerDistritos() }.getOrDefault(emptyList())
         actualizar { it.copy(cargando = false, centro = repositorio.centroDelMapa(), puntos = puntos, distritos = limites) }
     }
 
     init {
-        // Cada cambio del depósito (un llenado, el sensor, "me quedé sin agua") rehace el aviso.
         viewModelScope.launch {
             combine(deposito.observarPerfil(), deposito.observarDeposito()) { perfil, actual -> perfil to actual }
                 .collect { (perfil, actual) ->
@@ -86,7 +82,6 @@ class MapaViewModel(
         }
     }
 
-    /** La pantalla avisa si el usuario dio (o ya tenía) el permiso de ubicación. */
     fun onPermisoDeUbicacion(concedido: Boolean) {
         if (!concedido) {
             actualizar { it.copy(ubicacion = EstadoUbicacion.SIN_PERMISO, cercanas = emptyList()) }
@@ -111,14 +106,11 @@ class MapaViewModel(
         }
     }
 
-    /** Elige el distrito tocado en el mapa; fuera de los distritos, cierra la tarjeta. */
     fun onTocarDistrito(punto: Coordenada) {
         actualizar { it.copy(distritoElegido = it.distritos.distritoDe(punto)) }
     }
 
-    /** Trae los resultados reales de la Liga para pintar los distritos. */
     fun onRefrescarLiga() {
-        if (!ranking.conectado) return
         viewModelScope.launch {
             carga.join()
             val posiciones = ranking.ranking(lunesDe(ahora().date)).getOrNull() ?: return@launch

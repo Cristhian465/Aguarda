@@ -18,7 +18,6 @@ data class HistorialDeposito(
 }
 
 class ArmarDeposito(private val estimar: EstimarConsumo = EstimarConsumo()) {
-
     operator fun invoke(perfil: PerfilHogar, historial: HistorialDeposito, ahora: LocalDateTime): Deposito? {
         val llenado = historial.llenados.filter { it.momento <= ahora }.maxByOrNull { it.momento } ?: return null
         val consumo = perfil.consumoVigente
@@ -31,7 +30,6 @@ class ArmarDeposito(private val estimar: EstimarConsumo = EstimarConsumo()) {
 data class ResultadoSinAgua(val deposito: Deposito, val intervaloObservado: IntervaloConsumo)
 
 class DeclararSinAgua(private val estimar: EstimarConsumo = EstimarConsumo()) {
-
     operator fun invoke(deposito: Deposito, intervalos: List<IntervaloConsumo>, momento: LocalDateTime): ResultadoSinAgua {
         require(momento > deposito.llenado.momento) { "Solo se puede quedar sin agua después del último llenado" }
         val observado = IntervaloConsumo(deposito.llenado.momento, momento, deposito.nivelTrasLlenado.litros, ClaseIntervalo.OBSERVADO)

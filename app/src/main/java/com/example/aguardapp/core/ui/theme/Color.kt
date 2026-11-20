@@ -2,7 +2,6 @@ package com.example.aguardapp.core.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Paleta propuesta en el prototipo de Figma. Provisional hasta que el equipo la apruebe.
 val AguaProfunda = Color(0xFF0A1931)
 val AguaMedia = Color(0xFF1A3D63)
 val Agua = Color(0xFF4A7FA7)

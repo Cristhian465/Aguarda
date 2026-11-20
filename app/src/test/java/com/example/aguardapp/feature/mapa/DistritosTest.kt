@@ -12,8 +12,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DistritosTest {
-
-    // Se prueba con el mismo archivo de límites que usa la app.
     private val distritos = leerDistritos(File("src/main/assets/distritos_tacna.geojson").readText())
 
     private val cuadrado = Distrito(

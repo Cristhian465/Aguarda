@@ -8,7 +8,6 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlin.coroutines.resume
 import kotlinx.coroutines.suspendCancellableCoroutine
 
-/** Lee el texto de la foto dentro del teléfono con ML Kit. La foto no se copia ni se envía. */
 class LectorDeRecibo(context: Context) {
     private val contexto = context.applicationContext
 

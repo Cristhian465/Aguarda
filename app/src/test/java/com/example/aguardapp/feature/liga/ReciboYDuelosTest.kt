@@ -14,7 +14,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ReciboYDuelosTest {
-
     private val hoy = LocalDate(2026, 11, 18)
 
     private fun fila(ubigeo: String, puntaje: Double?) = FilaRanking(null, ubigeo, ubigeo, 5, 0, puntaje)

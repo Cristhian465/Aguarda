@@ -115,7 +115,7 @@ Según el Informe de Factibilidad **(FD01, Versión 1.0)**, el proyecto es viabl
 | Categoría | Tecnologías |
 |---|---|
 | **Lenguaje** | ![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?style=flat-square&logo=kotlin&logoColor=white) |
-| **UI** | ![Jetpack Compose](https://img.shields.io/badge/Jetpack_Compose-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white) ![Material 3](https://img.shields.io/badge/Material_3-757575?style=flat-square&logo=materialdesign&logoColor=white) |
+| **UI** | ![Jetpack Compose](https://img.shields.io/badge/Jetpack_Compose-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white) ![Material 3](https://img.shields.io/badge/Material_3-757575?style=flat-square&logo=materialdesign&logoColor=white) · Jetpack Glance 1.1.1 (widget) |
 | **Base de datos** | ![Room](https://img.shields.io/badge/Room_(SQLite)-003B57?style=flat-square&logo=sqlite&logoColor=white) |
 | **Mapas** | ![Google Maps](https://img.shields.io/badge/Google_Maps_Compose-4285F4?style=flat-square&logo=googlemaps&logoColor=white) |
 | **Red / HTML** | jsoup 1.24.1 · ![Retrofit](https://img.shields.io/badge/Retrofit-48B983?style=flat-square&logo=square&logoColor=white) ![ThingSpeak](https://img.shields.io/badge/ThingSpeak-1D6FA5?style=flat-square) |
@@ -157,11 +157,11 @@ AguardApp/
 │               ├── 📁 deposito/           Depósito de agua del hogar (MVVM + DDD)
 │               ├── 📁 liga/               Liga del Agua: medición del consumo y puntaje del hogar
 │               ├── 📁 mapa/               Mapa de puntos de cisterna (Google Maps)
-│               ├── 📁 sensor/             Nivel del tanque desde el sensor IoT (Retrofit + ThingSpeak)
+│               ├── 📁 sensor/             Nivel del tanque y detector de fugas desde el sensor IoT (HTTP directo a ThingSpeak)
 │               ├── 📁 ahorro/             Retos, racha, calendario e insignias (SharedPreferences)
-│               └── 📁 eps/                Consulta del portal, sesión cifrada y OCR del PDF
+│               ├── 📁 eps/                Consulta del portal, sesión cifrada y OCR del PDF
+│               └── 📁 widget/             Widget 2x1 de pantalla de inicio con el nivel del tanque (Glance)
 │
-├── 📄 claves.properties                 Claves compartidas (Maps y ThingSpeak)
 ├── 📁 iot/wokwi/                          Simulación del sensor: ESP32 + HC-SR04 (diagram.json, sketch.ino)
 │
 └── 📁 informes/                           📋 Documentación académica
@@ -296,9 +296,10 @@ git clone https://github.com/tu-usuario/AguardApp.git
 
 # 2. Abrir en Android Studio
 
-# 3. Claves: se leen de claves.properties (compartido en el repo privado).
-#    Si alguien pone una clave propia en su local.properties, se usa esa.
-#    MAPS_API_KEY, THINGSPEAK_CHANNEL_ID, THINGSPEAK_READ_KEY
+# 3. Claves: ya están en el código, no hay que configurar nada.
+#    ThingSpeak (canal y clave de lectura) -> feature/sensor/data/remote/ThingSpeakApi.kt
+#    Supabase (URL y clave anon)           -> feature/liga/data/remote/SupabaseApi.kt
+#    Google Maps                           -> AndroidManifest.xml
 
 # 4. Sincronizar Gradle y ejecutar
 ./gradlew :app:assembleDebug
@@ -374,6 +375,15 @@ flowchart LR
 ## 📝 Changelog
 
 ### 2026-11-20
+- [Agregado] Widget 2x1 "Nivel del tanque" (`feature/widget`, Jetpack Glance): muestra el porcentaje, los litros sobre la capacidad y un ícono de wifi que indica si el tanque envió una lectura en los últimos 10 minutos. Consulta ThingSpeak una vez por hora (`updatePeriodMillis`) para ahorrar batería y datos; al tocarlo abre la app. Usa colores turquesa propios. Recursos: `widget_nivel_tanque_info.xml`, `widget_fondo`, `widget_circulo`, `widget_pastilla`, `ic_wifi` e `ic_wifi_off`.
+- [Cambiado] El dibujo del tanque de Mi depósito se separó en `dibujarIndicadorNivel()` (con ola y colores opcionales) para que el widget lo reutilice sin animación.
+- [Cambiado] La conexión con ThingSpeak es directa, como la de Maps: `ThingSpeakApi` hace un GET a la URL del canal (con la clave de lectura incluida) tanto para la última lectura como para el historial del detector de fugas, y arma las `LecturaSensor` con `org.json`. Ya no usa Retrofit ni DTOs; Retrofit sigue para la ANA y Supabase.
+- [Cambiado] La URL y la clave de Supabase están en `SupabaseApi.kt`. La clave de Google Maps sigue en el `AndroidManifest.xml`.
+- [Eliminado] `claves.properties`, la lectura de claves en `app/build.gradle.kts` (`Properties`, `manifestPlaceholders`, `buildConfigField`) y `buildConfig = true`.
+- [Eliminado] Las comprobaciones "sin configurar" que ya no pueden ocurrir: `SensorRepository.estaConfigurado`, `RankingRepository.conectado` y la tarjeta "El ranking todavía no está conectado".
+- [Eliminado] Código sin uso: íconos `ic_info`, `ic_reloj` e `ic_flecha_abajo`, `ExampleUnitTest.kt`, las dependencias `ui-tooling` / `ui-tooling-preview` (no hay `@Preview`) y un import sin uso.
+- [Eliminado] Los comentarios `//` y `/* */` (incluidos los KDoc `/** */`) de todo el código propio: Kotlin de `app/src`, `app/build.gradle.kts` y `iot/wokwi/sketch.ino`. Los archivos de la plantilla del proyecto quedan como estaban.
+- [Corregido] `SeccionRanking` usa `LocalLifecycleOwner` de `androidx.lifecycle.compose` (el de `compose.ui.platform` está obsoleto).
 - Inicio reemplaza la barra inferior y muestra el nivel del depósito, un acceso a llenado y tarjetas independientes para Mapa, Represas, Ahorro, Liga del Agua y Recibos EPS.
 - Se aplica la paleta azul al tema. Recibos EPS agrupa la consulta en línea y la lectura por foto. Liga usa el recibo guardado como referencia de consumo sin gestionar la cuenta EPS. Se reutilizan las claves locales para conservar los recibos anteriores.
 

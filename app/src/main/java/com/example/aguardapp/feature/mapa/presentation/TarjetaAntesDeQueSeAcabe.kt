@@ -19,7 +19,6 @@ import com.example.aguardapp.core.ui.theme.FuenteTexto
 import com.example.aguardapp.core.ui.theme.Tenue
 import com.example.aguardapp.core.ui.theme.Tinta
 
-/** Tarjeta sobre la lista de cisternas: en coral si el agua no alcanza, en celeste si alcanza. */
 @Composable
 fun TarjetaAntesDeQueSeAcabe(aviso: AvisoDeAgua, modifier: Modifier = Modifier) {
     val fondo = if (aviso.faltaAgua) Coral.copy(alpha = 0.12f) else Tenue

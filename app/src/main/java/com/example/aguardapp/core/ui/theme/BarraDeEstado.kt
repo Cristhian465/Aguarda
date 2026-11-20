@@ -8,10 +8,6 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-/**
- * Los íconos de la barra de estado (hora, batería) deben verse sobre el fondo de la pantalla:
- * claros sobre las cabeceras oscuras y oscuros sobre las claras. Cada pantalla indica cuál necesita.
- */
 @Composable
 fun IconosClarosEnBarraDeEstado(claros: Boolean) {
     val vista = LocalView.current

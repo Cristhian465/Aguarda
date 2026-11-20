@@ -13,7 +13,6 @@ import com.example.aguardapp.feature.liga.domain.ResumenSemanal
 
 data class DatosDelHogar(val capacidadLitros: Int, val resumen: ResumenSemanal, val verificado: Boolean)
 
-/** Junta las marcas, los llenados, los retos y el recibo en el resumen semanal del hogar. */
 class ResumenDelHogar(
     private val liga: LigaRepository,
     private val deposito: DepositoRepository,
@@ -28,7 +27,6 @@ class ResumenDelHogar(
         perfil?.let {
             val hoy = ahora().date
             val habitantes = it.habitantes.cantidad
-            // Sin semanas anteriores medidas, el recibo vigente sirve como consumo habitual.
             val base = recibo?.takeIf { r -> r.vigente(hoy) }?.litrosPorPersonaDia(habitantes)
             val resumen = calcular.resumen(marcas, llenados, ahorro.historial().keys, habitantes, hoy, base)
             DatosDelHogar(it.capacidad.litros.valor.roundToInt(), resumen, recibo?.verificado(hoy) == true)

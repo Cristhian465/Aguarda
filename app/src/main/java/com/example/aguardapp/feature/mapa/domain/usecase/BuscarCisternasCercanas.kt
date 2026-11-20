@@ -4,12 +4,7 @@ import com.example.aguardapp.feature.mapa.domain.model.CisternaCercana
 import com.example.aguardapp.feature.mapa.domain.model.Coordenada
 import com.example.aguardapp.feature.mapa.domain.model.PuntoCisterna
 
-/**
- * Cisternas dentro del radio, de la más cercana a la más lejana.
- * Se incluyen las que ya terminaron su reparto: el estado se muestra aparte.
- */
 class BuscarCisternasCercanas {
-
     fun buscar(
         puntos: List<PuntoCisterna>,
         ubicacion: Coordenada,

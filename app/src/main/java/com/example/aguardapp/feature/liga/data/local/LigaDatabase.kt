@@ -11,7 +11,6 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import kotlinx.coroutines.flow.Flow
 
-/** Nivel del tanque marcado por el usuario. Se guarda solo en el teléfono. */
 @Entity(tableName = "marca_nivel")
 data class MarcaNivelEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

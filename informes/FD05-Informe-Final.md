@@ -151,7 +151,8 @@ La solución se construye con un conjunto de tecnologías gratuitas, en su mayor
 | Estado y asincronía | Corrutinas, Flow y Lifecycle (ViewModel) | Las pantallas observan un `StateFlow` y Room avisa de cada cambio con `Flow`. |
 | Fechas y horas | kotlinx-datetime | Cálculo del nivel, del agotamiento y del próximo llenado. |
 | Mapas | Google Maps Compose (maps-compose) | Mapa de los puntos de cisterna con marcadores por estado y la ubicación del usuario. |
-| Red | Retrofit + Gson | Lectura del último dato del sensor desde la API REST de ThingSpeak. |
+| Widget | Jetpack Glance (glance-appwidget) | Widget 2x1 de pantalla de inicio con el nivel del tanque. |
+| Red | HttpURLConnection + org.json; Retrofit + Gson | El último dato del sensor se lee con un GET directo a ThingSpeak; Retrofit se usa para la ANA y Supabase. |
 | IoT | ESP32 + sensor ultrasónico HC-SR04 (simulado en Wokwi) y ThingSpeak | El ESP32 mide el nivel del tanque y lo publica cada 20 s en un canal de ThingSpeak. |
 
 La arquitectura general de la solución se muestra a continuación:
@@ -174,7 +175,7 @@ flowchart LR
     DAT -. implementa .-> DOM
     DAT --> ROOM
     PRES -- mapa --> GM
-    DAT -- "Retrofit: último dato" --> TS
+    DAT -- "HTTP: último dato" --> TS
     ESP -- "nivel cada 20 s" --> TS
 ```
 
@@ -214,10 +215,11 @@ Durante la implementación se tomaron estas decisiones:
 6. **Avisos dentro de la aplicación:** en lugar de notificaciones push, que requieren permisos, se agregó una pantalla de avisos que se calcula a partir del depósito y no necesita tablas nuevas.
 7. **Base de datos versión 3:** se agregó la tabla `plan_recortes` para guardar los recortes elegidos hasta el próximo llenado. El paso de la versión 2 a la 3 usa una migración automática de Room (`AutoMigration`) que conserva los datos; solo si falta una migración, Room recrea la base. Los esquemas de cada versión se exportan en `app/schemas/`.
 8. **Privacidad reforzada:** el respaldo automático de Android está desactivado (`allowBackup="false"` y reglas que excluyen todos los datos), de modo que la base local no se copia a la nube ni a otro teléfono; además, la casilla de consentimiento de la bienvenida empieza sin marcar.
-9. **Mapa de cisternas:** se agregó la funcionalidad `mapa`, con Google Maps y una barra inferior para pasar de Mi depósito al mapa. Mientras EPS Tacna no publique los puntos oficiales, se usan puntos de prueba; la clave de Google Maps se lee de `local.properties`.
-10. **Sensor IoT del tanque:** se construyó un prototipo con un ESP32 y un sensor ultrasónico HC-SR04, simulado en Wokwi, que publica el nivel en ThingSpeak cada 20 s. La aplicación lo lee con Retrofit (funcionalidad `sensor`) y registra cada lectura nueva como el nivel actual del depósito, sin agregar tablas.
+9. **Mapa de cisternas:** se agregó la funcionalidad `mapa`, con Google Maps y una barra inferior para pasar de Mi depósito al mapa. Mientras EPS Tacna no publique los puntos oficiales, se usan puntos de prueba; la clave de Google Maps está en el `AndroidManifest.xml`.
+10. **Sensor IoT del tanque:** se construyó un prototipo con un ESP32 y un sensor ultrasónico HC-SR04, simulado en Wokwi, que publica el nivel en ThingSpeak cada 20 s. La aplicación lo lee con un GET directo a la URL del canal (funcionalidad `sensor`) y registra cada lectura nueva como el nivel actual del depósito, sin agregar tablas.
 11. **Inyección completa con Koin:** todos los ViewModels se registran en Koin y cada pantalla los obtiene con `koinViewModel()`.
 12. **Estimación más robusta:** un "me quedé sin agua" registrado menos de 1 hora después del llenado ya no se usa para estimar el consumo, porque se considera un error al registrar.
+13. **Widget del tanque:** widget 2x1 hecho con Jetpack Glance que muestra el nivel del sensor y si el tanque está conectado. Se actualiza cada hora para ahorrar batería y reutiliza el dibujo del tanque de Mi depósito.
 
 Al cierre de esta versión se cuenta con una aplicación funcional que permite configurar el hogar, registrar llenados, consultar el depósito y el déficit, ver qué recortar, declarar que se quedó sin agua y consultar los avisos del depósito, todo sin conexión; además, muestra el mapa de cisternas y toma el nivel real del tanque desde el sensor IoT cuando hay internet.
 

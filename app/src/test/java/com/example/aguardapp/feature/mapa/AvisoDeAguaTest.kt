@@ -14,7 +14,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AvisoDeAguaTest {
-
     private val ahora = LocalDateTime(2026, 11, 12, 9, 0)
     private val proximoLlenado = LocalDateTime(2026, 11, 13, 5, 0)
 

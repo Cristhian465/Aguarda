@@ -1,6 +1,5 @@
 package com.example.aguardapp.feature.represas.domain.model
 
-// modelo de represa
 data class Presa(
     val nombre: String,
     val distrito: String,

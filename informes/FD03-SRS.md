@@ -172,6 +172,7 @@ flowchart TD
 | RF-10 | Consultar el mapa de cisternas | Mostrar en un mapa los puntos de reparto de agua en cisterna de Tacna, con su horario y estado. | Media |
 | RF-11 | Consultar el nivel del sensor | Leer el nivel real del tanque medido por un sensor IoT y usarlo como nivel actual del depósito. | Media |
 | RF-12 | Registrar y consultar el progreso de ahorro | Marcar y desmarcar los retos del día, consultar la racha y el calendario, y ver las insignias. El historial se guarda en el teléfono. | Media |
+| RF-13 | Ver el nivel del tanque en un widget | Widget 2x1 para la pantalla de inicio. Muestra el porcentaje del tanque, los litros sobre la capacidad configurada y un ícono de wifi encendido si el sensor envió una lectura en los últimos 10 minutos (tachado si no). Se actualiza una vez por hora consultando ThingSpeak; sin conexión muestra la última lectura guardada. Al tocarlo se abre la aplicación. | Baja |
 
 ### b) Cuadro de Requerimientos No funcionales
 
@@ -179,7 +180,7 @@ flowchart TD
 |---|---|---|
 | RNF-01 | Disponibilidad | La gestión del depósito opera al 100 % sin conexión, con la base de datos local (Room / SQLite) como única fuente de verdad. Sin internet, el mapa y el sensor muestran el motivo y el resto de la aplicación sigue funcionando. |
 | RNF-02 | Rendimiento | Las pantallas deben responder en un máximo de 2 segundos en condiciones normales; los cálculos se hacen en el dispositivo sin esperar a la red. |
-| RNF-03 | Privacidad y seguridad | El depósito permanece local y el respaldo automático de Android está desactivado. La consulta EPS envía credenciales al portal HTTP (sin cifrado en tránsito) sin guardarlas y el ranking opcional envía datos anónimos con consentimiento. La aplicación solo declara los permisos de internet (para el mapa y el sensor, que únicamente descargan datos) y de ubicación, que se pide al abrir el mapa y puede negarse. Las claves de Google Maps y de ThingSpeak se leen de `local.properties` y no se guardan en el repositorio. El usuario se identifica con un UUID local. |
+| RNF-03 | Privacidad y seguridad | El depósito permanece local y el respaldo automático de Android está desactivado. La consulta EPS envía credenciales al portal HTTP (sin cifrado en tránsito) sin guardarlas y el ranking opcional envía datos anónimos con consentimiento. La aplicación solo declara los permisos de internet (para el mapa y el sensor, que únicamente descargan datos) y de ubicación, que se pide al abrir el mapa y puede negarse. Las claves de Google Maps, ThingSpeak (solo lectura) y Supabase (clave anon) están en el código del repositorio privado; ninguna permite modificar datos fuera de las funciones públicas previstas. El usuario se identifica con un UUID local. |
 | RNF-04 | Usabilidad y accesibilidad | Interfaz con textos legibles, una sola fuente tipográfica, colores sólidos, botones a lo ancho de la pantalla y mensajes de error claros debajo de cada campo. |
 | RNF-05 | Compatibilidad | Android 7.0 (API 24) o superior; probado contra la API 36. |
 | RNF-06 | Mantenibilidad | Arquitectura MVVM + DDD: dominio en Kotlin puro, independiente de Android; cada pantalla con un Screen y un ViewModel; sin capas innecesarias. |
@@ -268,7 +269,7 @@ flowchart LR
         direction TB
         P3["presentation"]
         D3["domain"]
-        DA3["data (Retrofit)"]
+        DA3["data (HTTP)"]
     end
     BIEN -- usa --> CORE
     P1 -- usa --> D1

@@ -5,7 +5,6 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import com.example.aguardapp.BuildConfig
 import com.example.aguardapp.core.util.Reloj
 import com.example.aguardapp.feature.liga.data.LigaRepositoryImpl
 import com.example.aguardapp.feature.liga.data.PreferenciasLiga
@@ -13,28 +12,25 @@ import com.example.aguardapp.feature.liga.data.RankingRepositoryImpl
 import com.example.aguardapp.feature.liga.data.ResumenDelHogar
 import com.example.aguardapp.feature.liga.data.local.LigaDatabase
 import com.example.aguardapp.feature.liga.data.remote.SupabaseApi
+import com.example.aguardapp.feature.liga.data.remote.URL_SUPABASE
 import com.example.aguardapp.feature.liga.domain.LigaRepository
 import com.example.aguardapp.feature.liga.domain.RankingRepository
 import com.example.aguardapp.feature.liga.presentation.LigaViewModel
 import com.example.aguardapp.feature.liga.presentation.RankingLigaViewModel
 
-/** Liga del Agua: datos locales, conexión con Supabase y pantallas. */
 internal fun moduloLiga(context: Context) = module {
     single { LigaDatabase.crear(context).ligaDao() }
     single<LigaRepository> { LigaRepositoryImpl(get()) }
     single { PreferenciasLiga(context.getSharedPreferences("liga", Context.MODE_PRIVATE)) }
     single { ResumenDelHogar(get(), get(), get(), get(), get<Reloj>()::ahora) }
-    single<RankingRepository> { RankingRepositoryImpl(crearSupabaseApi(), BuildConfig.SUPABASE_ANON_KEY) }
+    single<RankingRepository> { RankingRepositoryImpl(crearSupabaseApi()) }
     viewModel { LigaViewModel(get(), get(), get(), get<Reloj>()::ahora) }
     viewModel { RankingLigaViewModel(get(), get(), get(), get(), get(), get<Reloj>()::ahora) }
 }
 
-// Sin las claves de Supabase la app funciona igual y el ranking queda desconectado.
-private fun crearSupabaseApi(): SupabaseApi? {
-    if (BuildConfig.SUPABASE_URL.isBlank() || BuildConfig.SUPABASE_ANON_KEY.isBlank()) return null
-    return Retrofit.Builder()
-        .baseUrl(BuildConfig.SUPABASE_URL.trimEnd('/') + "/")
+private fun crearSupabaseApi(): SupabaseApi =
+    Retrofit.Builder()
+        .baseUrl(URL_SUPABASE)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
         .create(SupabaseApi::class.java)
-}

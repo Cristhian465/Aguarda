@@ -10,7 +10,6 @@ import com.example.aguardapp.feature.mapa.domain.repository.DistritosRepository
 
 private const val ARCHIVO_DISTRITOS = "distritos_tacna.geojson"
 
-/** Lee los límites guardados en la app (OpenStreetMap, con el ubigeo del INEI). No usa internet. */
 class DistritosRepositoryImpl(context: Context) : DistritosRepository {
     private val contexto = context.applicationContext
 
@@ -24,7 +23,6 @@ private data class FeatureGeoJson(val properties: PropiedadesGeoJson, val geomet
 private data class PropiedadesGeoJson(val ubigeo: String, val nombre: String)
 private data class GeometriaGeoJson(val coordinates: List<List<List<List<Double>>>>)
 
-/** GeoJSON MultiPolygon: cada punto viene como [longitud, latitud]; solo se usa el borde exterior. */
 fun leerDistritos(geoJson: String): List<Distrito> =
     Gson().fromJson(geoJson, ColeccionGeoJson::class.java).features.map { feature ->
         Distrito(

@@ -64,7 +64,6 @@ fun RepresasScreen(onVolver: () -> Unit, viewModel: RepresasViewModel = koinView
 
 @Composable
 private fun ListaDeRepresas(presas: List<Presa>, sinConexion: Boolean) = Column {
-    // mapa fuera de la lista para poder moverlo
     MapaDeRepresas(presas)
     LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         if (sinConexion) item { Texto("Sin conexión: mostrando los datos guardados.") }
@@ -80,7 +79,6 @@ private fun ListaDeRepresas(presas: List<Presa>, sinConexion: Boolean) = Column 
     }
 }
 
-// mapa con los marcadores
 @Composable
 private fun MapaDeRepresas(presas: List<Presa>) {
     val camara = rememberCameraPositionState { position = CameraPosition.fromLatLngZoom(SIERRA_DE_TACNA, 8.3f) }

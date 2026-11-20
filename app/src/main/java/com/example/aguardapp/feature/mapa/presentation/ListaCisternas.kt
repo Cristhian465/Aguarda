@@ -35,7 +35,6 @@ import com.example.aguardapp.feature.mapa.domain.model.PuntoCisterna
 import com.example.aguardapp.feature.mapa.domain.usecase.BuscarCisternasCercanas
 import com.example.aguardapp.feature.mapa.domain.usecase.CandidataCisterna
 
-/** Tono del marcador de Google Maps según el estado del punto. */
 fun tonoDelEstado(estado: EstadoCisterna): Float = when (estado) {
     EstadoCisterna.ACTIVO -> BitmapDescriptorFactory.HUE_AZURE
     EstadoCisterna.EN_RUTA -> BitmapDescriptorFactory.HUE_ORANGE
@@ -44,7 +43,6 @@ fun tonoDelEstado(estado: EstadoCisterna): Float = when (estado) {
 
 private fun colorDelEstado(estado: EstadoCisterna) = Color.hsv(tonoDelEstado(estado), 1f, 1f)
 
-/** Qué significa cada color de marcador. Va encima del mapa. */
 @Composable
 fun LeyendaDeEstados(modifier: Modifier = Modifier) {
     Row(
@@ -61,14 +59,11 @@ fun LeyendaDeEstados(modifier: Modifier = Modifier) {
     }
 }
 
-/** Lista bajo el mapa: las cisternas cercanas con su distancia o, sin ubicación, todos los puntos. */
 @Composable
 fun ListaCisternas(estado: MapaUiState, onSeleccionar: (PuntoCisterna) -> Unit, modifier: Modifier = Modifier) {
     val encontrada = estado.ubicacion == EstadoUbicacion.ENCONTRADA
     val conDistancia = encontrada && estado.cercanas.isNotEmpty()
-    // Si no hay ninguna dentro del radio, se muestran igual todos los puntos (sin distancia).
     val filas = estado.candidatas
-    // El aviso queda fijo arriba; debajo se desplaza la lista, para que el mapa conserve su espacio.
     Column(modifier.fillMaxWidth().background(Blanco)) {
         estado.aviso?.let { TarjetaAntesDeQueSeAcabe(it, Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp)) }
         ListaDesplazable(estado, filas, encontrada, conDistancia, onSeleccionar)

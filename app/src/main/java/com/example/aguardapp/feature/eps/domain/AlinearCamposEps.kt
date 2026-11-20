@@ -6,7 +6,6 @@ import kotlin.math.min
 
 data class LineaReciboEps(val texto: String, val izquierda: Int, val arriba: Int, val derecha: Int, val abajo: Int)
 
-/** Une solo las etiquetas conocidas con una cifra de la misma fila y columna del recibo EPS. */
 fun alinearCamposEps(lineas: List<LineaReciboEps>, anchoPagina: Int): String {
     fun normalizar(texto: String) = Normalizer.normalize(texto.lowercase(), Normalizer.Form.NFD)
         .replace(Regex("\\p{M}"), "").trim()
@@ -27,7 +26,6 @@ fun alinearCamposEps(lineas: List<LineaReciboEps>, anchoPagina: Int): String {
                 distancia >= altura * 0.5 && distancia <= anchoPagina * (if (volumen) 0.20 else 0.35)
         }.sortedBy { it.izquierda }
         val elegido = candidatos.firstOrNull() ?: return@mapNotNull null
-        // Dos cifras prácticamente a la misma distancia indican ambigüedad de OCR.
         if (candidatos.getOrNull(1)?.let { it.izquierda - elegido.izquierda < altura } == true) return@mapNotNull null
         val valor = normalizar(elegido.texto).replace(Regex("^(?:s\\s*/\\.?\\s*)?[*\\s]*"), "")
         if (volumen) "Consumo del mes: $valor m3" else "Total a pagar: S/ $valor"

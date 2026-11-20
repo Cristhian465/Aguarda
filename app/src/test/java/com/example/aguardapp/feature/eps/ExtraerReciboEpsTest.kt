@@ -8,7 +8,6 @@ import kotlinx.datetime.LocalDate
 import org.junit.Assert.*
 import org.junit.Test
 
-/** Ejemplos sintéticos: no sustituyen validar un recibo real de EPS Tacna. */
 class ExtraerReciboEpsTest {
     private fun texto(total: String = "S/ 45.20") = "Facturación: NOVIEMBRE 2026\nConsumo del mes: 18 m³\nTotal a pagar: $total"
 

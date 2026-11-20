@@ -15,9 +15,7 @@ import kotlin.coroutines.resume
 import com.example.aguardapp.feature.mapa.domain.model.Coordenada
 import com.example.aguardapp.feature.mapa.domain.repository.UbicacionRepository
 
-/** Lee la ubicación una sola vez, sin seguimiento en segundo plano. La coordenada no se guarda. */
 class UbicacionRepositoryImpl(context: Context) : UbicacionRepository {
-
     private val contexto = context.applicationContext
     private val gestor = contexto.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
@@ -33,7 +31,6 @@ class UbicacionRepositoryImpl(context: Context) : UbicacionRepository {
         ContextCompat.checkSelfPermission(contexto, it) == PackageManager.PERMISSION_GRANTED
     }
 
-    // La red responde en segundos; el GPS es más preciso pero tarda más en interiores.
     private fun proveedorDisponible(): String? =
         listOf(LocationManager.NETWORK_PROVIDER, LocationManager.GPS_PROVIDER)
             .firstOrNull { runCatching { gestor.isProviderEnabled(it) }.getOrDefault(false) }

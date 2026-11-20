@@ -2,7 +2,6 @@ package com.example.aguardapp.feature.liga.domain
 
 import kotlinx.datetime.LocalDate
 
-/** Lo único que sale del teléfono: un código anónimo y el resultado semanal del hogar. */
 data class EnvioSemanal(
     val token: String,
     val lunes: LocalDate,
@@ -12,7 +11,6 @@ data class EnvioSemanal(
     val verificado: Boolean
 )
 
-/** Resultado de un distrito según el servidor. Sin 5 hogares, el puntaje llega vacío. */
 data class PosicionDistrito(
     val ubigeo: String,
     val hogares: Int,
@@ -21,7 +19,6 @@ data class PosicionDistrito(
     val litrosPorPersonaDia: Double?
 )
 
-/** Fila del ranking ya ordenada. Los distritos sin datos suficientes no tienen puesto. */
 data class FilaRanking(
     val puesto: Int?,
     val ubigeo: String,
@@ -32,9 +29,6 @@ data class FilaRanking(
 )
 
 interface RankingRepository {
-    /** `false` mientras no se configure el proyecto de Supabase. */
-    val conectado: Boolean
-
     suspend fun enviar(envio: EnvioSemanal): Result<Unit>
 
     suspend fun ranking(lunes: LocalDate): Result<List<PosicionDistrito>>
@@ -42,7 +36,6 @@ interface RankingRepository {
     suspend fun borrarMisDatos(token: String): Result<Unit>
 }
 
-/** Une los distritos del mapa con los resultados: primero los que compiten, de mayor a menor puntaje. */
 fun armarRanking(distritos: List<Pair<String, String>>, posiciones: List<PosicionDistrito>): List<FilaRanking> {
     val porUbigeo = posiciones.associateBy { it.ubigeo }
     val (compiten, sinDatos) = distritos.partition { (ubigeo, _) -> porUbigeo[ubigeo]?.puntaje != null }

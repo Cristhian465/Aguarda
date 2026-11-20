@@ -4,7 +4,6 @@ import com.example.aguardapp.feature.eps.domain.MesRecibo
 
 data class CuentaEps(val usuario: String)
 
-/** Total a pagar del documento, que puede incluir deuda; no equivale al cargo del mes. */
 data class ReciboEps(val mes: MesRecibo, val metrosCubicos: Double, val totalPagar: Double)
 
 interface ConsultaEps {

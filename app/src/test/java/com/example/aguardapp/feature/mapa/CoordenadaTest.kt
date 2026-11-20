@@ -6,7 +6,6 @@ import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class CoordenadaTest {
-
     @Test
     fun unGradoDeLatitudEquivaleAUnos111Km() {
         val distancia = Coordenada(-18.0, -70.25).distanciaKmHasta(Coordenada(-17.0, -70.25))

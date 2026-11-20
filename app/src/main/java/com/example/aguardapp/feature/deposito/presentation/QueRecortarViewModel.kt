@@ -35,7 +35,6 @@ class QueRecortarViewModel(
     private val repositorio: DepositoRepository,
     private val ahora: () -> LocalDateTime
 ) : ViewModel() {
-
     private val calcularDeficit = CalcularDeficit()
     private val recortes = CalcularRecortes(calcularDeficit)
 

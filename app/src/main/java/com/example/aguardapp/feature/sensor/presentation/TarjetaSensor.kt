@@ -27,7 +27,6 @@ import com.example.aguardapp.feature.deposito.presentation.formatearMiles
 @Composable
 fun TarjetaSensor(modifier: Modifier = Modifier, viewModel: SensorViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    if (!uiState.configurado) return
     TarjetaBlanca(modifier) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("Sensor del tanque", fontFamily = FuenteTexto, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = Tinta)

@@ -11,7 +11,6 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 class MedicionLigaTest {
-
     private val medir = MedirConsumo()
     private val calcular = CalcularPuntaje()
     private val lunes = LocalDate(2026, 11, 16)

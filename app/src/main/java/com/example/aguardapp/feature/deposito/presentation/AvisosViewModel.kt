@@ -42,7 +42,6 @@ class AvisosViewModel(
     private val repositorio: DepositoRepository,
     private val ahora: () -> LocalDateTime
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow(AvisosUiState())
     val uiState: StateFlow<AvisosUiState> = _uiState.asStateFlow()
 

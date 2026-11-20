@@ -11,7 +11,6 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 class ElegirCisternaConvenienteTest {
-
     private val elegir = ElegirCisternaConveniente()
 
     private fun candidata(

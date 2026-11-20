@@ -11,6 +11,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -30,29 +31,47 @@ private val MARCAS_INDICADOR = listOf(47f / 196, 96f / 196, 145f / 196)
 @Composable
 fun IndicadorNivelReservorio(fraccion: Float, modifier: Modifier = Modifier) {
     val nivel by animateFloatAsState(fraccion.coerceIn(0f, 1f), tween(DURACION_ANIMACION_MS))
-    Canvas(modifier.size(width = 106.dp, height = 196.dp)) {
-        val grosorBorde = 2.dp.toPx()
-        val forma = formaDelTanque(size, inset = 0f)
-        drawPath(forma, AguaProfunda)
-        clipPath(forma) {
-            val alto = size.height * nivel
-            val superficie = size.height - alto
-            if (alto > 0f) {
-                drawRect(AguaClara, Offset(0f, superficie), Size(size.width, alto))
-            }
-            MARCAS_INDICADOR.forEach { marca ->
-                drawRect(Blanco, Offset(0f, size.height * marca), Size(11.dp.toPx(), 1.5.dp.toPx()))
-            }
-        }
-        drawPath(formaDelTanque(size, inset = grosorBorde / 2), Blanco, style = Stroke(grosorBorde))
-    }
+    Canvas(modifier.size(width = 106.dp, height = 196.dp)) { dibujarIndicadorNivel(nivel) }
 }
 
-private fun DrawScope.formaDelTanque(tamano: Size, inset: Float): Path =
+fun DrawScope.dibujarIndicadorNivel(
+    fraccion: Float,
+    conOla: Boolean = false,
+    colorFondo: Color = AguaProfunda,
+    colorAgua: Color = AguaClara
+) {
+    val nivel = fraccion.coerceIn(0f, 1f)
+    val grosorBorde = 2.dp.toPx()
+    val forma = formaDelTanque(size, inset = 0f)
+    drawPath(forma, colorFondo)
+    clipPath(forma) {
+        val alto = size.height * nivel
+        val superficie = size.height - alto
+        if (alto > 0f) {
+            if (conOla) drawPath(aguaConOla(superficie), colorAgua)
+            else drawRect(colorAgua, Offset(0f, superficie), Size(size.width, alto))
+        }
+        MARCAS_INDICADOR.forEach { marca ->
+            drawRect(Blanco, Offset(0f, size.height * marca), Size(size.width * 0.1f, 1.5.dp.toPx()))
+        }
+    }
+    drawPath(formaDelTanque(size, inset = grosorBorde / 2), Blanco, style = Stroke(grosorBorde))
+}
+
+private fun DrawScope.aguaConOla(superficie: Float): Path =
     Path().apply {
-        addRoundRect(
-            RoundRect(inset, inset, tamano.width - inset, tamano.height - inset, CornerRadius(20.dp.toPx() - inset))
-        )
+        val altura = size.height * 0.03f
+        moveTo(0f, superficie)
+        cubicTo(size.width * 0.3f, superficie - altura, size.width * 0.6f, superficie + altura, size.width, superficie - altura / 2)
+        lineTo(size.width, size.height)
+        lineTo(0f, size.height)
+        close()
+    }
+
+private fun formaDelTanque(tamano: Size, inset: Float): Path =
+    Path().apply {
+        val radio = tamano.width * 0.19f
+        addRoundRect(RoundRect(inset, inset, tamano.width - inset, tamano.height - inset, CornerRadius(radio - inset)))
     }
 
 private val MARCAS_TANQUE_LLENO = listOf(35.5f / 150, 73f / 150, 110.5f / 150)

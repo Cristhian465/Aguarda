@@ -6,7 +6,6 @@ import com.example.aguardapp.feature.eps.domain.ReciboGuardado
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/** Guarda el último recibo. Reutiliza las claves de las instalaciones anteriores. */
 class RecibosLocales(private val preferencias: SharedPreferences) {
     private val _recibo = MutableStateFlow(leerRecibo())
     val recibo = _recibo.asStateFlow()

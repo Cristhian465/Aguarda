@@ -19,7 +19,6 @@ import com.example.aguardapp.feature.deposito.presentation.componentes.TarjetaBl
 import com.example.aguardapp.feature.deposito.presentation.formatearMiles
 import com.example.aguardapp.feature.sensor.domain.usecase.EstadoFuga
 
-/** Aviso de fuga de la última madrugada. No ocupa espacio si no hay nada que decir. */
 @Composable
 fun TarjetaFuga(modifier: Modifier = Modifier, viewModel: FugaViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()

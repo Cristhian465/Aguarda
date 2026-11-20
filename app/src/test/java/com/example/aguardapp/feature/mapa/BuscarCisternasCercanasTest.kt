@@ -10,11 +10,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BuscarCisternasCercanasTest {
-
     private val buscar = BuscarCisternasCercanas()
     private val casa = Coordenada(-18.0000, -70.2500)
 
-    // 0.01 grados de latitud son aproximadamente 1.1 km
     private fun punto(id: String, latitud: Double, estado: EstadoCisterna = EstadoCisterna.ACTIVO) = PuntoCisterna(
         id = id,
         nombre = id,

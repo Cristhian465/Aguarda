@@ -37,7 +37,6 @@ class RegistrarLlenadoViewModel(
     private val ahora: () -> LocalDateTime,
     tipo: TipoLlenado
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow(RegistrarLlenadoUiState(tipo = tipo))
     val uiState: StateFlow<RegistrarLlenadoUiState> = _uiState.asStateFlow()
 

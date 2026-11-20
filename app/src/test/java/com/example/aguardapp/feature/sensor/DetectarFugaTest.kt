@@ -11,7 +11,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Lecturas sintéticas: una por minuto durante cuatro horas, como una madrugada de 1 a 5 a. m. */
 @OptIn(ExperimentalTime::class)
 class DetectarFugaTest {
     private val capacidad = 1100.0
@@ -30,7 +29,6 @@ class DetectarFugaTest {
     }
 
     @Test fun unaBajadaConstanteEsPosibleFugaYCalculaLosLitros() {
-        // Baja 4 puntos en 4 horas: entre el primer y el último bloque hay 3.5 puntos, unos 38 L.
         val analisis = detectarFuga(lecturas { 80.0 - 4.0 * it / minutos }, capacidad)
         assertEquals(EstadoFuga.POSIBLE_FUGA, analisis.estado)
         assertTrue("litros: ${analisis.litrosPerdidos}", analisis.litrosPerdidos in 37..40)

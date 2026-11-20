@@ -48,7 +48,6 @@ fun TarjetaEps(viewModel: EpsViewModel = koinViewModel()) {
 
 @Composable
 private fun FormularioEps(trabajando: Boolean, onVincular: (String, String) -> Unit, onCancelar: () -> Unit) {
-    // No rememberSaveable: la clave no entra en el estado guardado de Android.
     var usuario by remember { mutableStateOf("") }
     var clave by remember { mutableStateOf("") }
     Column {

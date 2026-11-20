@@ -9,7 +9,6 @@ import com.example.aguardapp.feature.liga.domain.LigaRepository
 import com.example.aguardapp.feature.liga.domain.MarcaNivel
 
 class LigaRepositoryImpl(private val dao: LigaDao) : LigaRepository {
-
     override fun observarMarcas(): Flow<List<MarcaNivel>> =
         dao.observarMarcas().map { marcas -> marcas.map { MarcaNivel(LocalDateTime.parse(it.momento), it.litros) } }
 
