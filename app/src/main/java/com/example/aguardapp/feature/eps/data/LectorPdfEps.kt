@@ -20,10 +20,8 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.suspendCancellableCoroutine
 
-/** PDF temporal privado: se elimina tanto si termina como si falla o se cancela. */
 internal class LectorPdfEps(private val context: Context) {
     suspend fun leer(bytes: ByteArray): String {
-        // El recibo digital conserva texto: extraerlo evita confundir cifras pequeñas con OCR.
         PDFBoxResourceLoader.init(context.applicationContext)
         val digital = try {
             PDDocument.load(bytes).use { documento ->

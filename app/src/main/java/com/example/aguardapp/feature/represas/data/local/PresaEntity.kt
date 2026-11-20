@@ -3,7 +3,6 @@ package com.example.aguardapp.feature.represas.data.local
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-// tabla de represas
 @Entity(tableName = "presa")
 data class PresaEntity(
     @PrimaryKey val nombre: String,

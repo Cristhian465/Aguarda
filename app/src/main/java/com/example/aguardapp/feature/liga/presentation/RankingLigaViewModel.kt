@@ -23,7 +23,6 @@ import com.example.aguardapp.feature.mapa.domain.repository.DistritosRepository
 import com.example.aguardapp.feature.mapa.domain.repository.UbicacionRepository
 
 data class RankingLigaUiState(
-    val conectado: Boolean = false,
     val participa: Boolean = false,
     val distritos: List<Pair<String, String>> = emptyList(),
     val ubigeoElegido: String? = null,
@@ -41,7 +40,7 @@ class RankingLigaViewModel(
     private val ahora: () -> LocalDateTime
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(
-        RankingLigaUiState(ranking.conectado, preferencias.participa, ubigeoElegido = preferencias.ubigeo)
+        RankingLigaUiState(preferencias.participa, ubigeoElegido = preferencias.ubigeo)
     )
     val uiState: StateFlow<RankingLigaUiState> = _uiState.asStateFlow()
 
@@ -50,7 +49,6 @@ class RankingLigaViewModel(
             val lista = runCatching { distritos.obtenerDistritos() }.getOrDefault(emptyList())
             _uiState.update { estado -> estado.copy(distritos = lista.map { it.ubigeo to it.nombre }) }
             actualizar()
-            // Propone el distrito del usuario; la ubicación se usa aquí y no se envía.
             val propuesto = runCatching { ubicacion.ubicacionActual() }.getOrNull()?.let { lista.distritoDe(it)?.ubigeo }
             _uiState.update { estado -> estado.copy(ubigeoElegido = estado.ubigeoElegido ?: propuesto) }
         }
@@ -80,9 +78,7 @@ class RankingLigaViewModel(
         }
     }
 
-    /** Envía el resumen del hogar (si aceptó participar) y trae el ranking de la semana. */
     fun actualizar() {
-        if (!ranking.conectado) return
         viewModelScope.launch {
             val lunes = lunesDe(ahora().date)
             val envio = if (preferencias.participa) enviarResumen() else Result.success(Unit)

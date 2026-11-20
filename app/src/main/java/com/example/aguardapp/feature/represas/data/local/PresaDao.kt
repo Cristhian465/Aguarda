@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PresaDao {
-    // ordenadas por volumen
     @Query("SELECT * FROM presa ORDER BY volumenHm3 DESC")
     fun todas(): Flow<List<PresaEntity>>
 

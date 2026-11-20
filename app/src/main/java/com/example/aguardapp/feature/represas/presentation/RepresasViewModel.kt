@@ -13,8 +13,6 @@ import com.example.aguardapp.feature.represas.domain.model.Presa
 import com.example.aguardapp.feature.represas.domain.repository.RepresasRepository
 
 class RepresasViewModel(private val repositorio: RepresasRepository) : ViewModel() {
-
-    // datos de room
     val presas: StateFlow<List<Presa>> =
         repositorio.presas.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 

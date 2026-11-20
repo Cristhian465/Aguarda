@@ -7,7 +7,6 @@ import kotlinx.datetime.daysUntil
 import kotlinx.datetime.number
 import kotlinx.datetime.plus
 
-/** Mes facturado en el recibo. */
 data class MesRecibo(val anio: Int, val mes: Int) {
     init {
         require(mes in 1..12) { "Mes inválido: $mes" }
@@ -21,7 +20,6 @@ data class MesRecibo(val anio: Int, val mes: Int) {
     override fun toString(): String = "${mes.toString().padStart(2, '0')}/$anio"
 
     companion object {
-        /** Acepta "11/2026". */
         fun desdeTexto(texto: String): MesRecibo? {
             val (mes, anio) = Regex("""^\s*(\d{1,2})/(20\d{2})\s*$""").find(texto)?.destructured ?: return null
             return mes.toInt().takeIf { it in 1..12 }?.let { MesRecibo(anio.toInt(), it) }
@@ -29,10 +27,6 @@ data class MesRecibo(val anio: Int, val mes: Int) {
     }
 }
 
-/**
- * Consumo confirmado desde foto (sin cambios) u obtenido del portal EPS autenticado.
- * La verificación indica origen y vigencia; no valida firmas digitales del documento.
- */
 data class ReciboGuardado(
     val mes: MesRecibo,
     val metrosCubicos: Double,
@@ -67,10 +61,6 @@ private fun normalizar(texto: String): String =
 
 private fun aNumero(texto: String): Double? = texto.replace(',', '.').toDoubleOrNull()?.takeIf { it > 0 && it <= 500 }
 
-/**
- * Busca los m³ consumidos en el texto del recibo. Prefiere la línea que dice "consumo". Si hay varios
- * valores posibles y ninguno está en esa línea, no adivina: devuelve `null` y el usuario lo escribe.
- */
 fun leerConsumoDelRecibo(texto: String): Double? {
     val lineas = normalizar(texto).lines()
     lineas.filter { "consumo" in it }.forEach { linea ->
@@ -82,7 +72,6 @@ fun leerConsumoDelRecibo(texto: String): Double? {
         .singleOrNull()
 }
 
-/** Busca el mes facturado; prefiere las líneas que hablan del periodo o del mes. */
 fun leerMesDelRecibo(texto: String): MesRecibo? {
     val lineas = normalizar(texto).lines()
     val ordenadas = lineas.filter { LINEA_DE_PERIODO.containsMatchIn(it) } + lineas

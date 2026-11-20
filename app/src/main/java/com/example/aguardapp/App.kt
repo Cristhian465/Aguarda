@@ -12,7 +12,6 @@ import com.example.aguardapp.core.ui.theme.AguardAppTheme
 fun App(inicio: InicioViewModel = koinViewModel()) {
     AguardAppTheme {
         val uiState by inicio.uiState.collectAsStateWithLifecycle()
-        // Mientras se decide la primera pantalla no se muestra nada (es una lectura local muy rápida).
         val rutaInicial = uiState.rutaInicial
         if (rutaInicial != null) {
             AppNavHost(rutaInicial, uiState.hayConfiguracion)

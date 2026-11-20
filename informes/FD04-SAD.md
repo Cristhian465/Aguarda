@@ -112,7 +112,7 @@ El documento se organiza en cuatro secciones: introducción; objetivos y restric
 - La gestión del depósito debe funcionar sin conexión, con la base de datos local como única fuente de verdad.
 - El dominio (`domain/`) no puede depender de Android, Room ni Koin: es Kotlin puro.
 - Solo se usan tecnologías gratuitas; no hay backend propio. Los únicos servicios externos son Google Maps y ThingSpeak, usados dentro de su cuota gratuita y solo para leer datos.
-- Las claves de los servicios externos (`MAPS_API_KEY`, `THINGSPEAK_CHANNEL_ID` y `THINGSPEAK_READ_KEY`) se leen de `local.properties` y no se suben al repositorio.
+- Las claves de los servicios externos están en el código: la de Google Maps en `AndroidManifest.xml`, el canal y la clave de lectura de ThingSpeak en `ThingSpeakApi.kt`, y la URL y la clave anon de Supabase en `SupabaseApi.kt`. No se usa `BuildConfig` ni archivos de propiedades.
 - El esquema de Room se exporta en `app/schemas/`. El historial de Ahorro se guarda en las preferencias privadas del teléfono.
 - Las pantallas no contienen lógica de negocio: solo pintan el `UiState` y llaman funciones del ViewModel.
 
@@ -185,8 +185,12 @@ flowchart TB
     subgraph SEN[feature/sensor]
       SPRES[presentation]
       SDOM[domain]
-      SDAT[data: Retrofit]
+      SDAT[data: HTTP directo]
     end
+    subgraph WID[feature/widget]
+      WPRES[presentation: NivelTanqueWidget + Receiver con Glance]
+    end
+    WPRES --> SDAT
 
     MAIN --> NAV
     MAIN --> DI
@@ -499,7 +503,7 @@ sequenceDiagram
     participant TSE as TarjetaSensor
     participant VM as SensorViewModel
     participant SR as SensorRepositoryImpl
-    participant API as ThingSpeakApi (Retrofit)
+    participant API as ThingSpeakApi (HTTP directo)
     participant R as DepositoRepository
     loop Cada 20 s
         ESP->>TS: GET /update (field1 = %, field2 = cm)
@@ -508,10 +512,10 @@ sequenceDiagram
     TSE->>VM: collectAsStateWithLifecycle()
     loop Cada 20 s mientras la pantalla está visible
         VM->>SR: ultimaLectura()
-        SR->>API: GET channels/{canal}/feeds/last.json
-        API->>TS: Petición HTTPS
+        SR->>API: ultimaLectura()
+        API->>TS: GET channels/3575152/feeds/last.json?api_key=…
         TS-->>API: created_at, field1, field2
-        API-->>SR: EntradaThingSpeakDto
+        API-->>SR: LecturaSensor (o null si no hay datos)
         SR-->>VM: Result(LecturaSensor) o el motivo del error
         VM->>R: observarDeposito().first()
         alt La lectura es más reciente que el último nivel
@@ -629,13 +633,12 @@ classDiagram
     class MapaViewModel
     class SensorRepository {
       <<interface>>
-      +estaConfigurado Boolean
       +ultimaLectura() Result~LecturaSensor~
     }
     class SensorRepositoryImpl
     class ThingSpeakApi {
-      <<Retrofit>>
-      +ultimaEntrada(canal, claveLectura) EntradaThingSpeakDto
+      +ultimaLectura() LecturaSensor?
+      +historial(desde, hasta) List~LecturaSensor~
     }
     class SensorViewModel {
       +onUsarMedicion()
@@ -741,7 +744,7 @@ flowchart LR
       ROOM[local: Room DAO y entidades]
       MIMPL[MapaRepositoryImpl: puntos de prueba]
       SIMPL[SensorRepositoryImpl]
-      API[remote: ThingSpeakApi con Retrofit]
+      API[remote: ThingSpeakApi con HttpURLConnection]
     end
 
     UI --> VM
@@ -820,7 +823,7 @@ flowchart LR
 
 > Además de Google Maps y ThingSpeak, la aplicación incluye ranking opcional y un conector EPS en validación. EPS recibe las credenciales para el acceso HTTP, sin cifrado en tránsito; la contraseña no se guarda y el PDF se procesa localmente. La gestión del depósito permanece local.
 
-**Inyección de dependencias:** Koin (`core/di/AppModule.kt`) se organiza en tres módulos. `moduloApp` registra el `Reloj`, el `UsuarioDao`, el `DepositoRepository` y el `MapaRepository`; `moduloRed` registra Retrofit (con la URL de ThingSpeak), la `ThingSpeakApi` y el `SensorRepository`, que recibe el canal y la clave de lectura desde `BuildConfig`; y `moduloViewModels` registra todos los ViewModels, que cada pantalla obtiene con `koinViewModel()`. El tipo de llenado (completo o parcial) llega a `RegistrarLlenadoViewModel` con `parametersOf`. Antes de iniciar Koin, `iniciarAplicacion` crea la base de datos y el usuario local. Los casos de uso no tienen estado y cada ViewModel o el repositorio los crea directamente.
+**Inyección de dependencias:** Koin (`core/di/AppModule.kt`) se organiza en tres módulos. `moduloApp` registra el `Reloj`, el `UsuarioDao`, el `DepositoRepository` y el `MapaRepository`; `moduloRed` registra el `SensorRepository` con una `ThingSpeakApi`, que hace un GET directo a la URL del canal (con la clave de lectura incluida), y el cliente Retrofit de la ANA; y `moduloViewModels` registra todos los ViewModels, que cada pantalla obtiene con `koinViewModel()`. El tipo de llenado (completo o parcial) llega a `RegistrarLlenadoViewModel` con `parametersOf`. Antes de iniciar Koin, `iniciarAplicacion` crea la base de datos y el usuario local. Los casos de uso no tienen estado y cada ViewModel o el repositorio los crea directamente.
 
 ## 3.4. Vista de procesos
 
@@ -915,7 +918,7 @@ El dominio es Kotlin puro y no depende de Android, por lo que puede probarse con
 
 ## 4.6. Otros escenarios
 
-**Privacidad:** la aplicación solo declara en el `AndroidManifest.xml` los permisos de internet (para el mapa y el sensor) y de ubicación (para mostrar al usuario en el mapa; se pide al abrirlo y puede negarse). El depósito permanece local. La consulta EPS envía las credenciales únicamente a su portal HTTP (sin cifrado en tránsito) y el ranking requiere consentimiento para los datos anónimos; el documento EPS se procesa dentro del teléfono. Las claves de Google Maps y de ThingSpeak se leen de `local.properties` y no se suben al repositorio. El respaldo automático de Android está desactivado (`allowBackup="false"`, y `backup_rules.xml` y `data_extraction_rules.xml` excluyen todos los datos), de modo que la base local no se copia a la nube ni a otro teléfono. El consentimiento de la bienvenida empieza sin marcar: el usuario debe aceptarlo de forma explícita.
+**Privacidad:** la aplicación solo declara en el `AndroidManifest.xml` los permisos de internet (para el mapa y el sensor) y de ubicación (para mostrar al usuario en el mapa; se pide al abrirlo y puede negarse). El depósito permanece local. La consulta EPS envía las credenciales únicamente a su portal HTTP (sin cifrado en tránsito) y el ranking requiere consentimiento para los datos anónimos; el documento EPS se procesa dentro del teléfono. Las claves de Google Maps, ThingSpeak (solo lectura) y Supabase (clave anon) están en el código del repositorio privado. El respaldo automático de Android está desactivado (`allowBackup="false"`, y `backup_rules.xml` y `data_extraction_rules.xml` excluyen todos los datos), de modo que la base local no se copia a la nube ni a otro teléfono. El consentimiento de la bienvenida empieza sin marcar: el usuario debe aceptarlo de forma explícita.
 
 
 ## Actualización arquitectónica — 18/11/2026: conector EPS

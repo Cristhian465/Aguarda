@@ -6,9 +6,11 @@ import retrofit2.http.Body
 import retrofit2.http.Header
 import retrofit2.http.POST
 
-/** Funciones de `supabase/liga_del_agua.sql`. La app no tiene acceso directo a la tabla. */
-interface SupabaseApi {
+const val URL_SUPABASE = "https://gkcqhmoegunrohoveamz.supabase.co/"
+const val CLAVE_SUPABASE =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrY3FobW9lZ3Vucm9ob3ZlYW16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5NTUxNTYsImV4cCI6MjEwNTUzMTE1Nn0.SDA4s11gzEWI8_W4V46o4Q81efHWoCiqskn_fLqEGwY"
 
+interface SupabaseApi {
     @POST("rest/v1/rpc/enviar_resumen")
     suspend fun enviarResumen(
         @Header("apikey") clave: String,

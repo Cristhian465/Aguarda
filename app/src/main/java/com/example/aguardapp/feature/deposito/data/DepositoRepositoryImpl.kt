@@ -30,7 +30,6 @@ class DepositoRepositoryImpl(
     private val ahora: () -> LocalDateTime,
     private val nuevoId: () -> String
 ) : DepositoRepository {
-
     private val estimar = EstimarConsumo()
 
     override fun observarPerfil(): Flow<PerfilHogar?> = dao.observarPerfil(usuarioId).map { it?.aDominio() }

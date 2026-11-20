@@ -10,7 +10,6 @@ import com.example.aguardapp.feature.deposito.domain.model.PlanRecortes
 import com.example.aguardapp.feature.deposito.domain.model.PrevisualizacionSinAgua
 
 interface DepositoRepository {
-
     fun observarPerfil(): Flow<PerfilHogar?>
 
     suspend fun guardarPerfil(configuracion: ConfiguracionHogar): Result<Unit>

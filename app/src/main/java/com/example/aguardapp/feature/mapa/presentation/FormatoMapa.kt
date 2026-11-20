@@ -13,7 +13,6 @@ fun nombreDelEstado(estado: EstadoCisterna): String = when (estado) {
     EstadoCisterna.TERMINADO -> "Terminado"
 }
 
-/** "a 850 m" o "a 1.2 km". Por debajo de 1 km se redondea a decenas de metros. */
 fun formatearDistancia(km: Double): String {
     val metros = (Math.round(km * 100) * 10).coerceAtLeast(10)
     if (metros < 1000) return "a $metros m"

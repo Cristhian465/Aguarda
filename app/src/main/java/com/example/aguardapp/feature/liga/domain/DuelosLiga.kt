@@ -2,9 +2,7 @@ package com.example.aguardapp.feature.liga.domain
 
 import kotlinx.datetime.LocalDate
 
-/** Enfrentamiento semanal entre dos distritos que ya tienen datos reales. */
 data class Duelo(val local: FilaRanking, val visitante: FilaRanking) {
-    /** Distrito que va ganando, o `null` si van empatados. */
     val ganador: FilaRanking?
         get() {
             val puntosLocal = local.puntaje ?: return null
@@ -17,10 +15,6 @@ data class Duelo(val local: FilaRanking, val visitante: FilaRanking) {
         }
 }
 
-/**
- * Arma los duelos de la semana solo con distritos que compiten. Los rivales rotan cada semana
- * y, si el número es impar, un distrito descansa.
- */
 fun duelosDeLaSemana(filas: List<FilaRanking>, lunes: LocalDate): List<Duelo> {
     val compiten = filas.filter { it.puntaje != null }.sortedBy { it.ubigeo }
     if (compiten.size < 2) return emptyList()

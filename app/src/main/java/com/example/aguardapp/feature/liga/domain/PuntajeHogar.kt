@@ -7,7 +7,6 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.minus
 import com.example.aguardapp.feature.deposito.domain.usecase.mediana
 
-/** Puntaje semanal del hogar, de 0 a 100. */
 data class PuntajeHogar(
     val total: Int,
     val puntosMejora: Int,
@@ -16,7 +15,6 @@ data class PuntajeHogar(
     val mejoraPct: Double?
 )
 
-/** Todo lo que se sabe del hogar en una semana. Sin medición de la semana no hay puntaje. */
 data class ResumenSemanal(
     val lunes: LocalDate,
     val litrosPorPersonaDia: Double?,
@@ -26,12 +24,7 @@ data class ResumenSemanal(
     val puntaje: PuntajeHogar?
 )
 
-/**
- * Premia el esfuerzo y no el consumo bajo: con racionamiento, consumir poco puede significar
- * que no llegó agua. Pesos: mejora frente a su propio consumo 50, retos 30 y constancia 20.
- */
 class CalcularPuntaje(private val medir: MedirConsumo = MedirConsumo()) {
-
     fun resumen(
         marcas: List<MarcaNivel>,
         llenados: List<LocalDateTime>,
@@ -58,7 +51,6 @@ class CalcularPuntaje(private val medir: MedirConsumo = MedirConsumo()) {
         return PuntajeHogar(puntosMejora + puntosRetos + puntosConstancia, puntosMejora, puntosRetos, puntosConstancia, mejora)
     }
 
-    // La línea base es la mediana de las últimas semanas medidas, sin contar la actual.
     private fun lineaBase(marcas: List<MarcaNivel>, llenados: List<LocalDateTime>, habitantes: Int, lunes: LocalDate): Double? =
         (1..SEMANAS_DE_BASE)
             .mapNotNull { atras -> medir.enLaSemana(marcas, llenados, lunes.plusDias(-atras * DIAS_POR_SEMANA)) }

@@ -11,7 +11,6 @@ import androidx.compose.ui.text.font.Font
 
 private val PESOS_DEL_TEXTO = listOf(FontWeight.Medium, FontWeight.SemiBold, FontWeight.Bold, FontWeight.ExtraBold)
 
-/** Plus Jakarta Sans: la única fuente de la app. Es una fuente variable: un solo archivo para todos los pesos. */
 val FuenteTexto: FontFamily
     @OptIn(ExperimentalTextApi::class)
     @Composable

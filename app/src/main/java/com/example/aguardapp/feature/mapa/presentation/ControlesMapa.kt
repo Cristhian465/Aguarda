@@ -28,7 +28,6 @@ import com.example.aguardapp.core.ui.theme.FuenteTexto
 
 private val PERMISOS_UBICACION = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
 
-/** Pide el permiso de ubicación al abrir el mapa; si se niega, el mapa funciona sin "mi ubicación". */
 @Composable
 fun rememberPermisoDeUbicacion(): Boolean {
     val context = LocalContext.current
@@ -42,7 +41,6 @@ fun rememberPermisoDeUbicacion(): Boolean {
     return concedido
 }
 
-/** Botón que aparece con el mapa en pantalla completa. */
 @Composable
 fun BotonVolverALaLista(modifier: Modifier = Modifier, onClick: () -> Unit) {
     Text(

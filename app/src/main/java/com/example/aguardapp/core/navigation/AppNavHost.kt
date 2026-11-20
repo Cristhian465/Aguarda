@@ -27,18 +27,15 @@ import com.example.aguardapp.feature.liga.presentation.LigaScreen
 import com.example.aguardapp.feature.mapa.presentation.MapaScreen
 import com.example.aguardapp.feature.represas.presentation.RepresasScreen
 
-/** Declara todas las pantallas de la app y cómo se pasa de una a otra. */
 @Composable
 fun AppNavHost(rutaInicial: String, hayConfiguracion: Boolean) {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = rutaInicial) {
-
         composable(Rutas.BIENVENIDA) {
             BienvenidaScreen(onListo = { irDespuesDeLaBienvenida(navController, hayConfiguracion) })
         }
 
         composable(Rutas.CONFIGURAR_HOGAR) {
-            // Si se llegó desde Mi depósito se está editando: se puede volver atrás.
             val editando = navController.previousBackStackEntry != null
             ConBarraDelSistema {
                 ConfiguracionScreen(
@@ -136,13 +133,11 @@ fun AppNavHost(rutaInicial: String, hayConfiguracion: Boolean) {
     }
 }
 
-// Tras la bienvenida: configurar el hogar, o Inicio si ya estaba configurado. La bienvenida no queda atrás.
 private fun irDespuesDeLaBienvenida(navController: NavHostController, hayConfiguracion: Boolean) {
     val destino = if (hayConfiguracion) Rutas.INICIO else Rutas.CONFIGURAR_HOGAR
     navController.navigate(destino) { popUpTo(Rutas.BIENVENIDA) { inclusive = true } }
 }
 
-// Al guardar: si se estaba editando se vuelve atrás; la primera vez se va a Inicio.
 private fun irDespuesDeConfigurar(navController: NavHostController, editando: Boolean) {
     if (editando) {
         navController.popBackStack()
@@ -151,7 +146,6 @@ private fun irDespuesDeConfigurar(navController: NavHostController, editando: Bo
     }
 }
 
-/** Deja libre el espacio de la barra de navegación del sistema, con el fondo de la app debajo. */
 @Composable
 private fun ConBarraDelSistema(contenido: @Composable () -> Unit) {
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).navigationBarsPadding()) {

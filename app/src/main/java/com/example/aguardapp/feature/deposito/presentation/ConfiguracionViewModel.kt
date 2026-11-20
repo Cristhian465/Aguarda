@@ -39,7 +39,6 @@ data class ConfiguracionUiState(
     val guardado: Boolean = false,
     val error: String? = null
 ) {
-
     val errorCapacidad: String?
         get() = if (capacidadLitros in CAPACIDAD_MINIMA_LITROS..CAPACIDAD_MAXIMA_LITROS) null
         else "La capacidad debe estar entre $CAPACIDAD_MINIMA_LITROS y $CAPACIDAD_MAXIMA_LITROS L"
@@ -60,7 +59,6 @@ data class ConfiguracionUiState(
 }
 
 class ConfiguracionViewModel(private val repositorio: DepositoRepository) : ViewModel() {
-
     private val estimar = EstimarConsumo()
 
     private val _uiState = MutableStateFlow(conConsumo(ConfiguracionUiState()))

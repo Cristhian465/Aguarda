@@ -1,6 +1,5 @@
 package com.example.aguardapp.core.navigation
 
-/** Todas las rutas de la app. Las que llevan datos tienen una función para armar la ruta completa. */
 object Rutas {
     const val BIENVENIDA = "bienvenida"
     const val CONFIGURAR_HOGAR = "configurar_hogar"
@@ -15,10 +14,8 @@ object Rutas {
     const val AHORRO = "ahorro"
     const val LIGA = "liga"
 
-    // Rutas con argumentos.
     const val ARG_TIPO = "tipo"
     const val REGISTRAR_LLENADO = "registrar_llenado/{$ARG_TIPO}"
 
-    /** "registrar_llenado/completo" o "registrar_llenado/parcial". */
     fun registrarLlenado(tipo: String): String = "registrar_llenado/$tipo"
 }

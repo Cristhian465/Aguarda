@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface DepositoDao {
-
     @Query("SELECT * FROM perfil_hogar WHERE usuarioId = :usuarioId")
     fun observarPerfil(usuarioId: String): Flow<PerfilHogarEntity?>
 

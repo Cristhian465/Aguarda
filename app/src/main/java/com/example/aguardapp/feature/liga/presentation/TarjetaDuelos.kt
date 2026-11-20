@@ -15,7 +15,6 @@ import com.example.aguardapp.core.ui.theme.Tinta
 import com.example.aguardapp.feature.deposito.presentation.componentes.TarjetaBlanca
 import com.example.aguardapp.feature.liga.domain.Duelo
 
-/** Duelos de la semana. Solo aparecen cuando dos distritos tienen datos reales. */
 @Composable
 fun TarjetaDuelos(duelos: List<Duelo>) {
     TarjetaBlanca {

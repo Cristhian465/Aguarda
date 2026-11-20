@@ -5,7 +5,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class FormatoDistanciaTest {
-
     @Test
     fun menosDeUnKilometroSeMuestraEnMetrosRedondeadosADecenas() {
         assertEquals("a 850 m", formatearDistancia(0.853))

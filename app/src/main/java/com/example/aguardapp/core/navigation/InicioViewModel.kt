@@ -10,18 +10,15 @@ import kotlinx.coroutines.launch
 import com.example.aguardapp.core.data.UsuarioDao
 import com.example.aguardapp.feature.deposito.domain.repository.DepositoRepository
 
-/** Por dónde empieza la app; `rutaInicial` es `null` mientras se lee la base de datos. */
 data class InicioUiState(
     val rutaInicial: String? = null,
     val hayConfiguracion: Boolean = false
 )
 
-/** Decide la primera pantalla: la bienvenida, configurar el hogar o directamente Inicio. */
 class InicioViewModel(
     private val usuarioDao: UsuarioDao,
     private val repositorio: DepositoRepository
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow(InicioUiState())
     val uiState: StateFlow<InicioUiState> = _uiState.asStateFlow()
 

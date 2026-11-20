@@ -75,7 +75,6 @@ class ReciboViewModel(
             _uiState.update { it.copy(error = "Revisa los datos: consumo en m³ y mes como 11/2026.") }
             return
         }
-        // Si el usuario cambió el número leído, el recibo ya no cuenta como verificado.
         val igualALaFoto = estado.metrosLeidos?.let { abs(it - metros) < 0.001 } == true
         val recibo = ReciboGuardado(mes, metros, igualALaFoto)
         recibos.guardarRecibo(recibo)

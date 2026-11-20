@@ -8,30 +8,23 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import retrofit2.HttpException
 import com.example.aguardapp.feature.sensor.data.local.LecturaSensorDao
 import com.example.aguardapp.feature.sensor.data.local.LecturaSensorEntity
-import com.example.aguardapp.feature.sensor.data.remote.EntradaThingSpeakDto
 import com.example.aguardapp.feature.sensor.data.remote.ThingSpeakApi
 import com.example.aguardapp.feature.sensor.domain.model.LecturaSensor
 import com.example.aguardapp.feature.sensor.domain.repository.SensorRepository
 
 class SensorRepositoryImpl(
     private val api: ThingSpeakApi,
-    private val dao: LecturaSensorDao,
-    private val canal: String,
-    private val claveLectura: String
+    private val dao: LecturaSensorDao
 ) : SensorRepository {
-    // El historial de una madrugada ya terminada no cambia: se pide una sola vez por periodo.
     @Volatile private var historialEnCache: Pair<String, List<LecturaSensor>>? = null
-
-    override val estaConfigurado: Boolean get() = canal.isNotBlank()
 
     override fun observarUltimaLectura(): Flow<LecturaSensor?> = dao.observar().map { it?.aDominio() }
 
     override suspend fun actualizarDesdeApi(): Result<LecturaSensor> {
         return try {
-            val lectura = api.ultimaEntrada(canal, claveLectura.ifBlank { null }).aLectura()
+            val lectura = api.ultimaLectura()
                 ?: return Result.failure(IllegalStateException(SIN_DATOS))
             dao.guardar(lectura.aEntidad())
             Result.success(lectura)
@@ -39,8 +32,8 @@ class SensorRepositoryImpl(
             throw e
         } catch (e: IOException) {
             Result.failure(IllegalStateException("Sin conexión con el sensor", e))
-        } catch (e: HttpException) {
-            Result.failure(IllegalStateException("El servidor del sensor respondió con error ${e.code()}", e))
+        } catch (e: IllegalStateException) {
+            Result.failure(e)
         } catch (e: Exception) {
             Result.failure(IllegalStateException(SIN_DATOS, e))
         }
@@ -51,8 +44,7 @@ class SensorRepositoryImpl(
         val periodo = "$desde/$hasta"
         historialEnCache?.takeIf { it.first == periodo }?.let { return Result.success(it.second) }
         return try {
-            val lecturas = api.historial(canal, claveLectura.ifBlank { null }, desde.paraThingSpeak(), hasta.paraThingSpeak())
-                .entradas.orEmpty().mapNotNull { it.aLectura() }
+            val lecturas = api.historial(desde.paraThingSpeak(), hasta.paraThingSpeak())
             historialEnCache = periodo to lecturas
             Result.success(lecturas)
         } catch (e: CancellationException) {
@@ -67,14 +59,6 @@ class SensorRepositoryImpl(
     }
 }
 
-@OptIn(ExperimentalTime::class)
-private fun EntradaThingSpeakDto.aLectura(): LecturaSensor? {
-    val porcentaje = porcentaje?.toDoubleOrNull()?.coerceIn(0.0, 100.0) ?: return null
-    val momento = creadaEn?.let { runCatching { Instant.parse(it) }.getOrNull() } ?: return null
-    return LecturaSensor(porcentaje, distanciaCm?.toDoubleOrNull(), momento)
-}
-
-// ThingSpeak espera las fechas en UTC como "AAAA-MM-DD HH:MM:SS".
 @OptIn(ExperimentalTime::class)
 private fun Instant.paraThingSpeak(): String {
     val utc = toLocalDateTime(TimeZone.UTC)

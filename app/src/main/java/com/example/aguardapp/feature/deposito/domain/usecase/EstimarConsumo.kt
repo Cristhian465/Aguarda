@@ -16,7 +16,6 @@ internal object ParametrosConsumo {
 
     const val HORAS_MINIMAS_ENTRE_LLENADOS = 6.0
 
-    // Un "me quedé sin agua" pocos minutos después de llenar no es consumo real (es un error al registrar).
     const val HORAS_MINIMAS_OBSERVADO = 1.0
 
     const val MINIMO_INFERIDOS = 2
@@ -34,7 +33,6 @@ internal object ParametrosConsumo {
 }
 
 class EstimarConsumo {
-
     fun consumo(intervalos: List<IntervaloConsumo>, capacidad: CapacidadLitros, porHabitos: ConsumoHorario? = null): ConsumoHorario {
         val validos = seleccionar(intervalos)
         return when {

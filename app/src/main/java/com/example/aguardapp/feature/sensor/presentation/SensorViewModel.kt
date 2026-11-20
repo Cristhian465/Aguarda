@@ -24,7 +24,6 @@ import com.example.aguardapp.feature.sensor.domain.model.LecturaSensor
 import com.example.aguardapp.feature.sensor.domain.repository.SensorRepository
 
 data class SensorUiState(
-    val configurado: Boolean = false,
     val cargando: Boolean = true,
     val porcentaje: Int? = null,
     val litros: Int? = null,
@@ -45,7 +44,6 @@ class SensorViewModel(
 
     private val consultas = flow {
         emit(Unit)
-        if (!sensor.estaConfigurado) return@flow
         while (true) {
             sensor.actualizarDesdeApi()
                 .onSuccess { lectura ->
@@ -62,17 +60,12 @@ class SensorViewModel(
         combine(consultas, sensor.observarUltimaLectura(), deposito.observarPerfil(), accion) { _, lectura, perfil, estado ->
             val capacidad = perfil?.capacidad?.litros?.valor
             estado.copy(
-                configurado = sensor.estaConfigurado,
                 cargando = lectura == null && estado.error == null,
                 porcentaje = lectura?.porcentaje?.roundToInt(),
                 litros = lectura?.let { l -> capacidad?.let { l.litros(it).roundToInt() } },
                 antiguedad = lectura?.let(::describirAntiguedad)
             )
-        }.stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(5_000),
-            SensorUiState(configurado = sensor.estaConfigurado)
-        )
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SensorUiState())
 
     fun onUsarMedicion() {
         val litros = uiState.value.litros ?: return

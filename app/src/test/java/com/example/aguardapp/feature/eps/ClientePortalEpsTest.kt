@@ -10,7 +10,6 @@ class ClientePortalEpsTest {
     private val base = "http://oficinavirtual.epstacna.com.pe"
     private val login = """<form method="post" action="../controlador/login.php"><input name="usu"><input name="pas" type="password"><input type="hidden" name="token" value="csrf"></form>"""
     private val panel = """<a href="recibos.php">Mis recibos</a><a href="salir.php">Salir</a>"""
-    // Estructura observada en la sesión real; sin datos de cuenta ni cookies reales.
     private val panelDinamico = """
         <a href="" id="m4" onclick="CargarRecibo('recibo.php'); marcar('m4');">Recibo virtual PDF</a>
         <script>

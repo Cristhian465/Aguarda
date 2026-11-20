@@ -26,7 +26,6 @@ data class FugaUiState(
     val descartada: Boolean = false
 )
 
-/** Revisa una vez, al abrir Mi depósito, si el tanque perdió agua en la última madrugada. */
 class FugaViewModel(
     private val sensor: SensorRepository,
     private val deposito: DepositoRepository,
@@ -50,7 +49,6 @@ class FugaViewModel(
 
     @OptIn(ExperimentalTime::class)
     private suspend fun analizar() {
-        if (!sensor.estaConfigurado) return
         val capacidad = deposito.observarPerfil().first()?.capacidad?.litros?.valor ?: return
         val (desde, hasta) = ultimaMadrugada(ahora())
         val zona = TimeZone.currentSystemDefault()

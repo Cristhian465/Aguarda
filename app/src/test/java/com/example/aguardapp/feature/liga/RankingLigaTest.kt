@@ -7,7 +7,6 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 class RankingLigaTest {
-
     private val distritos = listOf("230101" to "Tacna", "230104" to "Ciudad Nueva", "230108" to "Pocollay")
 
     private fun posicion(ubigeo: String, hogares: Int, puntaje: Double?) = PosicionDistrito(ubigeo, hogares, 0, puntaje, null)

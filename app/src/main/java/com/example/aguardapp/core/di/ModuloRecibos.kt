@@ -12,7 +12,6 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 internal fun moduloRecibos(context: Context) = module {
-    // Mantiene el recibo de quienes ya lo guardaron antes de separar las pantallas.
     single { RecibosLocales(context.getSharedPreferences("liga", Context.MODE_PRIVATE)) }
     single { LectorDeRecibo(context) }
     single<ConsultaEps> { ConsultaEpsPortal(context) }

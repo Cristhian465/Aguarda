@@ -25,7 +25,6 @@ data class SituacionRecortes(
 }
 
 class CalcularRecortes(private val calcularDeficit: CalcularDeficit = CalcularDeficit()) {
-
     fun evaluar(perfil: PerfilHogar, deposito: Deposito, plan: PlanRecortes?, ahora: LocalDateTime): SituacionRecortes {
         val proximoLlenado = calcularDeficit.proximoLlenado(perfil.configuracion.horaProximoLlenado, ahora)
         val sugeridos = sugerir(perfil.configuracion.habitos, perfil.habitantes, horasEntre(ahora, proximoLlenado))

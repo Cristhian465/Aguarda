@@ -11,7 +11,6 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
-/** La clave EPS nunca se persiste. Solo la sesión, cifrada y excluida de copias de seguridad. */
 internal class AlmacenSesionEps(context: Context) {
     private val archivo = File(context.noBackupFilesDir, "eps-sesion.enc")
     private val gson = Gson()
@@ -32,7 +31,6 @@ internal class AlmacenSesionEps(context: Context) {
         cifrador.init(Cipher.ENCRYPT_MODE, clave())
         val bytes = cifrador.iv + cifrador.doFinal(gson.toJson(sesion).toByteArray(Charsets.UTF_8))
         require(bytes.size <= 65_536)
-        // AtomicFile evita dejar una sesión a medio escribir si se interrumpe la aplicación.
         val atomico = android.util.AtomicFile(archivo)
         val salida = atomico.startWrite()
         try {

@@ -3,7 +3,6 @@ package com.example.aguardapp.feature.ahorro.data
 import android.content.SharedPreferences
 import kotlinx.datetime.LocalDate
 
-// Cada fecha guarda los identificadores de los retos marcados ese día.
 class AhorroLocal(private val preferencias: SharedPreferences) {
     fun historial(): Map<LocalDate, Set<String>> =
         preferencias.all.keys.associate { clave ->

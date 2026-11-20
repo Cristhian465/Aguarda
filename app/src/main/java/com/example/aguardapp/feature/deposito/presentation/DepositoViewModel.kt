@@ -42,7 +42,6 @@ class DepositoViewModel(
     private val repositorio: DepositoRepository,
     private val ahora: () -> LocalDateTime
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow(DepositoUiState())
     val uiState: StateFlow<DepositoUiState> = _uiState.asStateFlow()
 

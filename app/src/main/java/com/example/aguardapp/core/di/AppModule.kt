@@ -8,7 +8,6 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import com.example.aguardapp.BuildConfig
 import org.koin.mp.KoinPlatform
 import com.example.aguardapp.core.data.UsuarioEntity
 import com.example.aguardapp.core.db.AguardAppDatabase
@@ -50,16 +49,13 @@ import com.example.aguardapp.feature.represas.presentation.RepresasViewModel
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 
-/** Se llama una sola vez desde la clase `Application`, antes de mostrar ninguna pantalla. */
 fun iniciarAplicacion(context: Context) {
     if (KoinPlatform.getKoinOrNull() != null) return
     val base = AguardAppDatabase.crear(context)
-    // El usuario debe existir antes de la primera pantalla; es una lectura local y rápida.
     val usuarioId = runBlocking(Dispatchers.IO) { obtenerOCrearUsuario(base) }
     startKoin { modules(moduloApp(context, base, usuarioId), moduloRed(context), moduloViewModels, moduloLiga(context), moduloRecibos(context)) }
 }
 
-// Lee el usuario local o lo crea la primera vez, con un UUID que ya no cambia.
 private suspend fun obtenerOCrearUsuario(base: AguardAppDatabase): String {
     val dao = base.usuarioDao()
     val existente = dao.obtener()
@@ -69,7 +65,6 @@ private suspend fun obtenerOCrearUsuario(base: AguardAppDatabase): String {
     return nuevo.id
 }
 
-/** Todo lo que se inyecta en la app: la base de datos, el reloj, los repositorios del depósito y del mapa, y la ubicación. */
 private fun moduloApp(context: Context, base: AguardAppDatabase, usuarioId: String) = module {
     single<Reloj> { RelojDelSistema() }
     single { AhorroLocal(context.getSharedPreferences("ahorro", Context.MODE_PRIVATE)) }
@@ -83,20 +78,9 @@ private fun moduloApp(context: Context, base: AguardAppDatabase, usuarioId: Stri
     single { base.presaDao() }
 }
 
-/** Cliente HTTP (Retrofit) para leer el sensor IoT del tanque publicado en ThingSpeak. */
 private fun moduloRed(context: Context) = module {
-    single {
-        Retrofit.Builder()
-            .baseUrl("https://api.thingspeak.com/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-    }
-    single<ThingSpeakApi> { get<Retrofit>().create(ThingSpeakApi::class.java) }
-    single<SensorRepository> {
-        SensorRepositoryImpl(get(), SensorDatabase.crear(context).lecturaDao(), BuildConfig.THINGSPEAK_CHANNEL_ID, BuildConfig.THINGSPEAK_READ_KEY)
-    }
+    single<SensorRepository> { SensorRepositoryImpl(ThingSpeakApi(), SensorDatabase.crear(context).lecturaDao()) }
     single { PreferenciasFuga(context.getSharedPreferences("fugas", Context.MODE_PRIVATE)) }
-    // la ANA demora, timeout de 30s
     single<AnaApi> {
         Retrofit.Builder()
             .baseUrl(URL_ANA)
@@ -108,7 +92,6 @@ private fun moduloRed(context: Context) = module {
     single<RepresasRepository> { RepresasRepositoryImpl(get(), get()) }
 }
 
-/** ViewModels de cada pantalla: Koin los crea y les entrega sus dependencias. */
 private val moduloViewModels = module {
     viewModel { AhorroViewModel(get(), get()) }
     viewModel { InicioViewModel(get(), get()) }
@@ -118,7 +101,6 @@ private val moduloViewModels = module {
     viewModel { AvisosViewModel(get(), get<Reloj>()::ahora) }
     viewModel { QueRecortarViewModel(get(), get<Reloj>()::ahora) }
     viewModel { SinAguaViewModel(get(), get<Reloj>()::ahora) }
-    // El tipo de llenado (completo o parcial) llega desde la pantalla con parametersOf(tipo).
     viewModel { (tipo: TipoLlenado) -> RegistrarLlenadoViewModel(get(), get<Reloj>()::ahora, tipo) }
     viewModel { MapaViewModel(get(), get(), get(), get(), get(), get<Reloj>()::ahora) }
     viewModel { SensorViewModel(get(), get(), get<Reloj>()::ahora) }

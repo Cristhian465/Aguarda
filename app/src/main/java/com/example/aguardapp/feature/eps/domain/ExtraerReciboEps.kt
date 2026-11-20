@@ -3,12 +3,10 @@ package com.example.aguardapp.feature.eps.domain
 import com.example.aguardapp.feature.eps.domain.leerMesDelRecibo
 import java.text.Normalizer
 
-/** Solo acepta datos explícitos del documento; una lectura de medidor no es consumo facturado. */
 fun extraerReciboEps(texto: String): ReciboEps {
     val normalizado = Normalizer.normalize(texto.lowercase(), Normalizer.Form.NFD)
         .replace(Regex("\\p{M}"), "")
     val originales = normalizado.lines().map(String::trim).filter(String::isNotEmpty)
-    // ML Kit puede separar la etiqueta de su valor en el bloque de texto del PDF.
     val lineas = originales.mapIndexed { indice, linea ->
         val siguiente = originales.getOrNull(indice + 1).orEmpty()
         val esValor = siguiente.matches(Regex("""(?:s\s*/\.?\s*)?\d+(?:[.,]\d+)*"""))

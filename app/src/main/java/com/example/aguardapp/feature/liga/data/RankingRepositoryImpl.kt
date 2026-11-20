@@ -6,6 +6,7 @@ import kotlin.math.round
 import kotlinx.datetime.LocalDate
 import retrofit2.Response
 import com.example.aguardapp.feature.liga.data.remote.BorrarDatosDto
+import com.example.aguardapp.feature.liga.data.remote.CLAVE_SUPABASE
 import com.example.aguardapp.feature.liga.data.remote.EnviarResumenDto
 import com.example.aguardapp.feature.liga.data.remote.RankingSemanaDto
 import com.example.aguardapp.feature.liga.data.remote.SupabaseApi
@@ -13,11 +14,8 @@ import com.example.aguardapp.feature.liga.domain.EnvioSemanal
 import com.example.aguardapp.feature.liga.domain.PosicionDistrito
 import com.example.aguardapp.feature.liga.domain.RankingRepository
 
-/** [api] es `null` mientras el proyecto de Supabase no esté configurado en las claves. */
-class RankingRepositoryImpl(private val api: SupabaseApi?, private val clave: String) : RankingRepository {
+class RankingRepositoryImpl(private val api: SupabaseApi, private val clave: String = CLAVE_SUPABASE) : RankingRepository {
     private val autorizacion = "Bearer $clave"
-
-    override val conectado: Boolean get() = api != null
 
     override suspend fun enviar(envio: EnvioSemanal): Result<Unit> = llamar { servicio ->
         val litros = round(envio.litrosPorPersonaDia * 10) / 10
@@ -38,15 +36,13 @@ class RankingRepositoryImpl(private val api: SupabaseApi?, private val clave: St
     }
 
     private suspend fun <T> llamar(accion: suspend (SupabaseApi) -> T): Result<T> {
-        val servicio = api ?: return Result.failure(IllegalStateException("La Liga aún no está conectada"))
         return try {
-            Result.success(accion(servicio))
+            Result.success(accion(api))
         } catch (e: CancellationException) {
             throw e
         } catch (e: IOException) {
             Result.failure(IllegalStateException("Sin conexión con la Liga", e))
         } catch (e: RuntimeException) {
-            // Respuesta con error o con un formato inesperado: la app sigue funcionando.
             Result.failure(IllegalStateException(e.message ?: "La Liga no respondió bien", e))
         }
     }

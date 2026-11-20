@@ -13,7 +13,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,7 +39,6 @@ fun SeccionRanking(viewModel: RankingLigaViewModel = koinViewModel()) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
     val ciclo = LocalLifecycleOwner.current
     LaunchedEffect(ciclo) {
-        // Se actualiza solo mientras la pantalla está visible.
         ciclo.repeatOnLifecycle(Lifecycle.State.STARTED) {
             while (true) {
                 delay(REFRESCO_MS)
@@ -48,10 +47,6 @@ fun SeccionRanking(viewModel: RankingLigaViewModel = koinViewModel()) {
         }
     }
     when {
-        !estado.conectado -> TarjetaBlanca {
-            Titulo("Ranking de distritos")
-            Detalle("El ranking todavía no está conectado. Tu medición y tu puntaje ya funcionan en este teléfono.")
-        }
         !estado.participa -> TarjetaConsentimiento(estado, viewModel::onElegirDistrito, viewModel::onParticipar)
         else -> Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             TarjetaRanking(estado, viewModel::onDejarDeParticipar)

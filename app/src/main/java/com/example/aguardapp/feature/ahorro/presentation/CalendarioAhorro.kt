@@ -33,7 +33,6 @@ import kotlinx.datetime.LocalDate
 import com.example.aguardapp.R
 import com.example.aguardapp.core.ui.theme.Agua
 import com.example.aguardapp.core.ui.theme.Blanco
-import com.example.aguardapp.core.ui.theme.Divisor
 import com.example.aguardapp.core.ui.theme.Ocre
 import com.example.aguardapp.core.ui.theme.Tinta
 import com.example.aguardapp.core.ui.theme.TintaSuave

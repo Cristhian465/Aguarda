@@ -39,7 +39,6 @@ internal interface TransporteEps {
     fun ejecutar(url: String, campos: Map<String, String>?, cookies: Map<String, String>, referencia: String? = null, ajax: Boolean = false): RespuestaEps
 }
 
-/** Sigue enlaces y las dos solicitudes AJAX de recibo observadas en EPS, sin ejecutar JavaScript. */
 internal class ClientePortalEps(private val transporte: TransporteEps) {
     fun vincular(usuario: String, clave: String): SesionEps {
         if (usuario.isBlank() || clave.isBlank()) throw ErrorEps("Escribe el usuario y la clave de tu recibo EPS.")
@@ -102,7 +101,6 @@ internal class ClientePortalEps(private val transporte: TransporteEps) {
             if (respuesta.contenido.size >= LIMITE_DOCUMENTO) throw ErrorEps("El archivo de EPS supera el límite de 8 MB.")
             if (respuesta.codigo in listOf(301, 302, 303, 307, 308)) {
                 destino = resolverEps(destino, respuesta.destino ?: throw ErrorEps("EPS devolvió una redirección incompleta."))
-                // Nunca reenvía la clave por una redirección que conserve POST.
                 if (datos != null && respuesta.codigo in listOf(307, 308)) {
                     throw ErrorEps("EPS cambió el destino del acceso. No reenviamos tu clave.")
                 }
@@ -123,7 +121,6 @@ internal fun esLogin(html: Document): Boolean = html.selectFirst("input[name=pas
 
 internal data class PasoReciboEps(val url: String, val post: Boolean)
 
-/** EPS abre recibo.php y luego MostrarRecibo() carga el visor. Ambas rutas salen del HTML. */
 internal fun pasosReciboVirtual(html: Document, base: String): List<PasoReciboEps>? {
     val botones = html.select("a[onclick], button[onclick]").filter {
         Regex("recibo\\s+virtual|recibo\\s+pdf", RegexOption.IGNORE_CASE).containsMatchIn(it.text())
@@ -156,7 +153,6 @@ internal fun pasosReciboVirtual(html: Document, base: String): List<PasoReciboEp
     return listOf(paso(llamada.groupValues[2], cargar), paso(visor, mostrar))
 }
 
-/** Con varios recibos exige un periodo identificable o una etiqueta explícita de último recibo. */
 internal fun enlaceRecibo(html: Document, base: String): String {
     data class Enlace(val url: String, val prioridad: Int, val periodo: Int?)
     val candidatos = html.select("a[href], iframe[src], embed[src], object[data]").mapNotNull { elemento ->

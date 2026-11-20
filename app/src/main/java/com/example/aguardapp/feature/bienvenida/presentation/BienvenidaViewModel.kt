@@ -10,13 +10,11 @@ import kotlinx.coroutines.launch
 import com.example.aguardapp.core.data.UsuarioDao
 
 data class BienvenidaUiState(
-    // Empieza sin marcar: el consentimiento tiene que ser un acto explícito de la persona.
     val consentimiento: Boolean = false,
     val listo: Boolean = false
 )
 
 class BienvenidaViewModel(private val usuarioDao: UsuarioDao) : ViewModel() {
-
     private val _uiState = MutableStateFlow(BienvenidaUiState())
     val uiState: StateFlow<BienvenidaUiState> = _uiState.asStateFlow()
 

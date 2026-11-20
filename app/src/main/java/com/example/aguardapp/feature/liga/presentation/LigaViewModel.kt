@@ -36,7 +36,6 @@ class LigaViewModel(
 
     init {
         viewModelScope.launch {
-            // El deslizador empieza en el nivel que la app estima para hoy.
             val estimado = deposito.observarDeposito().first()?.nivelEn(ahora())?.litros?.valor?.roundToInt() ?: 0
             _uiState.update { it.copy(nivelElegido = estimado) }
             hogar.observar().collect { datos ->

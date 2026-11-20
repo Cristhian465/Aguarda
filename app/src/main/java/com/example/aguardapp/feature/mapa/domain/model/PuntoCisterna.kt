@@ -14,8 +14,6 @@ data class Coordenada(val latitud: Double, val longitud: Double) {
         require(longitud in -180.0..180.0) { "Longitud fuera de rango: $longitud" }
     }
 
-    // Fórmula de Haversine: la Tierra es una esfera, así que restar
-    // latitudes y longitudes directamente daría distancias erróneas.
     fun distanciaKmHasta(otra: Coordenada): Double {
         val dLat = radianes(otra.latitud - latitud)
         val dLon = radianes(otra.longitud - longitud)

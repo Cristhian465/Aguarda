@@ -59,7 +59,6 @@ fun MapaScreen(onVolver: () -> Unit, viewModel: MapaViewModel = koinViewModel())
         onPauseOrDispose { }
     }
     IconosClarosEnBarraDeEstado(claros = false)
-    // Al tocar el mapa se agranda; "Volver a la lista" o el botón atrás lo devuelven a su tamaño.
     var pantallaCompleta by rememberSaveable { mutableStateOf(false) }
     val salirDePantallaCompleta = {
         pantallaCompleta = false
@@ -81,7 +80,6 @@ fun MapaScreen(onVolver: () -> Unit, viewModel: MapaViewModel = koinViewModel())
             val alcance = rememberCoroutineScope()
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 MapaDeCisternas(camara, uiState, marcadores, permisoConcedido, pantallaCompleta) { punto ->
-                    // Primer toque: agranda el mapa. Con el mapa grande, cada toque elige un distrito.
                     if (pantallaCompleta) viewModel.onTocarDistrito(punto) else pantallaCompleta = true
                 }
                 val bajoLaBarraDeEstado = if (pantallaCompleta) Modifier.statusBarsPadding() else Modifier
@@ -125,7 +123,6 @@ private fun MapaDeCisternas(
     GoogleMap(
         modifier = Modifier.fillMaxSize(),
         cameraPositionState = camara,
-        // En pantalla completa, los botones del mapa no quedan debajo de la barra de estado.
         contentPadding = if (pantallaCompleta) WindowInsets.statusBars.asPaddingValues() else PaddingValues(),
         onMapClick = { onTocarMapa(Coordenada(it.latitude, it.longitude)) },
         properties = MapProperties(isMyLocationEnabled = permisoConcedido),

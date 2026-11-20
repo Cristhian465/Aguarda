@@ -17,11 +17,6 @@ import com.example.aguardapp.feature.represas.data.local.PresaDao
 
 private const val NOMBRE_BASE_DE_DATOS = "aguardapp.db"
 
-/**
- * La base de datos local de la app (SQLite con Room).
- * Cada vez que cambien las tablas hay que subir `version` y agregar su `AutoMigration`, que conserva los datos.
- * Si falta la migración de una versión (por ejemplo, de la 1 a la 2), Room borra la base vieja y crea la nueva.
- */
 @Database(
     entities = [
         UsuarioEntity::class,
