@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">AguardApp</string>
+    <string name="app_name">Aguarda</string>
     <string name="widget_descripcion">Nivel del tanque medido por el sensor, cada hora</string>
 </resources>

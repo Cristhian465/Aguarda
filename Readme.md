@@ -375,6 +375,15 @@ flowchart LR
 ## 📝 Changelog
 
 ### 2026-11-20
+- [Cambiado] Los fondos que usaban `#000F22` (tarjeta de Mi depósito en Inicio y widget) pasan a `#1B3554`; el texto principal (`Tinta`) se mantiene en `#000F22`. Los elementos que iban sobre fondos `#1B3554` (botón de ajustes de Mi depósito, logo, tarjeta y casilla de la bienvenida, círculo de Inicio, pastilla y círculo del widget) usan `AguaSuave` `#3F6593` para seguir viéndose.
+- [Cambiado] Las barras superiores (`BarraSuperior`: Mapa, Represas, Liga del Agua, Recibos EPS, Avisos, Configurar, Registrar llenado, Sin agua y Qué recortar) y el encabezado "Aguarda" de Inicio son `#1B3554` hasta la barra de estado, con título blanco, subtítulo `#C0E6FD` e íconos de estado claros.
+- [Cambiado] El agua de los tres tanques (widget, Mi depósito y Registrar llenado completo/parcial) pasa a un cian apagado (`#51AFBC`) para que no resalte tanto sobre la paleta azul.
+- [Cambiado] Paleta azul del tema (`Color.kt`): `AguaProfunda`/`AguaMedia` `#1B3554`, `Tinta` `#000F22`, `AguaSuave` `#3F6593`, `TintaSuave` `#3F6593`, `Agua`/`TintaTenue` `#5B86B6` y `AguaClara` `#C0E6FD`; el widget usa fondo `#1B3554` con ondas `#80AAD3`.
+- [Cambiado] La aplicación se llama "Aguarda" (nombre en el teléfono y en la bienvenida).
+- [Cambiado] Ícono de la aplicación en azul marino (`#1B3554`, el mismo del logo de Inicio).
+- [Cambiado] Widget del tanque con fondo azul marino de la paleta actual; el interior de los tanques mantiene el fondo turquesa oscuro original (`#06323A`).
+- [Corregido] Widget: el texto ya no se corta en teléfonos con la letra del sistema agrandada (los tamaños compensan `fontScale`).
+- [Cambiado] Inicio: las 5 tarjetas de "Explorar Aguarda" son cuadradas y del mismo tamaño (`aspectRatio(1f)`), incluida la que queda sola en la última fila.
 - [Agregado] Widget 2x1 "Nivel del tanque" (`feature/widget`, Jetpack Glance): muestra el porcentaje, los litros sobre la capacidad y un ícono de wifi que indica si el tanque envió una lectura en los últimos 10 minutos. Consulta ThingSpeak una vez por hora (`updatePeriodMillis`) para ahorrar batería y datos; al tocarlo abre la app. Usa colores turquesa propios. Recursos: `widget_nivel_tanque_info.xml`, `widget_fondo`, `widget_circulo`, `widget_pastilla`, `ic_wifi` e `ic_wifi_off`.
 - [Cambiado] El dibujo del tanque de Mi depósito se separó en `dibujarIndicadorNivel()` (con ola y colores opcionales) para que el widget lo reutilice sin animación.
 - [Cambiado] La conexión con ThingSpeak es directa, como la de Maps: `ThingSpeakApi` hace un GET a la URL del canal (con la clave de lectura incluida) tanto para la última lectura como para el historial del detector de fugas, y arma las `LecturaSensor` con `org.json`. Ya no usa Retrofit ni DTOs; Retrofit sigue para la ANA y Supabase.

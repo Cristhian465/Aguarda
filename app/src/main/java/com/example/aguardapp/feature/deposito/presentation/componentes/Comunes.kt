@@ -35,11 +35,12 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.aguardapp.R
+import com.example.aguardapp.core.ui.theme.AguaClara
 import com.example.aguardapp.core.ui.theme.AguaMedia
 import com.example.aguardapp.core.ui.theme.Blanco
 import com.example.aguardapp.core.ui.theme.Coral
-import com.example.aguardapp.core.ui.theme.Fondo
 import com.example.aguardapp.core.ui.theme.FuenteTexto
+import com.example.aguardapp.core.ui.theme.IconosClarosEnBarraDeEstado
 import com.example.aguardapp.core.ui.theme.Tinta
 import com.example.aguardapp.core.ui.theme.TintaTenue
 
@@ -48,22 +49,23 @@ private val FORMA_TARJETA = RoundedCornerShape(18.dp)
 
 @Composable
 fun BarraSuperior(titulo: String, subtitulo: String, onVolver: (() -> Unit)?) {
+    IconosClarosEnBarraDeEstado(claros = true)
     Row(
-        Modifier.fillMaxWidth().background(Blanco).statusBarsPadding().padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 22.dp),
+        Modifier.fillMaxWidth().background(AguaMedia).statusBarsPadding().padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 22.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.Top
     ) {
         if (onVolver != null) {
             Box(
-                Modifier.size(40.dp).clip(RoundedCornerShape(13.dp)).background(Fondo).clickable(role = Role.Button, onClick = onVolver),
+                Modifier.size(40.dp).clip(RoundedCornerShape(13.dp)).background(Blanco.copy(alpha = 0.14f)).clickable(role = Role.Button, onClick = onVolver),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(painterResource(R.drawable.ic_atras), contentDescription = "Volver", modifier = Modifier.size(20.dp), tint = Tinta)
+                Icon(painterResource(R.drawable.ic_atras), contentDescription = "Volver", modifier = Modifier.size(20.dp), tint = Blanco)
             }
         }
         Column(Modifier.padding(top = 2.dp, start = if (onVolver == null) 4.dp else 0.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(titulo, fontFamily = FuenteTexto, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold, color = Tinta)
-            Text(subtitulo, fontFamily = FuenteTexto, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = TintaTenue)
+            Text(titulo, fontFamily = FuenteTexto, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold, color = Blanco)
+            Text(subtitulo, fontFamily = FuenteTexto, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = AguaClara)
         }
     }
 }

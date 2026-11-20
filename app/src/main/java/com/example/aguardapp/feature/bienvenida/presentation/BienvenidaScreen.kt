@@ -34,8 +34,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.viewmodel.koinViewModel
 import com.example.aguardapp.R
+import com.example.aguardapp.core.ui.theme.AguaSuave
 import com.example.aguardapp.core.ui.theme.AguaMedia
-import com.example.aguardapp.core.ui.theme.AguaProfunda
 import com.example.aguardapp.core.ui.theme.Blanco
 import com.example.aguardapp.core.ui.theme.FuenteTexto
 import com.example.aguardapp.core.ui.theme.IconosClarosEnBarraDeEstado
@@ -71,10 +71,10 @@ private fun Presentacion(modifier: Modifier) {
     Column(modifier.verticalScroll(rememberScrollState()).padding(horizontal = 24.dp)) {
         Spacer(Modifier.height(40.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(AguaProfunda), contentAlignment = Alignment.Center) {
+            Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(AguaSuave), contentAlignment = Alignment.Center) {
                 Icon(painterResource(R.drawable.ic_gota), contentDescription = null, modifier = Modifier.size(24.dp), tint = Blanco)
             }
-            Text("AguardApp", fontFamily = FuenteTexto, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold, color = Blanco)
+            Text("Aguarda", fontFamily = FuenteTexto, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold, color = Blanco)
         }
         Spacer(Modifier.height(30.dp))
         Text(
@@ -99,7 +99,7 @@ private fun Presentacion(modifier: Modifier) {
 @Composable
 private fun Beneficio(titulo: String, detalle: String) {
     Row(
-        Modifier.fillMaxWidth().clip(FORMA).background(AguaProfunda).padding(horizontal = 14.dp, vertical = 12.dp),
+        Modifier.fillMaxWidth().clip(FORMA).background(AguaSuave).padding(horizontal = 14.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(13.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -119,7 +119,7 @@ private fun Consentimiento(marcado: Boolean, onAlternar: () -> Unit) {
     ) {
         Box(
             Modifier.size(23.dp).clip(RoundedCornerShape(7.dp))
-                .background(if (marcado) Blanco else AguaProfunda)
+                .background(if (marcado) Blanco else AguaSuave)
                 .border(1.5.dp, Blanco, RoundedCornerShape(7.dp)),
             contentAlignment = Alignment.Center
         ) {

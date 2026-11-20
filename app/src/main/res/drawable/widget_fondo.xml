@@ -7,9 +7,9 @@
         <aapt:attr name="android:fillColor">
             <gradient android:type="linear"
                 android:startX="0" android:startY="0" android:endX="300" android:endY="150"
-                android:startColor="#FF0B6C7A" android:endColor="#FF075A66" />
+                android:startColor="#FF1B3554" android:endColor="#FF1B3554" />
         </aapt:attr>
     </path>
-    <path android:fillColor="#4012A0AE" android:pathData="M300,55C262,62 250,118 170,150H300Z" />
-    <path android:fillColor="#3012A0AE" android:pathData="M300,100C272,104 250,138 215,150H300Z" />
+    <path android:fillColor="#4080AAD3" android:pathData="M300,55C262,62 250,118 170,150H300Z" />
+    <path android:fillColor="#3080AAD3" android:pathData="M300,100C272,104 250,138 215,150H300Z" />
 </vector>

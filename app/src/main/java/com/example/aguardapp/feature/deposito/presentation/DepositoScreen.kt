@@ -39,8 +39,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.viewmodel.koinViewModel
 import com.example.aguardapp.R
+import com.example.aguardapp.core.ui.theme.AguaSuave
 import com.example.aguardapp.core.ui.theme.AguaMedia
-import com.example.aguardapp.core.ui.theme.AguaProfunda
 import com.example.aguardapp.core.ui.theme.Blanco
 import com.example.aguardapp.core.ui.theme.Coral
 import com.example.aguardapp.core.ui.theme.Divisor
@@ -130,7 +130,7 @@ private fun Encabezado(vista: DepositoVista, onEditarHogar: () -> Unit, onVolver
                 Text(vista.subtituloHogar, fontFamily = FuenteTexto, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Blanco, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
             Box(
-                Modifier.size(40.dp).clip(RoundedCornerShape(14.dp)).background(AguaProfunda).clickable(role = Role.Button, onClick = onEditarHogar),
+                Modifier.size(40.dp).clip(RoundedCornerShape(14.dp)).background(AguaSuave).clickable(role = Role.Button, onClick = onEditarHogar),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(painterResource(R.drawable.ic_ajustes), contentDescription = "Editar mi hogar", modifier = Modifier.size(20.dp), tint = Blanco)

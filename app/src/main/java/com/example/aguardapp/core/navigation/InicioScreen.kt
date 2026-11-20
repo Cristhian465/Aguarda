@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -41,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.aguardapp.R
+import com.example.aguardapp.core.ui.theme.AguaSuave
 import com.example.aguardapp.core.ui.theme.Agua
 import com.example.aguardapp.core.ui.theme.AguaClara
 import com.example.aguardapp.core.ui.theme.AguaMedia
@@ -73,25 +74,31 @@ fun InicioScreen(
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
     val deposito = estado.vista
     var elegirLlenado by rememberSaveable { mutableStateOf(false) }
-    IconosClarosEnBarraDeEstado(claros = false)
+    IconosClarosEnBarraDeEstado(claros = true)
 
-    Column(Modifier.fillMaxSize().background(Fondo).statusBarsPadding(), horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(Modifier.fillMaxSize().background(Fondo), horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(Modifier.fillMaxWidth().background(AguaMedia).statusBarsPadding(), contentAlignment = Alignment.Center) {
+            Row(
+                Modifier.widthIn(max = 620.dp).fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(AguaSuave), contentAlignment = Alignment.Center) {
+                    Icon(painterResource(R.drawable.ic_gota), null, tint = Blanco)
+                }
+                Text("Aguarda", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = Blanco)
+            }
+        }
         Column(
             Modifier.widthIn(max = 620.dp).fillMaxWidth().weight(1f)
                 .verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(AguaMedia), contentAlignment = Alignment.Center) {
-                    Icon(painterResource(R.drawable.ic_gota), null, tint = Blanco)
-                }
-                Text("Aguarda", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
-            }
             Text("Inicio", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.ExtraBold)
             Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(AguaProfunda)) {
                 Canvas(Modifier.matchParentSize()) {
                     val centro = Offset(size.width - 26.dp.toPx(), size.height - 16.dp.toPx())
-                    drawCircle(AguaMedia, 105.dp.toPx(), centro)
+                    drawCircle(AguaSuave.copy(alpha = .45f), 105.dp.toPx(), centro)
                     drawCircle(Agua, 81.dp.toPx(), centro, style = Stroke(1.dp.toPx()))
                     drawCircle(Agua.copy(alpha = .28f), 60.dp.toPx(), centro)
                 }
@@ -122,7 +129,7 @@ fun InicioScreen(
             accesos.chunked(2).forEach { fila ->
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     fila.forEach { acceso ->
-                        OutlinedCard(onClick = { onAbrir(acceso.ruta) }, modifier = Modifier.weight(1f).heightIn(min = 126.dp)) {
+                        OutlinedCard(onClick = { onAbrir(acceso.ruta) }, modifier = Modifier.weight(1f).aspectRatio(1f)) {
                             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(AguaClara), contentAlignment = Alignment.Center) {
                                     Icon(painterResource(acceso.icono), null, tint = AguaMedia)

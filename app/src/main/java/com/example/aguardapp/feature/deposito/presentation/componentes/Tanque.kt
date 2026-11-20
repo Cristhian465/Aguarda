@@ -17,14 +17,14 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.unit.dp
-import com.example.aguardapp.core.ui.theme.Agua
-import com.example.aguardapp.core.ui.theme.AguaClara
 import com.example.aguardapp.core.ui.theme.AguaMedia
-import com.example.aguardapp.core.ui.theme.AguaProfunda
 import com.example.aguardapp.core.ui.theme.Blanco
 import com.example.aguardapp.core.ui.theme.Tenue
 
 private const val DURACION_ANIMACION_MS = 900
+
+private val INTERIOR_TANQUE = Color(0xFF06323A)
+private val AGUA_TANQUE = Color(0xFF51AFBC)
 
 private val MARCAS_INDICADOR = listOf(47f / 196, 96f / 196, 145f / 196)
 
@@ -34,22 +34,17 @@ fun IndicadorNivelReservorio(fraccion: Float, modifier: Modifier = Modifier) {
     Canvas(modifier.size(width = 106.dp, height = 196.dp)) { dibujarIndicadorNivel(nivel) }
 }
 
-fun DrawScope.dibujarIndicadorNivel(
-    fraccion: Float,
-    conOla: Boolean = false,
-    colorFondo: Color = AguaProfunda,
-    colorAgua: Color = AguaClara
-) {
+fun DrawScope.dibujarIndicadorNivel(fraccion: Float, conOla: Boolean = false) {
     val nivel = fraccion.coerceIn(0f, 1f)
     val grosorBorde = 2.dp.toPx()
     val forma = formaDelTanque(size, inset = 0f)
-    drawPath(forma, colorFondo)
+    drawPath(forma, INTERIOR_TANQUE)
     clipPath(forma) {
         val alto = size.height * nivel
         val superficie = size.height - alto
         if (alto > 0f) {
-            if (conOla) drawPath(aguaConOla(superficie), colorAgua)
-            else drawRect(colorAgua, Offset(0f, superficie), Size(size.width, alto))
+            if (conOla) drawPath(aguaConOla(superficie), AGUA_TANQUE)
+            else drawRect(AGUA_TANQUE, Offset(0f, superficie), Size(size.width, alto))
         }
         MARCAS_INDICADOR.forEach { marca ->
             drawRect(Blanco, Offset(0f, size.height * marca), Size(size.width * 0.1f, 1.5.dp.toPx()))
@@ -83,7 +78,7 @@ fun TanqueLleno(modifier: Modifier = Modifier) {
         val forma = Path().apply { addRoundRect(RoundRect(0f, 0f, size.width, size.height, CornerRadius(18.dp.toPx()))) }
         drawPath(forma, Tenue)
         clipPath(forma) {
-            drawRect(Agua, Offset.Zero, size)
+            drawRect(AGUA_TANQUE, Offset.Zero, size)
             MARCAS_TANQUE_LLENO.forEach { marca ->
                 drawRect(Blanco, Offset(0f, size.height * marca), Size(9.6.dp.toPx(), 1.5.dp.toPx()))
             }

@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
@@ -50,6 +49,7 @@ import kotlinx.coroutines.flow.first
 import org.koin.mp.KoinPlatform
 import com.example.aguardapp.MainActivity
 import com.example.aguardapp.R
+import com.example.aguardapp.core.ui.theme.AguaClara
 import com.example.aguardapp.core.ui.theme.Blanco
 import com.example.aguardapp.feature.deposito.domain.repository.DepositoRepository
 import com.example.aguardapp.feature.deposito.presentation.componentes.dibujarIndicadorNivel
@@ -58,8 +58,6 @@ import com.example.aguardapp.feature.sensor.domain.repository.SensorRepository
 
 private val MAXIMO_SIN_SENAL = 10.minutes
 private const val PROPORCION = 2.1f
-private val FONDO_TANQUE = Color(0xFF06323A)
-private val AGUA_TANQUE = Color(0xFF3FD3DB)
 
 class NivelTanqueReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = NivelTanqueWidget()
@@ -97,6 +95,8 @@ private fun Contenido(estado: EstadoTanque) {
     val context = LocalContext.current
     val tamano = LocalSize.current
     val base = minOf(tamano.height, tamano.width / PROPORCION)
+    val escalaLetra = context.resources.configuration.fontScale
+    fun letra(proporcion: Float) = (base.value * proporcion / escalaLetra).sp
     val margen = base * 0.1f
     val altoTanque = base * 0.8f
     val anchoTanque = altoTanque * 0.56f
@@ -120,14 +120,14 @@ private fun Contenido(estado: EstadoTanque) {
                     Text(
                         "${estado.porcentaje} %",
                         maxLines = 1,
-                        style = TextStyle(color = blanco, fontSize = (base.value * 0.34f).sp, fontWeight = FontWeight.Bold)
+                        style = TextStyle(color = blanco, fontSize = letra(0.3f), fontWeight = FontWeight.Bold)
                     )
                     Text(
                         "del tanque disponible",
                         maxLines = 1,
-                        style = TextStyle(color = blanco, fontSize = (base.value * 0.105f).sp, fontWeight = FontWeight.Medium)
+                        style = TextStyle(color = blanco, fontSize = letra(0.1f), fontWeight = FontWeight.Medium)
                     )
-                    Spacer(GlanceModifier.height(base * 0.05f))
+                    Spacer(GlanceModifier.height(base * 0.04f))
                     Row(
                         GlanceModifier.background(ImageProvider(R.drawable.widget_pastilla))
                             .padding(horizontal = base * 0.06f, vertical = base * 0.03f),
@@ -137,13 +137,13 @@ private fun Contenido(estado: EstadoTanque) {
                             ImageProvider(R.drawable.ic_gota),
                             contentDescription = null,
                             modifier = GlanceModifier.size(base * 0.1f),
-                            colorFilter = ColorFilter.tint(ColorProvider(AGUA_TANQUE))
+                            colorFilter = ColorFilter.tint(ColorProvider(AguaClara))
                         )
                         Spacer(GlanceModifier.width(base * 0.04f))
                         Text(
                             "${formatearMiles(estado.litros)} L de ${formatearMiles(estado.capacidad)} L",
                             maxLines = 1,
-                            style = TextStyle(color = blanco, fontSize = (base.value * 0.09f).sp, fontWeight = FontWeight.Medium)
+                            style = TextStyle(color = blanco, fontSize = letra(0.085f), fontWeight = FontWeight.Medium)
                         )
                     }
                 }
@@ -171,7 +171,7 @@ private fun dibujarTanque(context: Context, fraccion: Float, ancho: Dp, alto: Dp
     val altoPx = (alto.value * densidad).roundToInt().coerceAtLeast(1)
     val imagen = ImageBitmap(anchoPx, altoPx)
     CanvasDrawScope().draw(Density(densidad), LayoutDirection.Ltr, Canvas(imagen), Size(anchoPx.toFloat(), altoPx.toFloat())) {
-        dibujarIndicadorNivel(fraccion, conOla = true, colorFondo = FONDO_TANQUE, colorAgua = AGUA_TANQUE)
+        dibujarIndicadorNivel(fraccion, conOla = true)
     }
     return imagen.asAndroidBitmap()
 }
