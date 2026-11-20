@@ -79,6 +79,14 @@ private fun ListaDesplazable(
     onSeleccionar: (PuntoCisterna) -> Unit
 ) {
     LazyColumn {
+        estado.miDistrito?.let { avisoDeDistrito(estado.reportes, it.ubigeo) }?.let { aviso ->
+            item(key = "vecinos") {
+                Texto(
+                    "En tu distrito: $aviso", 13, AguaMedia, FontWeight.ExtraBold,
+                    Modifier.padding(start = 20.dp, end = 20.dp, top = 12.dp)
+                )
+            }
+        }
         item(key = "encabezado") {
             Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 6.dp)) {
                 Texto(if (conDistancia) "Cisternas cercanas" else "Puntos de reparto", 15, Tinta, FontWeight.ExtraBold)
@@ -87,7 +95,9 @@ private fun ListaDesplazable(
         }
         items(filas, key = { it.punto.id }) { candidata ->
             val sugerida = candidata.punto.id == estado.aviso?.sugeridaId
-            FilaCisterna(candidata.punto, candidata.distanciaKm, sugerida) { onSeleccionar(candidata.punto) }
+            FilaCisterna(candidata.punto, candidata.distanciaKm, sugerida, avisoDeCisterna(estado.reportes, candidata.punto.id)) {
+                onSeleccionar(candidata.punto)
+            }
             HorizontalDivider(color = Divisor)
         }
     }
@@ -102,7 +112,7 @@ private fun avisoDeUbicacion(estado: EstadoUbicacion, sinCercanas: Boolean): Str
 }
 
 @Composable
-private fun FilaCisterna(punto: PuntoCisterna, distanciaKm: Double?, sugerida: Boolean, onClick: () -> Unit) {
+private fun FilaCisterna(punto: PuntoCisterna, distanciaKm: Double?, sugerida: Boolean, aviso: String?, onClick: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -112,6 +122,7 @@ private fun FilaCisterna(punto: PuntoCisterna, distanciaKm: Double?, sugerida: B
         Column(Modifier.weight(1f)) {
             Texto(punto.nombre, 14, Tinta, FontWeight.Bold)
             Texto(detalleDe(punto), 12.5, TintaSuave)
+            aviso?.let { Texto(it, 12.5, AguaMedia, FontWeight.SemiBold) }
             if (sugerida) Texto("Te conviene", 12, AguaMedia, FontWeight.ExtraBold)
         }
         distanciaKm?.let { Texto(formatearDistancia(it), 13, Tinta, FontWeight.SemiBold) }
@@ -124,6 +135,6 @@ private fun Punto(color: Color, tamano: Int) {
 }
 
 @Composable
-private fun Texto(texto: String, tamano: Number, color: Color, peso: FontWeight = FontWeight.Medium) {
-    Text(texto, fontFamily = FuenteTexto, fontSize = tamano.toFloat().sp, fontWeight = peso, color = color)
+private fun Texto(texto: String, tamano: Number, color: Color, peso: FontWeight = FontWeight.Medium, modifier: Modifier = Modifier) {
+    Text(texto, modifier, fontFamily = FuenteTexto, fontSize = tamano.toFloat().sp, fontWeight = peso, color = color)
 }

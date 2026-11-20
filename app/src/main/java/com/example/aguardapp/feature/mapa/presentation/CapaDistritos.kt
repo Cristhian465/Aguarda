@@ -86,7 +86,13 @@ private fun PuntoDeColor(color: Color) {
 }
 
 @Composable
-fun TarjetaDistrito(distrito: Distrito, esMiDistrito: Boolean, fila: FilaRanking?, modifier: Modifier = Modifier) {
+fun TarjetaDistrito(
+    distrito: Distrito,
+    esMiDistrito: Boolean,
+    fila: FilaRanking?,
+    aviso: String? = null,
+    modifier: Modifier = Modifier
+) {
     Column(modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Blanco).pointerInput(Unit) {}.padding(16.dp)) {
         if (esMiDistrito) {
             Text("Tu distrito", fontFamily = FuenteTexto, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = AguaMedia)
@@ -103,6 +109,16 @@ fun TarjetaDistrito(distrito: Distrito, esMiDistrito: Boolean, fila: FilaRanking
             fontWeight = FontWeight.Medium,
             color = TintaSuave
         )
+        aviso?.let {
+            Text(
+                it,
+                modifier = Modifier.padding(top = 4.dp),
+                fontFamily = FuenteTexto,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = AguaMedia
+            )
+        }
         Text(
             "Límites: © colaboradores de OpenStreetMap",
             modifier = Modifier.padding(top = 6.dp),

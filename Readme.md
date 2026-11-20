@@ -156,7 +156,7 @@ AguardApp/
 │               ├── 📁 bienvenida/         Pantalla de entrada (solo el primer uso)
 │               ├── 📁 deposito/           Depósito de agua del hogar (MVVM + DDD)
 │               ├── 📁 liga/               Liga del Agua: medición del consumo y puntaje del hogar
-│               ├── 📁 mapa/               Mapa de puntos de cisterna (Google Maps)
+│               ├── 📁 mapa/               Mapa de puntos de cisterna, distritos y reportes de vecinos (Google Maps)
 │               ├── 📁 sensor/             Nivel del tanque y detector de fugas desde el sensor IoT (HTTP directo a ThingSpeak)
 │               ├── 📁 ahorro/             Retos, racha, calendario e insignias (SharedPreferences)
 │               ├── 📁 eps/                Consulta del portal, sesión cifrada y OCR del PDF
@@ -375,6 +375,8 @@ flowchart LR
 ## 📝 Changelog
 
 ### 2026-11-20
+- [Agregado] Mapa, reportes de vecinos: el botón "Reportar" permite avisar "Sin agua en mi cuadra", "Ya llegó el agua a mi cuadra", "Llegó la cisterna" o "La cisterna ya se fue". Solo se envía el tipo de reporte, el distrito (o la cisterna elegida, de la que se deduce su distrito) y el código anónimo del hogar; nunca la ubicación, el nombre ni fotos del vecino. Un reporte se muestra cuando al menos 2 hogares distintos coinciden (en la tarjeta del distrito, bajo la cisterna y como "En tu distrito" si el teléfono tiene ubicación), dura 6 horas en pantalla y el servidor lo olvida a los 2 días. Se rechaza el mismo reporte repetido en 3 horas y más de 10 por hora. Código: `ReportesRepositoryImpl.kt`, `ReportesApi.kt`, `DialogoReporte.kt`, `AvisoDeVecinos.kt` y `ModuloReportes.kt`.
+- [Agregado] `supabase/reportes_agua.sql`: tabla `reporte_agua` (sin acceso directo, con RLS) y las funciones `enviar_reporte` y `reportes_recientes`. Se ejecuta una vez en el SQL Editor después de `liga_del_agua.sql`; ya está aplicado en el proyecto AguaTacna. Reemplaza `borrar_mis_datos` para que "Salir y borrar mis datos" también borre los reportes del hogar.
 - [Agregado] Mapa, colores por distrito: cada distrito tiene su propio color (Tacna turquesa, Alto de la Alianza violeta, Ciudad Nueva amarillo, Pocollay verde y Coronel Gregorio Albarracín Lanchipa rosa; `ColoresDeDistrito.kt`). El relleno se intensifica cuando el distrito ya compite en la Liga según su puntaje real y se mantiene tenue mientras no. En pantalla completa aparece la leyenda de distritos y la tarjeta del distrito muestra su color.
 - [Agregado] Liga del Agua, gráfico semanal: la tarjeta "Tus litros por semana" muestra en barras los litros por persona al día de las últimas 6 semanas (la actual resaltada) y una línea con el consumo habitual. Se calcula en el teléfono con las mismas marcas de nivel (`historialSemanal` en `HistorialLitros.kt`, `GraficoSemanal.kt`); las semanas sin medición quedan con "–".
 - [Cambiado] Liga del Agua, ranking: cuando un distrito aún no compite, en lugar de "Sin datos" se lee cuántos hogares le faltan ("Faltan 4 hogares") y "Aún sin hogares" si no tiene ninguno. El mínimo de 5 hogares es la constante `HOGARES_MINIMOS` (`RankingLiga.kt`), la misma cifra de `supabase/liga_del_agua.sql`.

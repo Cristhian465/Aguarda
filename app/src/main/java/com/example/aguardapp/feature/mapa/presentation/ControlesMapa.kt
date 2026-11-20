@@ -57,6 +57,22 @@ fun BotonVolverALaLista(modifier: Modifier = Modifier, onClick: () -> Unit) {
     )
 }
 
+@Composable
+fun BotonReportar(modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Text(
+        "Reportar",
+        modifier = modifier
+            .clip(RoundedCornerShape(50))
+            .background(Blanco)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        fontFamily = FuenteTexto,
+        fontSize = 13.sp,
+        fontWeight = FontWeight.Bold,
+        color = AguaMedia
+    )
+}
+
 fun subtituloDe(cantidad: Int): String = when (cantidad) {
     0 -> "Sin puntos de reparto por ahora"
     1 -> "1 punto de reparto en Tacna"
