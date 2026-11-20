@@ -375,6 +375,7 @@ flowchart LR
 ## 📝 Changelog
 
 ### 2026-11-20
+- [Agregado] Mapa, colores por distrito: cada distrito tiene su propio color (Tacna turquesa, Alto de la Alianza violeta, Ciudad Nueva amarillo, Pocollay verde y Coronel Gregorio Albarracín Lanchipa rosa; `ColoresDeDistrito.kt`). El relleno se intensifica cuando el distrito ya compite en la Liga según su puntaje real y se mantiene tenue mientras no. En pantalla completa aparece la leyenda de distritos y la tarjeta del distrito muestra su color.
 - [Agregado] Liga del Agua, gráfico semanal: la tarjeta "Tus litros por semana" muestra en barras los litros por persona al día de las últimas 6 semanas (la actual resaltada) y una línea con el consumo habitual. Se calcula en el teléfono con las mismas marcas de nivel (`historialSemanal` en `HistorialLitros.kt`, `GraficoSemanal.kt`); las semanas sin medición quedan con "–".
 - [Cambiado] Liga del Agua, ranking: cuando un distrito aún no compite, en lugar de "Sin datos" se lee cuántos hogares le faltan ("Faltan 4 hogares") y "Aún sin hogares" si no tiene ninguno. El mínimo de 5 hogares es la constante `HOGARES_MINIMOS` (`RankingLiga.kt`), la misma cifra de `supabase/liga_del_agua.sql`.
 - [Cambiado] El botón del ranking dice "Salir y borrar mis datos" para que el texto no se pegue a los bordes en pantallas angostas.
