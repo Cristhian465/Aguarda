@@ -31,5 +31,6 @@ class HogaresQueFaltanTest {
         assertEquals("Aún sin hogares", textoHogares(0, 0))
         assertEquals("1 hogar", textoHogares(1, 0))
         assertEquals("6 hogares · 2 verificados", textoHogares(6, 2))
+        assertEquals("9 hogares · 1 verificado", textoHogares(9, 1))
     }
 }
