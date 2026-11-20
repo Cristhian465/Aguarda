@@ -83,7 +83,13 @@ fun MapaScreen(onVolver: () -> Unit, viewModel: MapaViewModel = koinViewModel())
                     if (pantallaCompleta) viewModel.onTocarDistrito(punto) else pantallaCompleta = true
                 }
                 val bajoLaBarraDeEstado = if (pantallaCompleta) Modifier.statusBarsPadding() else Modifier
-                LeyendaDeEstados(Modifier.align(Alignment.TopStart).then(bajoLaBarraDeEstado).padding(12.dp))
+                Column(
+                    Modifier.align(Alignment.TopStart).then(bajoLaBarraDeEstado).padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    LeyendaDeEstados()
+                    if (pantallaCompleta) LeyendaDeDistritos(uiState.distritos)
+                }
                 if (pantallaCompleta) {
                     Column(
                         Modifier.align(Alignment.BottomCenter).padding(start = 16.dp, end = 72.dp, bottom = 20.dp),
