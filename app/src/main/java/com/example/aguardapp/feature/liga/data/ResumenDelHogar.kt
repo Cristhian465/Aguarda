@@ -9,9 +9,16 @@ import com.example.aguardapp.feature.deposito.domain.repository.DepositoReposito
 import com.example.aguardapp.feature.eps.data.RecibosLocales
 import com.example.aguardapp.feature.liga.domain.CalcularPuntaje
 import com.example.aguardapp.feature.liga.domain.LigaRepository
+import com.example.aguardapp.feature.liga.domain.LitrosSemana
 import com.example.aguardapp.feature.liga.domain.ResumenSemanal
+import com.example.aguardapp.feature.liga.domain.historialSemanal
 
-data class DatosDelHogar(val capacidadLitros: Int, val resumen: ResumenSemanal, val verificado: Boolean)
+data class DatosDelHogar(
+    val capacidadLitros: Int,
+    val resumen: ResumenSemanal,
+    val verificado: Boolean,
+    val historial: List<LitrosSemana>
+)
 
 class ResumenDelHogar(
     private val liga: LigaRepository,
@@ -29,7 +36,8 @@ class ResumenDelHogar(
             val habitantes = it.habitantes.cantidad
             val base = recibo?.takeIf { r -> r.vigente(hoy) }?.litrosPorPersonaDia(habitantes)
             val resumen = calcular.resumen(marcas, llenados, ahorro.historial().keys, habitantes, hoy, base)
-            DatosDelHogar(it.capacidad.litros.valor.roundToInt(), resumen, recibo?.verificado(hoy) == true)
+            val historial = historialSemanal(marcas, llenados, habitantes, hoy)
+            DatosDelHogar(it.capacidad.litros.valor.roundToInt(), resumen, recibo?.verificado(hoy) == true, historial)
         }
     }
 }
