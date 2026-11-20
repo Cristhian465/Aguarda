@@ -13,6 +13,7 @@ import kotlin.math.roundToInt
 import com.example.aguardapp.feature.deposito.domain.repository.DepositoRepository
 import com.example.aguardapp.feature.liga.data.ResumenDelHogar
 import com.example.aguardapp.feature.liga.domain.LigaRepository
+import com.example.aguardapp.feature.liga.domain.LitrosSemana
 import com.example.aguardapp.feature.liga.domain.MarcaNivel
 import com.example.aguardapp.feature.liga.domain.ResumenSemanal
 
@@ -21,6 +22,7 @@ data class LigaUiState(
     val capacidadLitros: Int? = null,
     val nivelElegido: Int = 0,
     val resumen: ResumenSemanal? = null,
+    val historial: List<LitrosSemana> = emptyList(),
     val guardando: Boolean = false,
     val mensaje: String? = null
 )
@@ -39,7 +41,14 @@ class LigaViewModel(
             val estimado = deposito.observarDeposito().first()?.nivelEn(ahora())?.litros?.valor?.roundToInt() ?: 0
             _uiState.update { it.copy(nivelElegido = estimado) }
             hogar.observar().collect { datos ->
-                _uiState.update { it.copy(cargando = false, capacidadLitros = datos?.capacidadLitros, resumen = datos?.resumen) }
+                _uiState.update {
+                    it.copy(
+                        cargando = false,
+                        capacidadLitros = datos?.capacidadLitros,
+                        resumen = datos?.resumen,
+                        historial = datos?.historial.orEmpty()
+                    )
+                }
             }
         }
     }

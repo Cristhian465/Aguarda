@@ -40,6 +40,7 @@ fun LigaScreen(onVolver: () -> Unit, viewModel: LigaViewModel = koinViewModel())
                 TarjetaMarcarNivel(uiState, capacidad, viewModel::onCambiarNivel, viewModel::onGuardarNivel)
                 uiState.resumen?.let {
                     TarjetaConsumo(it)
+                    TarjetaHistorial(uiState.historial, it.lineaBase)
                     TarjetaPuntaje(it)
                 }
                 SeccionRanking()
