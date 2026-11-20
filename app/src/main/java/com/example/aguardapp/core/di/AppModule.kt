@@ -53,7 +53,7 @@ fun iniciarAplicacion(context: Context) {
     if (KoinPlatform.getKoinOrNull() != null) return
     val base = AguardAppDatabase.crear(context)
     val usuarioId = runBlocking(Dispatchers.IO) { obtenerOCrearUsuario(base) }
-    startKoin { modules(moduloApp(context, base, usuarioId), moduloRed(context), moduloViewModels, moduloLiga(context), moduloRecibos(context)) }
+    startKoin { modules(moduloApp(context, base, usuarioId), moduloRed(context), moduloViewModels, moduloLiga(context), moduloRecibos(context), moduloReportes()) }
 }
 
 private suspend fun obtenerOCrearUsuario(base: AguardAppDatabase): String {
@@ -102,7 +102,7 @@ private val moduloViewModels = module {
     viewModel { QueRecortarViewModel(get(), get<Reloj>()::ahora) }
     viewModel { SinAguaViewModel(get(), get<Reloj>()::ahora) }
     viewModel { (tipo: TipoLlenado) -> RegistrarLlenadoViewModel(get(), get<Reloj>()::ahora, tipo) }
-    viewModel { MapaViewModel(get(), get(), get(), get(), get(), get<Reloj>()::ahora) }
+    viewModel { MapaViewModel(get(), get(), get(), get(), get(), get(), get<Reloj>()::ahora) }
     viewModel { SensorViewModel(get(), get(), get<Reloj>()::ahora) }
     viewModel { FugaViewModel(get(), get(), get(), get<Reloj>()::ahora) }
     viewModel { RepresasViewModel(get()) }

@@ -56,6 +56,7 @@ fun MapaScreen(onVolver: () -> Unit, viewModel: MapaViewModel = koinViewModel())
     LaunchedEffect(permisoConcedido) { viewModel.onPermisoDeUbicacion(permisoConcedido) }
     LifecycleResumeEffect(Unit) {
         viewModel.onRefrescarLiga()
+        viewModel.onRefrescarReportes()
         onPauseOrDispose { }
     }
     IconosClarosEnBarraDeEstado(claros = false)
@@ -90,6 +91,10 @@ fun MapaScreen(onVolver: () -> Unit, viewModel: MapaViewModel = koinViewModel())
                     LeyendaDeEstados()
                     if (pantallaCompleta) LeyendaDeDistritos(uiState.distritos)
                 }
+                BotonReportar(
+                    Modifier.align(Alignment.TopEnd).then(bajoLaBarraDeEstado).padding(top = 60.dp, end = 12.dp),
+                    onClick = viewModel::onAbrirReporte
+                )
                 if (pantallaCompleta) {
                     Column(
                         Modifier.align(Alignment.BottomCenter).padding(start = 16.dp, end = 72.dp, bottom = 20.dp),
@@ -97,11 +102,27 @@ fun MapaScreen(onVolver: () -> Unit, viewModel: MapaViewModel = koinViewModel())
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         uiState.distritoElegido?.let { distrito ->
-                            TarjetaDistrito(distrito, distrito.ubigeo == uiState.miDistrito?.ubigeo, uiState.liga.firstOrNull { it.ubigeo == distrito.ubigeo })
+                            TarjetaDistrito(
+                                distrito,
+                                distrito.ubigeo == uiState.miDistrito?.ubigeo,
+                                uiState.liga.firstOrNull { it.ubigeo == distrito.ubigeo },
+                                avisoDeDistrito(uiState.reportes, distrito.ubigeo)
+                            )
                         }
                         BotonVolverALaLista(onClick = salirDePantallaCompleta)
                     }
                 }
+            }
+            uiState.reporte?.let { panel ->
+                DialogoReporte(
+                    estado = uiState,
+                    panel = panel,
+                    onTipo = viewModel::onElegirTipoReporte,
+                    onDistrito = viewModel::onElegirDistritoDelReporte,
+                    onCisterna = viewModel::onElegirCisternaDelReporte,
+                    onEnviar = viewModel::onEnviarReporte,
+                    onCerrar = viewModel::onCerrarReporte
+                )
             }
             if (!pantallaCompleta) ListaCisternas(
                 estado = uiState,

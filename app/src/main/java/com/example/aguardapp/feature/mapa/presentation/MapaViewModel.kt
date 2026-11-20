@@ -20,14 +20,29 @@ import com.example.aguardapp.feature.mapa.domain.model.CisternaCercana
 import com.example.aguardapp.feature.mapa.domain.model.Coordenada
 import com.example.aguardapp.feature.mapa.domain.model.Distrito
 import com.example.aguardapp.feature.mapa.domain.model.PuntoCisterna
+import com.example.aguardapp.feature.mapa.domain.model.ReporteVecinos
+import com.example.aguardapp.feature.mapa.domain.model.TipoReporte
 import com.example.aguardapp.feature.mapa.domain.model.distritoDe
 import com.example.aguardapp.feature.mapa.domain.repository.DistritosRepository
 import com.example.aguardapp.feature.mapa.domain.repository.MapaRepository
+import com.example.aguardapp.feature.mapa.domain.repository.ReportesRepository
 import com.example.aguardapp.feature.mapa.domain.repository.UbicacionRepository
 import com.example.aguardapp.feature.mapa.domain.usecase.BuscarCisternasCercanas
 import com.example.aguardapp.feature.mapa.domain.usecase.CandidataCisterna
 
 enum class EstadoUbicacion { SIN_PERMISO, BUSCANDO, ENCONTRADA, NO_DISPONIBLE }
+
+data class PanelReporte(
+    val tipo: TipoReporte? = null,
+    val ubigeo: String? = null,
+    val puntoId: String? = null,
+    val enviando: Boolean = false,
+    val enviado: Boolean = false,
+    val error: String? = null
+) {
+    val listo: Boolean
+        get() = tipo != null && if (tipo.deCisterna) puntoId != null else ubigeo != null
+}
 
 data class MapaUiState(
     val cargando: Boolean = true,
@@ -39,7 +54,9 @@ data class MapaUiState(
     val distritos: List<Distrito> = emptyList(),
     val miDistrito: Distrito? = null,
     val distritoElegido: Distrito? = null,
-    val liga: List<FilaRanking> = emptyList()
+    val liga: List<FilaRanking> = emptyList(),
+    val reportes: List<ReporteVecinos> = emptyList(),
+    val reporte: PanelReporte? = null
 ) {
     val candidatas: List<CandidataCisterna>
         get() = if (ubicacion == EstadoUbicacion.ENCONTRADA && cercanas.isNotEmpty()) {
@@ -55,6 +72,7 @@ class MapaViewModel(
     private val deposito: DepositoRepository,
     private val distritos: DistritosRepository,
     private val ranking: RankingRepository,
+    private val reportes: ReportesRepository,
     private val ahora: () -> LocalDateTime,
     private val buscarCercanas: BuscarCisternasCercanas = BuscarCisternasCercanas()
 ) : ViewModel() {
@@ -116,6 +134,60 @@ class MapaViewModel(
             val posiciones = ranking.ranking(lunesDe(ahora().date)).getOrNull() ?: return@launch
             actualizar { it.copy(liga = armarRanking(it.distritos.map { d -> d.ubigeo to d.nombre }, posiciones)) }
         }
+    }
+
+    fun onRefrescarReportes() {
+        viewModelScope.launch {
+            val lista = reportes.recientes().getOrNull() ?: return@launch
+            actualizar { it.copy(reportes = lista) }
+        }
+    }
+
+    fun onAbrirReporte() {
+        actualizar { it.copy(reporte = PanelReporte(ubigeo = it.miDistrito?.ubigeo)) }
+    }
+
+    fun onCerrarReporte() {
+        actualizar { it.copy(reporte = null) }
+    }
+
+    fun onElegirTipoReporte(tipo: TipoReporte) {
+        cambiarPanel { it.copy(tipo = tipo, error = null) }
+    }
+
+    fun onElegirDistritoDelReporte(ubigeo: String) {
+        cambiarPanel { it.copy(ubigeo = ubigeo, error = null) }
+    }
+
+    fun onElegirCisternaDelReporte(puntoId: String) {
+        cambiarPanel { it.copy(puntoId = puntoId, error = null) }
+    }
+
+    fun onEnviarReporte() {
+        val estado = _uiState.value
+        val panel = estado.reporte ?: return
+        val tipo = panel.tipo ?: return
+        if (!panel.listo || panel.enviando) return
+        val punto = estado.puntos.firstOrNull { it.id == panel.puntoId }
+        val ubigeo = if (tipo.deCisterna) punto?.let { estado.distritos.distritoDe(it.ubicacion)?.ubigeo } else panel.ubigeo
+        if (ubigeo == null) {
+            cambiarPanel { it.copy(error = "No pudimos ubicar esa cisterna en un distrito.") }
+            return
+        }
+        cambiarPanel { it.copy(enviando = true, error = null) }
+        viewModelScope.launch {
+            val resultado = reportes.enviar(tipo, ubigeo, if (tipo.deCisterna) punto?.id else null)
+            if (resultado.isSuccess) {
+                cambiarPanel { it.copy(enviando = false, enviado = true) }
+                onRefrescarReportes()
+            } else {
+                cambiarPanel { it.copy(enviando = false, error = resultado.exceptionOrNull()?.message) }
+            }
+        }
+    }
+
+    private fun cambiarPanel(cambio: (PanelReporte) -> PanelReporte) {
+        actualizar { estado -> estado.copy(reporte = estado.reporte?.let(cambio)) }
     }
 
     fun onCerrarDistrito() {
