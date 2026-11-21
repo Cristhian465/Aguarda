@@ -33,8 +33,14 @@ data class ReciboGuardado(
     val leidoDeLaFoto: Boolean,
     val leidoDeEps: Boolean = false,
     val totalPagar: Double? = null,
-    val actualizadoEn: String? = null
+    val actualizadoEn: String? = null,
+    val diasFacturados: Int? = null,
+    val totalMes: Double? = null,
+    val deuda: Double? = null
 ) {
+    val litrosPorDia: Double?
+        get() = diasFacturados?.takeIf { it > 0 }?.let { metrosCubicos * LITROS_POR_M3 / it }
+
     fun vigente(hoy: LocalDate): Boolean = mes.mesesHasta(hoy) in 0..MESES_DE_VIGENCIA
 
     fun verificado(hoy: LocalDate): Boolean = (leidoDeLaFoto || leidoDeEps) && vigente(hoy)
@@ -53,7 +59,7 @@ private val NUMERO_Y_UNIDAD = Regex("""(?<![\d.,])$NUMERO\s*$UNIDAD(?![a-z\d])""
 private val UNIDAD_Y_NUMERO = Regex("""$UNIDAD\W{0,6}$NUMERO(?![\d/-])""")
 private val MESES = listOf("ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "se[pt]", "oct", "nov", "dic")
 private val MES_EN_LETRAS = Regex("""\b(${MESES.joinToString("|")})[a-z]*\.?[\s/-]*(?:de\s+)?(20\d{2})\b""")
-private val MES_EN_NUMEROS = Regex("""(?<!\d)(0?[1-9]|1[0-2])[/-](20\d{2})\b""")
+private val MES_EN_NUMEROS = Regex("""(?<![\d/-])(0?[1-9]|1[0-2])[/-](20\d{2})\b""")
 private val LINEA_DE_PERIODO = Regex("""periodo|mes|facturac""")
 
 private fun normalizar(texto: String): String =

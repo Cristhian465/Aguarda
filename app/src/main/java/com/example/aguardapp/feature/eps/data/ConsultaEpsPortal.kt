@@ -38,6 +38,14 @@ class ConsultaEpsPortal(context: Context) : ConsultaEps {
         extraerReciboEps(texto)
     }
 
+    override suspend fun consultarHistorial(): List<ReciboEps> = operar {
+        val actual = sesion ?: throw ErrorEps("Primero vincula tu cuenta EPS.", true)
+        val (historial, renovada) = cliente.historial(actual)
+        almacen.guardar(renovada)
+        sesion = renovada
+        historial
+    }
+
     override suspend fun desvincular() = mutex.withLock {
         withContext(Dispatchers.IO) { almacen.borrar(); sesion = null }
     }

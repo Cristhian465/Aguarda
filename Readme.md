@@ -340,18 +340,18 @@ git clone https://github.com/tu-usuario/AguardApp.git
 En **Inicio → Recibos EPS**, la tarjeta **Tu recibo desde EPS Tacna** ofrece:
 
 1. **Vincular cuenta EPS**: ingresar el usuario y la clave impresos en el recibo. El conector lee el formulario y sus campos ocultos; envía las credenciales mediante HTTP únicamente al host exacto de la oficina virtual. La cuenta queda vinculada únicamente si la respuesta contiene evidencia de acceso y una cookie de sesión.
-2. **Actualizar recibo**: reutiliza la sesión, sigue enlaces directos del portal al PDF y extrae primero el texto digital con PDFBox Android y, si no basta, procesa hasta cuatro páginas con `PdfRenderer` y ML Kit, asociando etiquetas y cifras por posición. Guarda automáticamente mes facturado, consumo explícito en m³ y **total a pagar** (puede incluir deuda, no equivale al cargo del mes). No estima consumo a partir del importe o de las lecturas.
-3. **Desvincular cuenta**: elimina la sesión de este teléfono y conserva el último recibo. No revoca la sesión en el servidor de EPS.
+2. **Actualizar último recibo**: reutiliza la sesión, sigue enlaces directos del portal al PDF y extrae primero el texto digital con PDFBox Android y, si no basta, procesa hasta cuatro páginas con `PdfRenderer` y ML Kit, asociando etiquetas y cifras por posición. Guarda automáticamente mes facturado, consumo explícito en m³ y **total a pagar** (puede incluir deuda, no equivale al cargo del mes). No estima consumo a partir del importe o de las lecturas.
+3. **Desvincular cuenta**: elimina la sesión de este teléfono y conserva el historial de recibos. No revoca la sesión en el servidor de EPS.
 
-La contraseña no se persiste ni se añade a logs. Las cookies y el usuario se cifran con AES/GCM y una clave de Android Keystore, en `noBackupFilesDir/eps-sesion.enc`. El PDF se procesa en caché privada y se elimina al terminar o fallar. No se envía el documento a una IA externa. Un error conserva el recibo guardado; una sesión vencida obliga a vincular de nuevo. Los datos EPS se reflejan en la tarjeta de recibo existente y en la referencia de consumo de la Liga. El origen EPS cuenta como verificado si el recibo sigue vigente, sin afirmar que exista una firma digital validada.
+La contraseña no se persiste ni se añade a logs. Las cookies y el usuario se cifran con AES/GCM y una clave de Android Keystore, en `noBackupFilesDir/eps-sesion.enc`. El PDF se procesa en caché privada y se elimina al terminar o fallar. No se envía el documento a una IA externa. Un error conserva el recibo guardado; una sesión vencida abre el formulario para vincular de nuevo. Los datos EPS se reflejan en la tarjeta de recibo existente y en la referencia de consumo de la Liga. El origen EPS cuenta como verificado si el recibo sigue vigente, sin afirmar que exista una firma digital validada.
 
 **Estado real de la integración:** se inspeccionó el HTML público del acceso oficial, que utiliza `usu` y `pas` con POST a `../controlador/login.php`. Se verificaron el acceso autenticado y la descarga de un PDF real desde el Samsung conectado; la validación de campos se describe al final de esta sección. No hay una API oficial documentada identificada. El enlace de Gob.pe usa HTTP y la prueba HTTPS falló al validar el certificado. Por solicitud del usuario se permite HTTP solo para `oficinavirtual.epstacna.com.pe`, sin subdominios y en el puerto estándar. Usuario, clave, cookies y documento viajan sin cifrado y podrían ser interceptados; la pantalla lo informa antes de vincular. HTTPS sigue validando certificados si el portal redirige allí.
 
-El descubrimiento usa enlaces HTML y el flujo AJAX observado del botón «Recibo virtual PDF»: interpreta las rutas literales y métodos de `CargarRecibo(...)` y `MostrarRecibo()`, solicita el visor y sigue su iframe, siempre en el mismo host. Envía `Referer` y `X-Requested-With` en las solicitudes AJAX. No ejecuta JavaScript arbitrario, no resuelve CAPTCHA y no inventa rutas de descarga. Si hay varios documentos, exige una etiqueta explícita de último recibo o periodos identificables para elegir el más reciente. Formularios adicionales, variantes de JavaScript distintas del flujo observado o una disposición de PDF no reconocible requieren adaptar el conector. La extracción rechaza campos ausentes o ambiguos, periodos futuros y recibos anteriores al guardado.
+El descubrimiento usa enlaces HTML y el flujo AJAX observado del botón «Recibo virtual PDF»: interpreta las rutas literales y métodos de `CargarRecibo(...)` y `MostrarRecibo()`, solicita el visor y sigue su iframe, siempre en el mismo host. Envía `Referer` y `X-Requested-With` en las solicitudes AJAX. No ejecuta JavaScript arbitrario, no resuelve CAPTCHA y no inventa rutas de descarga. Si hay varios documentos, exige una etiqueta explícita de último recibo o periodos identificables para elegir el más reciente. Formularios adicionales, variantes de JavaScript distintas del flujo observado o una disposición de PDF no reconocible requieren adaptar el conector. La extracción rechaza campos ausentes o ambiguos, y periodos futuros.
 
 **Dependencias nuevas:** `org.jsoup:jsoup:1.24.1` para formularios, enlaces y transporte HTTP/HTTPS, y `com.tom-roush:pdfbox-android:2.0.27.0` para texto digital del PDF. PDFBox extrae el texto digital; `PdfRenderer`, Android Keystore y ML Kit reutilizan la plataforma y dependencias existentes. No requiere claves API nuevas, servidor propio ni cambios de Supabase. El permiso `INTERNET` ya existe.
 
-**Paquete:** `feature/eps/{domain,data,presentation}`, registrado en `ModuloRecibos.kt`. No cambia el esquema de Room. Los campos opcionales de origen EPS, total y fecha de actualización se guardan junto al último recibo en las preferencias existentes, con valores por defecto compatibles con instalaciones previas.
+**Paquete:** `feature/eps/{domain,data,presentation}`, registrado en `ModuloRecibos.kt`. No cambia el esquema de Room. El historial se guarda en las preferencias existentes y conserva el recibo de instalaciones previas.
 
 ```mermaid
 flowchart LR
@@ -362,7 +362,7 @@ flowchart LR
     CP --> AS[AlmacenSesionEps + Android Keystore]
     CP --> PDF[LectorPdfEps: PDFBox + PdfRenderer + ML Kit]
     PDF --> EX[extraerReciboEps]
-    VM --> PREF[RecibosLocales: último recibo]
+    VM --> PREF[RecibosLocales: historial por periodo]
     PREF --> REC[TarjetaRecibo y resumen de Liga]
 ```
 
@@ -373,6 +373,12 @@ flowchart LR
 ---
 
 ## 📝 Changelog
+
+### 2026-11-21
+- Si EPS rechaza la sesión al actualizar, Recibos EPS abre el formulario con el usuario anterior. Al volver a vincular, reintenta actualizar el recibo una vez. La clave se introduce de nuevo y el recibo anterior sigue disponible durante el proceso.
+- Aguarda recuerda localmente el usuario después de vincular la cuenta con éxito y lo rellena al abrir el formulario, incluso tras cerrar la app. Desvincular explícitamente borra el usuario recordado. La clave se vuelve a ingresar.
+- Recibos EPS conserva un historial local por mes facturado, tanto al actualizar desde el portal como al añadir una foto. El recibo de la versión anterior aparece como primer registro. Una nueva lectura del mismo mes actualiza su entrada. Si ya existe un recibo oficial, una foto solo puede completar los días faltantes. Liga sigue leyendo el periodo más reciente. La pantalla compara los dos periodos guardados más recientes, con el consumo y el total a pagar separados. Solo compara litros por día cuando ambos recibos tienen días facturados. La foto permite confirmar el importe y los días como campos opcionales. EPS obtiene los días de un valor explícito o de fechas identificadas como periodo de consumo.
+- Recibos EPS ofrece **Actualizar último recibo** (PDF) e **Importar historial completo** (todos los periodos entregados por Historial de facturación, incluido el más reciente). La importación reutiliza la sesión, conserva consumo, cargo del mes, deuda y total a pagar como campos distintos y actualiza el historial local sin duplicados. La tabla no muestra días facturados, por lo que se conservan los que ya se hayan obtenido de un recibo. Si la sesión vence se reanuda la acción elegida tras volver a vincular.
 
 ### 2026-11-20
 - [Cambiado] Liga del Agua, pantalla en tarjetas: en lugar de mostrar todo de golpe, la Liga abre con un resumen de la semana y cinco tarjetas cuadradas como las de Inicio (Mi tanque, Mi consumo, Mi puntaje, Ranking y Duelos), cada una con su ícono (`ic_liga_*.xml`) y un dato en vivo. Al tocar una tarjeta se abre esa sección y el botón atrás regresa al menú; no cambia la navegación de la app (`MenuLiga.kt`, `LigaScreen.kt`).

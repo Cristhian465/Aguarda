@@ -670,9 +670,9 @@ classDiagram
 
 - **RF-EPS-01:** vincular la cuenta del usuario con el formulario real de EPS Tacna mediante HTTP, limitado al host de la oficina virtual. La contraseña no se guarda; se conserva solo la sesión cifrada en el teléfono y la cuenta se vincula tras confirmar el acceso.
 - **RF-EPS-02:** consultar el recibo con «Actualizar recibo», sin abrir la web ni descargar manualmente. El conector interpreta el flujo AJAX de recibo observado en el portal, sigue el iframe del visor al PDF y obtiene mes facturado, consumo explícito en m³ y total a pagar mediante texto digital y OCR local con alineación por posición. El total puede incluir deuda y no debe presentarse como cargo exclusivo del mes.
-- **RF-EPS-03:** desvincular eliminando la sesión local, conservando el último recibo. La operación no revoca sesiones del servidor EPS.
+- **RF-EPS-03:** desvincular eliminando la sesión local, conservando el historial. La operación no revoca sesiones del servidor EPS.
 - **RN-EPS-01 (actualizada por solicitud del usuario):** permitir HTTP únicamente al host exacto `oficinavirtual.epstacna.com.pe`, puerto estándar y sin subdominios. Informar antes de vincular que usuario, clave y sesión viajan sin cifrado y pueden ser interceptados. Bloquear otros destinos y no reenviar POST por redirecciones 307/308. Mantener validación TLS para HTTPS.
-- **RN-EPS-02:** guardar automáticamente solo si consumo, periodo e importe son inequívocos. Ante error, conservar el recibo anterior. No aceptar periodos futuros o anteriores al guardado, ni deducir consumo de importes/lecturas.
+- **RN-EPS-02:** guardar automáticamente solo si consumo, periodo e importe son inequívocos. Ante error, conservar el recibo anterior. No aceptar periodos futuros, ni deducir consumo de importes/lecturas.
 - **RN-EPS-03:** el recibo obtenido de EPS puede figurar como verificado por origen y vigencia (hasta dos meses); no significa validación de firma digital. La lectura de fotos previa se conserva.
 - **RNF-EPS-01:** procesamiento fuera del hilo principal, PDF de menos de 8 MB y entre una y cuatro páginas; caché privada temporal y sesión cifrada con Android Keystore, excluida de copias.
 
@@ -698,7 +698,7 @@ sequenceDiagram
     C->>P: Extraer texto y campos
     alt Campos inequívocos y periodo válido
         P-->>V: Consumo, mes y total
-        V->>L: Guardar último recibo
+        V->>L: Guardar recibo por periodo
     else Error o datos incompletos
         C-->>V: Error visible; conservar recibo anterior
     end
@@ -712,3 +712,9 @@ sequenceDiagram
 Inicio reúne Mi depósito, Mapa, Represas, Ahorro, Liga del Agua y Recibos EPS. El nivel del depósito viene del mismo estado que usa Mi depósito y el acceso a llenado permite elegir completo o parcial. Cada pantalla tiene un acceso de regreso. La interfaz adopta la paleta azul.
 
 Recibos EPS tiene ruta propia y agrupa vinculación, actualización y lectura por foto. `RecibosLocales` conserva las claves del último recibo y Liga del Agua consume ese dato para su resumen, sin presentar la vinculación de EPS dentro de Liga.
+
+**Sesión de EPS vencida (21/11/2026).** Si EPS rechaza la sesión al actualizar, Recibos EPS abre el formulario con el usuario anterior. Al volver a vincular, reintenta actualizar el recibo una vez. La clave se introduce de nuevo y el recibo anterior sigue disponible durante el proceso. Aguarda recuerda localmente el usuario después de vincular la cuenta con éxito y lo rellena al abrir el formulario, incluso tras cerrar la app. Desvincular explícitamente borra el usuario recordado. La clave se vuelve a ingresar.
+
+**Historial de recibos EPS (21/11/2026).** Recibos EPS conserva un historial local por mes facturado, tanto al actualizar desde el portal como al añadir una foto. El recibo de la versión anterior aparece como primer registro. Una nueva lectura del mismo mes actualiza su entrada. Si ya existe un recibo oficial, una foto solo puede completar los días faltantes. Liga sigue leyendo el periodo más reciente. La pantalla compara los dos periodos guardados más recientes, con el consumo y el total a pagar separados. Solo compara litros por día cuando ambos recibos tienen días facturados. La foto permite confirmar el importe y los días como campos opcionales. EPS obtiene los días de un valor explícito o de fechas identificadas como periodo de consumo.
+
+Recibos EPS ofrece **Actualizar último recibo** (PDF) e **Importar historial completo** (todos los periodos entregados por Historial de facturación, incluido el más reciente). La importación reutiliza la sesión, conserva consumo, cargo del mes, deuda y total a pagar como campos distintos y actualiza el historial local sin duplicados. La tabla no muestra días facturados, por lo que se conservan los que ya se hayan obtenido de un recibo. Si la sesión vence se reanuda la acción elegida tras volver a vincular.

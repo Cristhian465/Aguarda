@@ -11,15 +11,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.koin.compose.viewmodel.koinViewModel
-import com.example.aguardapp.core.ui.theme.AguaMedia
 import com.example.aguardapp.core.ui.theme.Coral
 import com.example.aguardapp.core.ui.theme.FuenteTexto
 import com.example.aguardapp.feature.deposito.presentation.componentes.BotonPrincipal
@@ -27,28 +23,17 @@ import com.example.aguardapp.feature.deposito.presentation.componentes.BotonSecu
 import com.example.aguardapp.feature.deposito.presentation.componentes.TarjetaBlanca
 
 @Composable
-fun TarjetaRecibo(viewModel: ReciboViewModel = koinViewModel()) {
-    val estado by viewModel.uiState.collectAsStateWithLifecycle()
+internal fun TarjetaRecibo(estado: ReciboUiState, viewModel: ReciboViewModel) {
     val elegirFoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { foto ->
         foto?.let(viewModel::onFotoElegida)
     }
     TarjetaBlanca {
-        Text("Recibo guardado o lectura por foto", fontWeight = FontWeight.Bold)
+        Text("Añadir recibo por foto", fontWeight = FontWeight.Bold)
         if (estado.revisando) {
             FormularioRecibo(estado, viewModel)
         } else {
-            estado.guardado?.let { recibo ->
-                val verificado = recibo.verificado(estado.hoy)
-                Text(
-                    if (verificado) "Verificado" else "Sin verificar",
-                    fontFamily = FuenteTexto, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold,
-                    color = if (verificado) AguaMedia else Coral
-                )
-                Text("Recibo de ${recibo.mes}: ${recibo.metrosCubicos} m³")
-                recibo.totalPagar?.let { Text("Total a pagar: S/ ${String.format(java.util.Locale.US, "%.2f", it)}") }
-                if (recibo.leidoDeEps) Text("Obtenido de EPS Tacna")
-                recibo.actualizadoEn?.let { Text("Actualizado: ${it.replace('T', ' ')}") }
-            } ?: Text("Elige una foto de tu recibo de agua. Se lee dentro del teléfono: la foto no se guarda ni se envía.")
+            Text("Elige una foto del recibo para añadir su periodo al historial.")
+            estado.mensaje?.let { Text(it) }
             BotonPrincipal(
                 if (estado.leyendo) "Leyendo el recibo…" else "Elegir foto del recibo",
                 { elegirFoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
@@ -76,6 +61,22 @@ private fun FormularioRecibo(estado: ReciboUiState, viewModel: ReciboViewModel) 
             onValueChange = viewModel::onCambiarMes,
             label = { Text("Mes del recibo (11/2026)") },
             singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = estado.totalTexto,
+            onValueChange = viewModel::onCambiarTotal,
+            label = { Text("Total a pagar (S/, opcional)") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = estado.diasTexto,
+            onValueChange = viewModel::onCambiarDias,
+            label = { Text("Días facturados (opcional)") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth()
         )
         estado.error?.let { Text(it, fontFamily = FuenteTexto, fontSize = 13.sp, color = Coral) }

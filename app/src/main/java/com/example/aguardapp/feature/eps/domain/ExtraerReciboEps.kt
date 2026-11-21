@@ -29,23 +29,34 @@ fun extraerReciboEps(texto: String): ReciboEps {
     }.distinct()
     val meses = lineas.filter { Regex("periodo|mes facturado|facturacion").containsMatchIn(it) }
         .mapNotNull(::leerMesDelRecibo).distinct()
-    val importes = lineas.filter { "total a pagar" in it || "importe total" in it }.mapNotNull { linea ->
-        val valor = linea.substringAfter(if ("total a pagar" in linea) "total a pagar" else "importe total")
-            .trim().removePrefix(":").trim().replace(Regex("^(s\\s*/\\.?|s/|pen)\\s*"), "")
-            .replace(Regex("^[*\\s]+"), "")
-        Regex("^([0-9]+(?:[.,][0-9]{3})*(?:[.,][0-9]{2})?)\\s*$")
-            .matchEntire(valor)?.groupValues?.get(1)?.let(::importeDecimal)
-    }.distinct()
     val metros = consumos.singleOrNull()
     val mes = meses.singleOrNull()
-    val total = importes.singleOrNull()
+    val total = leerTotalAPagar(texto)
     if (metros == null || mes == null || total == null) {
         throw ErrorEps("No pudimos identificar con certeza el consumo, periodo y total a pagar del recibo. Conservamos tu recibo anterior.")
     }
-    return ReciboEps(mes, metros, total)
+    return ReciboEps(mes, metros, total, leerDiasFacturados(texto))
 }
 
-private fun importeDecimal(valor: String): Double? {
+fun leerTotalAPagar(texto: String): Double? {
+    val lineas = Normalizer.normalize(texto.lowercase(), Normalizer.Form.NFD)
+        .replace(Regex("""\p{M}"""), "").lines().map(String::trim).filter(String::isNotEmpty)
+    fun limpiarImporte(valor: String) = valor.trim().removePrefix(":").trim()
+        .replace(Regex("""^(s\s*/\.?|pen)\s*"""), "").trimStart('*', ' ')
+    return lineas.mapIndexedNotNull { indice, linea ->
+        val etiqueta = when {
+            "total a pagar" in linea -> "total a pagar"
+            "importe total" in linea -> "importe total"
+            else -> return@mapIndexedNotNull null
+        }
+        val importeEnLinea = limpiarImporte(linea.substringAfter(etiqueta))
+        val valor = importeEnLinea.ifBlank { limpiarImporte(lineas.getOrNull(indice + 1).orEmpty()) }
+        importeDecimal(valor)
+    }.distinct().singleOrNull()
+}
+
+internal fun importeDecimal(valor: String): Double? {
+    if (!Regex("""[0-9]+(?:[.,][0-9]{3})*(?:[.,][0-9]{2})?""").matches(valor)) return null
     val posicionDecimal = valor.indexOfLast { it == '.' || it == ',' }
     val tieneDecimales = posicionDecimal >= 0 && valor.length - posicionDecimal - 1 == 2
     val limpio = if (tieneDecimales) {

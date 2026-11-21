@@ -79,6 +79,16 @@ class ClientePortalEpsTest {
         assertTrue(error.requiereVincular)
     }
 
+    @Test fun reconoceSesionVencidaTrasElUltimoEnlaceAlRecibo() {
+        val paginas = (0..4).map { indice ->
+            respuesta("/recibo-$indice.php", "<a href='recibo-${indice + 1}.php'>Recibo</a>")
+        } + respuesta("/recibo-5.php", login)
+        val red = Falso(*paginas.toTypedArray())
+        val sesion = SesionEps("123", "$base/recibo-0.php", mapOf("PHPSESSID" to "prueba"))
+        val error = assertThrows(ErrorEps::class.java) { ClientePortalEps(red).documento(sesion) }
+        assertTrue(error.requiereVincular)
+    }
+
     @Test fun descargaElPdfUsandoLaSesionSinSolicitarLaClave() {
         val red = Falso(respuesta("/src/vista/inicio.php", "<a href='recibo.pdf'>Último recibo</a>"),
             respuesta("/src/vista/recibo.pdf", "%PDF-1.7 prueba"))

@@ -1,6 +1,7 @@
 package com.example.aguardapp.feature.eps.data
 
 import com.example.aguardapp.feature.eps.domain.ErrorEps
+import com.example.aguardapp.feature.eps.domain.ReciboEps
 import com.example.aguardapp.feature.eps.domain.leerMesDelRecibo
 import java.net.URI
 import org.jsoup.Jsoup
@@ -73,22 +74,37 @@ internal class ClientePortalEps(private val transporte: TransporteEps) {
         repeat(5) {
             if (pagina.esPdf()) return pagina.contenido to sesion.copy(cookies = cookies.toMap())
             val html = pagina.html()
-            if (esLogin(html)) throw ErrorEps("Tu sesión de EPS venció. Vuelve a vincular la cuenta.", true)
+            verificarSesion(html)
             if (!visitadas.add(pagina.url)) throw ErrorEps("EPS no entregó el archivo del recibo.")
             val pasos = pasosReciboVirtual(html, pagina.url)
             if (pasos != null) {
                 pasos.forEach { paso ->
                     if (!pagina.esPdf()) {
                         pagina = solicitar(paso.url, if (paso.post) emptyMap() else null, cookies, sesion.inicio, ajax = true)
-                        if (!pagina.esPdf() && esLogin(pagina.html())) {
-                            throw ErrorEps("Tu sesión de EPS venció. Vuelve a vincular la cuenta.", true)
-                        }
+                        if (!pagina.esPdf()) verificarSesion(pagina.html())
                     }
                 }
             } else pagina = solicitar(enlaceRecibo(html, pagina.url), null, cookies, sesion.inicio)
         }
         if (pagina.esPdf()) return pagina.contenido to sesion.copy(cookies = cookies.toMap())
+        verificarSesion(pagina.html())
         throw ErrorEps("El portal no entregó un PDF mediante enlaces directos. Este formato requiere adaptar el conector.")
+    }
+
+    fun historial(sesion: SesionEps): Pair<List<ReciboEps>, SesionEps> {
+        val cookies = sesion.cookies.toMutableMap()
+        val panel = solicitar(sesion.inicio, null, cookies)
+        val html = panel.html()
+        verificarSesion(html)
+        val acceso = accesoHistorialEps(html, panel.url)
+        val respuesta = solicitar(acceso.url, acceso.campos, cookies, panel.url, ajax = acceso.ajax)
+        val tabla = respuesta.html()
+        verificarSesion(tabla)
+        return leerHistorialEps(tabla) to sesion.copy(cookies = cookies.toMap())
+    }
+
+    private fun verificarSesion(html: Document) {
+        if (esLogin(html)) throw ErrorEps("Tu sesión de EPS venció. Vuelve a vincular la cuenta.", true)
     }
 
     private fun solicitar(url: String, campos: Map<String, String>?, cookies: MutableMap<String, String>, referencia: String? = null, ajax: Boolean = false): RespuestaEps {

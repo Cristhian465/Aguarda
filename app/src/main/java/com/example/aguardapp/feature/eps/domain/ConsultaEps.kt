@@ -1,15 +1,21 @@
 package com.example.aguardapp.feature.eps.domain
 
-import com.example.aguardapp.feature.eps.domain.MesRecibo
-
 data class CuentaEps(val usuario: String)
 
-data class ReciboEps(val mes: MesRecibo, val metrosCubicos: Double, val totalPagar: Double)
+data class ReciboEps(
+    val mes: MesRecibo,
+    val metrosCubicos: Double,
+    val totalPagar: Double,
+    val diasFacturados: Int? = null,
+    val totalMes: Double? = null,
+    val deuda: Double? = null
+)
 
 interface ConsultaEps {
     fun cuenta(): CuentaEps?
     suspend fun vincular(usuario: String, clave: String)
     suspend fun actualizar(): ReciboEps
+    suspend fun consultarHistorial(): List<ReciboEps>
     suspend fun desvincular()
 }
 

@@ -28,30 +28,53 @@ fun TarjetaEps(viewModel: EpsViewModel = koinViewModel()) {
     TarjetaBlanca {
         Text("Tu recibo desde EPS Tacna", fontWeight = FontWeight.Bold)
         Text("Consulta tu recibo sin tomar fotos ni descargar archivos manualmente.")
+        if (estado.formulario || estado.cuenta == null) estado.error?.let { Text(it, color = Coral) }
         if (estado.cuenta != null) {
             Text("Cuenta vinculada: ${estado.cuenta!!.usuario}")
-            BotonPrincipal("Actualizar recibo", viewModel::actualizar, habilitado = !estado.trabajando)
+            BotonPrincipal(AccionRecibos.ACTUALIZAR.boton, viewModel::actualizar, habilitado = !estado.trabajando)
+            TextButton(onClick = viewModel::importar, enabled = !estado.trabajando) {
+                Text(AccionRecibos.IMPORTAR.boton)
+            }
+            Text("Trae todos los periodos disponibles en el historial de EPS.")
             TextButton(onClick = viewModel::desvincular, enabled = !estado.trabajando) { Text("Desvincular cuenta") }
         } else if (estado.formulario) {
-            FormularioEps(estado.trabajando, viewModel::vincular) { viewModel.mostrarFormulario(false) }
+            FormularioEps(
+                usuarioInicial = estado.reconectar?.usuario ?: estado.usuarioRecordado,
+                accionPendiente = estado.accionPendiente,
+                trabajando = estado.trabajando,
+                onVincular = viewModel::vincular,
+                onCancelar = { viewModel.mostrarFormulario(false) }
+            )
         } else {
-            BotonPrincipal("Vincular cuenta EPS", { viewModel.mostrarFormulario(true) }, habilitado = !estado.trabajando)
+            BotonPrincipal(
+                if (estado.reconectar == null) "Vincular cuenta EPS" else "Volver a vincular",
+                { viewModel.mostrarFormulario(true) },
+                habilitado = !estado.trabajando
+            )
         }
         if (estado.trabajando) {
             CircularProgressIndicator()
             Text("Consultando EPS Tacna…")
         }
         estado.mensaje?.let { Text(it) }
-        estado.error?.let { Text(it, color = Coral) }
+        if (estado.cuenta != null) estado.error?.let { Text(it, color = Coral) }
     }
 }
 
 @Composable
-private fun FormularioEps(trabajando: Boolean, onVincular: (String, String) -> Unit, onCancelar: () -> Unit) {
-    var usuario by remember { mutableStateOf("") }
+private fun FormularioEps(
+    usuarioInicial: String,
+    accionPendiente: AccionRecibos?,
+    trabajando: Boolean,
+    onVincular: (String, String) -> Unit,
+    onCancelar: () -> Unit
+) {
+    var usuario by remember(usuarioInicial) { mutableStateOf(usuarioInicial) }
     var clave by remember { mutableStateOf("") }
     Column {
-        Text("Usa el usuario y la clave que aparecen en tu recibo de EPS Tacna.")
+        if (usuarioInicial.isBlank()) {
+            Text("Usa el usuario y la clave que aparecen en tu recibo de EPS Tacna.")
+        }
         OutlinedTextField(usuario, { usuario = it }, label = { Text("Usuario EPS") },
             singleLine = true, enabled = !trabajando, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(clave, { clave = it }, label = { Text("Clave EPS") },
@@ -59,7 +82,7 @@ private fun FormularioEps(trabajando: Boolean, onVincular: (String, String) -> U
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password))
         Text("EPS Tacna usa HTTP: tu usuario, clave y sesión viajan sin cifrado y podrían ser interceptados. Al vincular, aceptas enviarlos a su oficina virtual. Aguarda no guarda tu clave; conserva la sesión cifrada en el teléfono.")
-        BotonPrincipal("Vincular cuenta", {
+        BotonPrincipal(accionPendiente?.alReconectar ?: "Vincular cuenta", {
             onVincular(usuario, clave)
             clave = ""
         }, habilitado = !trabajando && usuario.isNotBlank() && clave.isNotBlank())
