@@ -19,6 +19,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -89,11 +91,14 @@ private fun MapaDeRepresas(presas: List<Presa>) {
         uiSettings = MapUiSettings(mapToolbarEnabled = false)
     ) {
         presas.forEach { presa ->
-            Marker(
-                state = MarkerState(LatLng(presa.latitud, presa.longitud)),
-                title = presa.nombre,
-                snippet = "${presa.volumenHm3 ?: "s/d"} hm³ · ${presa.uso}"
-            )
+            key(presa.nombre) {
+                val estado = remember(presa.latitud, presa.longitud) { MarkerState(LatLng(presa.latitud, presa.longitud)) }
+                Marker(
+                    state = estado,
+                    title = presa.nombre,
+                    snippet = "${presa.volumenHm3 ?: "s/d"} hm³ · ${presa.uso}"
+                )
+            }
         }
     }
 }

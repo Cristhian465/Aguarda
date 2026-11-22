@@ -1,0 +1,25 @@
+# Ajustes sobre la configuración por defecto de detekt, pensados para Jetpack Compose.
+# El workflow lo usa con --build-upon-default-config: aquí solo va lo que cambia.
+
+naming:
+  # Las funciones @Composable empiezan con mayúscula por convención.
+  FunctionNaming:
+    ignoreAnnotated: ['Composable']
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Z][A-Za-z0-9_]*'
+
+complexity:
+  # Las pantallas de Compose reciben muchos parámetros y son largas por naturaleza.
+  LongParameterList:
+    ignoreAnnotated: ['Composable']
+  LongMethod:
+    ignoreAnnotated: ['Composable']
+
+style:
+  # En Compose los tamaños en dp y sp se escriben directamente.
+  MagicNumber:
+    ignoreAnnotated: ['Composable']
+    ignorePropertyDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+  MaxLineLength:
+    maxLineLength: 180

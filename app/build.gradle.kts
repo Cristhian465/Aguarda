@@ -20,6 +20,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Reporte de cobertura de las pruebas unitarias: ./gradlew createDebugUnitTestCoverageReport
+            enableUnitTestCoverage = true
+        }
         release {
             optimization {
                 enable = false
