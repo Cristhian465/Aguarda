@@ -61,7 +61,8 @@ private val accesos = listOf(
     Acceso(Rutas.REPRESAS, "Represas", "Nivel de los embalses", R.drawable.ic_represa),
     Acceso(Rutas.AHORRO, "Ahorro", "Retos y hábitos diarios", R.drawable.ic_ahorro),
     Acceso(Rutas.LIGA, "Liga del Agua", "Puntaje, ranking y duelos", R.drawable.ic_ahorro_trofeo),
-    Acceso(Rutas.RECIBOS_EPS, "Recibos EPS", "Consulta tu recibo de agua", R.drawable.ic_recibo)
+    Acceso(Rutas.RECIBOS_EPS, "Recibos EPS", "Consulta tu recibo de agua", R.drawable.ic_recibo),
+    Acceso(Rutas.FAMILIA, "Mi familia", "Comparte el tanque con tu casa", R.drawable.ic_familia)
 )
 
 @Composable

@@ -17,6 +17,8 @@ mlkitTextRecognition = "16.0.1"
 jsoup = "1.24.1"
 pdfboxAndroid = "2.0.27.0"
 glance = "1.1.1"
+zxing = "3.5.3"
+codeScanner = "16.1.0"
 
 [libraries]
 # Android y Compose
@@ -45,6 +47,10 @@ pdfbox-android = { group = "com.tom-roush", name = "pdfbox-android", version.ref
 
 # Widget de pantalla de inicio
 androidx-glance-appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "glance" }
+
+# Modo familia: QR de invitación (generar y leer)
+zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
+play-services-code-scanner = { group = "com.google.android.gms", name = "play-services-code-scanner", version.ref = "codeScanner" }
 
 # Mapas (Google Maps para Compose)
 maps-compose = { group = "com.google.maps.android", name = "maps-compose", version.ref = "mapsCompose" }

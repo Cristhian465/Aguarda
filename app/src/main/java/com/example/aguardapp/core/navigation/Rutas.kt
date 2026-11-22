@@ -13,6 +13,7 @@ object Rutas {
     const val REPRESAS = "represas"
     const val AHORRO = "ahorro"
     const val LIGA = "liga"
+    const val FAMILIA = "familia"
 
     const val ARG_TIPO = "tipo"
     const val REGISTRAR_LLENADO = "registrar_llenado/{$ARG_TIPO}"
