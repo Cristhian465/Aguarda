@@ -21,6 +21,11 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyBw-1EAiZ0Tm-XFsIwgqcNAanQBNGL3Mb4" />
 
+        <!-- Modo familia: el lector de QR de Google Play services se descarga al instalar la app. -->
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="barcode_ui" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

@@ -23,6 +23,7 @@ import com.example.aguardapp.feature.deposito.presentation.RegistrarLlenadoScree
 import com.example.aguardapp.feature.deposito.presentation.SinAguaScreen
 import com.example.aguardapp.feature.deposito.presentation.TipoLlenado
 import com.example.aguardapp.feature.eps.presentation.RecibosEpsScreen
+import com.example.aguardapp.feature.familia.presentation.FamiliaScreen
 import com.example.aguardapp.feature.liga.presentation.LigaScreen
 import com.example.aguardapp.feature.mapa.presentation.MapaScreen
 import com.example.aguardapp.feature.represas.presentation.RepresasScreen
@@ -56,6 +57,10 @@ fun AppNavHost(rutaInicial: String, hayConfiguracion: Boolean) {
 
         composable(Rutas.RECIBOS_EPS) {
             ConBarraDelSistema { RecibosEpsScreen(onVolver = { navController.popBackStack() }) }
+        }
+
+        composable(Rutas.FAMILIA) {
+            ConBarraDelSistema { FamiliaScreen(onVolver = { navController.popBackStack() }) }
         }
 
         composable(Rutas.MI_DEPOSITO) {

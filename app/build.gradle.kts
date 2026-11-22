@@ -73,6 +73,10 @@ dependencies {
     implementation(libs.jsoup)
     implementation(libs.pdfbox.android)
 
+    // Modo familia: QR de invitación
+    implementation(libs.zxing.core)
+    implementation(libs.play.services.code.scanner)
+
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
 
