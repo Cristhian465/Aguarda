@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -49,8 +50,9 @@ import androidx.core.content.FileProvider
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.aguardapp.R
+import com.example.aguardapp.core.ui.theme.AguaMedia
 import com.example.aguardapp.core.ui.theme.IconosClarosEnBarraDeEstado
-import com.example.aguardapp.feature.deposito.presentation.componentes.BarraSuperior
+import com.example.aguardapp.feature.deposito.presentation.CabeceraAzul
 import com.example.aguardapp.feature.deposito.presentation.componentes.TarjetaBlanca
 import com.example.aguardapp.feature.eps.domain.MesRecibo
 import com.example.aguardapp.feature.eps.domain.PeriodoEvolucion
@@ -135,20 +137,27 @@ fun RecibosEpsScreen(
 
     eps.pdfVisible?.let { VisorPdfEps(it, epsViewModel::cerrarVisorPdf) }
 
-    IconosClarosEnBarraDeEstado(claros = false)
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        BarraSuperior("Recibos EPS", "EPS Tacna", onVolver)
-        LazyColumn(Modifier.weight(1f), state = lista, contentPadding = PaddingValues(16.dp)) {
+    IconosClarosEnBarraDeEstado(claros = true)
+    val margen = Modifier.padding(horizontal = 16.dp)
+    Column(Modifier.fillMaxSize().background(AguaMedia).statusBarsPadding()) {
+        LazyColumn(
+            Modifier.weight(1f).background(MaterialTheme.colorScheme.background),
+            state = lista,
+            contentPadding = PaddingValues(bottom = 16.dp)
+        ) {
             item {
-                TarjetaEps(historial.firstOrNull(), historial, estado.metaMensual, viewModel::guardarMeta, eps, epsViewModel)
+                CabeceraAzul(titulo = "Recibos EPS", contexto = "EPS Tacna", onVolver = onVolver) {
+                    ResumenUltimoRecibo(historial.firstOrNull(), historial, estado.metaMensual, viewModel::guardarMeta, eps, epsViewModel)
+                }
+                EstadoConsultaEps(eps, epsViewModel, margen.padding(top = 8.dp))
             }
             if (historial.isNotEmpty()) {
                 item {
-                    Box(Modifier.padding(top = 14.dp)) { TarjetaEvolucion(historial, estado.metaMensual) }
+                    Box(margen.padding(top = 14.dp)) { TarjetaEvolucion(historial, estado.metaMensual) }
                 }
             }
             item {
-                Column(Modifier.padding(top = 20.dp, bottom = 10.dp)) {
+                Column(margen.padding(top = 20.dp, bottom = 10.dp)) {
                     Text("Historial de recibos", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     val cantidad = historial.size
                     Text(
@@ -165,10 +174,10 @@ fun RecibosEpsScreen(
             itemsIndexed(periodos, key = { _, periodo -> periodo.mes.toString() }) { indice, periodo ->
                 val arriba = if (indice == 0) 16.dp else 0.dp
                 val abajo = if (indice == periodos.lastIndex) 16.dp else 0.dp
-                FilaPeriodo(periodo, estado.hoy, RoundedCornerShape(arriba, arriba, abajo, abajo), indice != periodos.lastIndex)
+                FilaPeriodo(periodo, estado.hoy, RoundedCornerShape(arriba, arriba, abajo, abajo), indice != periodos.lastIndex, margen)
             }
             item {
-                Column(Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(margen.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(
                             onClick = {
@@ -202,7 +211,7 @@ fun RecibosEpsScreen(
                 }
             }
             if (historial.size >= 2) item {
-                Box(Modifier.padding(top = 12.dp)) { TarjetaComparacion(historial[0], historial[1]) }
+                Box(margen.padding(top = 12.dp)) { TarjetaComparacion(historial[0], historial[1]) }
             }
         }
     }
@@ -221,11 +230,11 @@ private fun TarjetaComparacion(reciente: ReciboGuardado, anterior: ReciboGuardad
 }
 
 @Composable
-private fun FilaPeriodo(periodo: PeriodoEvolucion, hoy: LocalDate, forma: RoundedCornerShape, separador: Boolean) {
+private fun FilaPeriodo(periodo: PeriodoEvolucion, hoy: LocalDate, forma: RoundedCornerShape, separador: Boolean, modifier: Modifier) {
     val recibo = periodo.recibo
     var desplegado by rememberSaveable { mutableStateOf(false) }
     val colores = MaterialTheme.colorScheme
-    Column(Modifier.fillMaxWidth().clip(forma).background(colores.surface)) {
+    Column(modifier.fillMaxWidth().clip(forma).background(colores.surface)) {
         val accion = if (recibo == null) Modifier else Modifier
             .clickable(role = Role.Button, onClickLabel = if (desplegado) "Cerrar detalle" else "Ver detalle") {
                 desplegado = !desplegado
