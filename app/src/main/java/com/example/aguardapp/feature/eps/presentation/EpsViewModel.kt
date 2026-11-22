@@ -9,7 +9,11 @@ import com.example.aguardapp.feature.eps.data.RecibosLocales
 import com.example.aguardapp.feature.eps.domain.ReciboGuardado
 import com.example.aguardapp.feature.eps.domain.ReciboEps
 import com.example.aguardapp.feature.eps.domain.periodosImportables
+import java.io.IOException
+import java.io.OutputStream
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -18,12 +22,16 @@ import kotlinx.datetime.LocalDateTime
 
 enum class AccionRecibos(val boton: String, val alReconectar: String) {
     ACTUALIZAR("Actualizar último recibo", "Vincular y actualizar"),
-    IMPORTAR("Importar historial completo", "Vincular e importar")
+    IMPORTAR("Importar historial completo", "Vincular e importar"),
+    PDF("Descargar PDF", "Vincular y descargar PDF"),
+    VER_PDF("Ver PDF", "Vincular y ver PDF")
 }
 
 data class EpsUiState(
     val cuenta: CuentaEps? = null,
     val trabajando: Boolean = false,
+    val elegirDestinoPdf: Boolean = false,
+    val pdfVisible: ByteArray? = null,
     val formulario: Boolean = false,
     val reconectar: CuentaEps? = null,
     val accionPendiente: AccionRecibos? = null,
@@ -41,6 +49,7 @@ class EpsViewModel(
         EpsUiState(cuenta = consulta.cuenta(), usuarioRecordado = recibos.ultimoUsuarioEps.orEmpty())
     )
     val uiState = _uiState.asStateFlow()
+    private var pdfPendiente: ByteArray? = null
 
     init {
         // Recupera el usuario si la cuenta se vinculó antes de que se guardara este dato.
@@ -50,8 +59,15 @@ class EpsViewModel(
         }
     }
 
-    fun mostrarFormulario(mostrar: Boolean) {
-        if (!_uiState.value.trabajando) _uiState.update { it.copy(formulario = mostrar, error = null, mensaje = null) }
+    fun mostrarFormulario(mostrar: Boolean, accionPendiente: AccionRecibos? = null) {
+        _uiState.update { estado ->
+            if (estado.trabajando) estado else estado.copy(
+                formulario = mostrar,
+                accionPendiente = if (mostrar) accionPendiente ?: estado.accionPendiente else null,
+                error = null,
+                mensaje = null
+            )
+        }
     }
 
     fun vincular(usuario: String, clave: String) = ejecutar(_uiState.value.accionPendiente) {
@@ -72,6 +88,8 @@ class EpsViewModel(
         when (reanudar) {
             AccionRecibos.ACTUALIZAR -> descargarYGuardar()
             AccionRecibos.IMPORTAR -> importarYGuardar()
+            AccionRecibos.PDF -> prepararPdf()
+            AccionRecibos.VER_PDF -> abrirVisorPdf()
             null -> Unit
         }
     }
@@ -79,6 +97,57 @@ class EpsViewModel(
     fun actualizar() = ejecutar(AccionRecibos.ACTUALIZAR) { descargarYGuardar() }
 
     fun importar() = ejecutar(AccionRecibos.IMPORTAR) { importarYGuardar() }
+
+    fun descargarPdf() {
+        if (_uiState.value.cuenta == null) mostrarFormulario(true, AccionRecibos.PDF)
+        else ejecutar(AccionRecibos.PDF) { prepararPdf() }
+    }
+
+    fun verPdf() {
+        if (_uiState.value.cuenta == null) mostrarFormulario(true, AccionRecibos.VER_PDF)
+        else ejecutar(AccionRecibos.VER_PDF) { abrirVisorPdf() }
+    }
+
+    private suspend fun abrirVisorPdf() {
+        val pdf = consulta.descargarUltimoPdf()
+        _uiState.update { it.copy(pdfVisible = pdf) }
+    }
+
+    fun cerrarVisorPdf() = _uiState.update { it.copy(pdfVisible = null) }
+
+    private suspend fun prepararPdf() {
+        pdfPendiente = consulta.descargarUltimoPdf()
+        _uiState.update { it.copy(elegirDestinoPdf = true) }
+    }
+
+    fun selectorPdfAbierto() = _uiState.update { it.copy(elegirDestinoPdf = false) }
+
+    fun descartarPdf(error: String? = null) {
+        pdfPendiente = null
+        _uiState.update { it.copy(elegirDestinoPdf = false, error = error) }
+    }
+
+    fun guardarPdf(abrirDestino: () -> OutputStream?) {
+        val pdf = pdfPendiente
+        descartarPdf()
+        if (pdf == null) {
+            _uiState.update { it.copy(error = "La descarga se interrumpió. Vuelve a tocar Descargar PDF.") }
+            return
+        }
+        ejecutar {
+            try {
+                withContext(Dispatchers.IO) {
+                    val destino = abrirDestino() ?: throw IOException()
+                    destino.use { it.write(pdf) }
+                }
+            } catch (error: IOException) {
+                throw ErrorEps("No se pudo guardar el PDF. Intenta con otra ubicación.")
+            } catch (error: SecurityException) {
+                throw ErrorEps("Aguarda no tiene acceso a esa ubicación. Elige otra carpeta.")
+            }
+            _uiState.update { it.copy(mensaje = "PDF guardado en la ubicación elegida.") }
+        }
+    }
 
     private suspend fun importarYGuardar() {
         val historialEps = consulta.consultarHistorial()

@@ -14,6 +14,7 @@ data class ReciboEps(
 interface ConsultaEps {
     fun cuenta(): CuentaEps?
     suspend fun vincular(usuario: String, clave: String)
+    suspend fun descargarUltimoPdf(): ByteArray
     suspend fun actualizar(): ReciboEps
     suspend fun consultarHistorial(): List<ReciboEps>
     suspend fun desvincular()

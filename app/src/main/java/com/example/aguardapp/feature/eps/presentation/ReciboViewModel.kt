@@ -1,6 +1,7 @@
 package com.example.aguardapp.feature.eps.presentation
 
 import android.net.Uri
+import java.io.File
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlin.math.abs
@@ -29,6 +30,7 @@ data class ReciboUiState(
     val diasTexto: String = "",
     val metrosLeidos: Double? = null,
     val error: String? = null,
+    val metaMensual: Double? = null,
     val historial: List<ReciboGuardado> = emptyList(),
     val mensaje: String? = null,
     val hoy: LocalDate
@@ -39,7 +41,7 @@ class ReciboViewModel(
     private val recibos: RecibosLocales,
     ahora: () -> LocalDateTime
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(ReciboUiState(historial = recibos.historial.value, hoy = ahora().date))
+    private val _uiState = MutableStateFlow(ReciboUiState(metaMensual = recibos.metaMensual, historial = recibos.historial.value, hoy = ahora().date))
     val uiState: StateFlow<ReciboUiState> = _uiState.asStateFlow()
 
     init {
@@ -48,7 +50,13 @@ class ReciboViewModel(
         }
     }
 
-    fun onFotoElegida(foto: Uri) {
+    fun guardarMeta(valor: Double?) {
+        require(valor == null || (valor.isFinite() && valor > 0))
+        recibos.metaMensual = valor
+        _uiState.update { it.copy(metaMensual = valor) }
+    }
+
+    fun onFotoElegida(foto: Uri, capturaTemporal: File? = null) {
         _uiState.update { it.copy(leyendo = true, error = null, mensaje = null) }
         viewModelScope.launch {
             val texto = lector.leerTexto(foto).getOrNull().orEmpty()
@@ -65,7 +73,7 @@ class ReciboViewModel(
                     error = if (metros == null) "No pudimos leer el consumo. Escríbelo tú; quedará sin verificar." else null
                 )
             }
-        }
+        }.invokeOnCompletion { capturaTemporal?.delete() }
     }
 
     fun onCambiarMetros(texto: String) = _uiState.update { it.copy(metrosTexto = texto, error = null) }

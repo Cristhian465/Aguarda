@@ -29,12 +29,18 @@ class ConsultaEpsPortal(context: Context) : ConsultaEps {
         sesion = nueva
     }
 
-    override suspend fun actualizar(): ReciboEps = operar {
+    override suspend fun descargarUltimoPdf(): ByteArray = operar { obtenerPdf() }
+
+    private fun obtenerPdf(): ByteArray {
         val actual = sesion ?: throw ErrorEps("Primero vincula tu cuenta EPS.", true)
         val (pdf, renovada) = cliente.documento(actual)
         almacen.guardar(renovada)
         sesion = renovada
-        val texto = lector.leer(pdf)
+        return pdf
+    }
+
+    override suspend fun actualizar(): ReciboEps = operar {
+        val texto = lector.leer(obtenerPdf())
         extraerReciboEps(texto)
     }
 

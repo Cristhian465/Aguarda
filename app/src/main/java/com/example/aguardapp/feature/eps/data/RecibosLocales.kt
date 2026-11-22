@@ -15,6 +15,12 @@ class RecibosLocales(private val preferencias: SharedPreferences) {
     private val _recibo = MutableStateFlow(_historial.value.firstOrNull())
     val recibo = _recibo.asStateFlow()
 
+    var metaMensual: Double?
+        get() = preferencias.getString("eps_meta_mensual", null)?.toDoubleOrNull()
+        set(valor) {
+            preferencias.edit().putString("eps_meta_mensual", valor?.toString()).apply()
+        }
+
     var ultimoUsuarioEps: String?
         get() = preferencias.getString(CLAVE_USUARIO_EPS, null)
         set(usuario) {

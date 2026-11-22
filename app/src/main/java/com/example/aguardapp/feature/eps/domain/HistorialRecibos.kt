@@ -1,7 +1,10 @@
 package com.example.aguardapp.feature.eps.domain
 
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.daysUntil
+import kotlinx.datetime.number
+import kotlinx.datetime.plus
 
 internal fun periodosImportables(historial: List<ReciboEps>, hoy: LocalDate): List<ReciboEps> =
     historial.filter { it.mes.mesesHasta(hoy) >= 0 }
@@ -37,6 +40,26 @@ internal fun compararRecibos(reciente: ReciboGuardado, anterior: ReciboGuardado)
 
 private fun diferenciaOpcional(reciente: Double?, anterior: Double?): Double? =
     if (reciente != null && anterior != null) reciente - anterior else null
+
+internal data class PeriodoEvolucion(val mes: MesRecibo, val recibo: ReciboGuardado?)
+
+internal fun periodosDeEvolucion(historial: List<ReciboGuardado>): List<PeriodoEvolucion> {
+    val ordenados = historial.sortedWith(compareBy<ReciboGuardado> { it.mes.anio }.thenBy { it.mes.mes })
+    val primero = ordenados.firstOrNull()?.mes ?: return emptyList()
+    val ultimo = ordenados.last().mes
+    val fin = LocalDate(ultimo.anio, ultimo.mes, 1)
+    val cantidad = primero.mesesHasta(fin) + 1
+    val inicio = fin.plus(1 - cantidad, DateTimeUnit.MONTH)
+    val porMes = historial.associateBy { it.mes }
+    return List(cantidad) { indice ->
+        val fecha = inicio.plus(indice, DateTimeUnit.MONTH)
+        val mes = MesRecibo(fecha.year, fecha.month.number)
+        PeriodoEvolucion(mes, porMes[mes])
+    }
+}
+
+internal fun promedioConsumoAnterior(periodos: List<PeriodoEvolucion>): Double? =
+    periodos.dropLast(1).mapNotNull { it.recibo?.metrosCubicos }.takeIf { it.isNotEmpty() }?.average()
 
 private val diasFacturados = Regex(
     """(?i)\b(?:d[ií]as\s+facturados\s*[:=]?\s*(\d{1,3})|(\d{1,3})\s+d[ií]as\s+facturados)\b"""
