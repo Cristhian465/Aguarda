@@ -12,6 +12,7 @@ import com.example.aguardapp.feature.deposito.data.local.EventoLlenadoEntity
 import com.example.aguardapp.feature.deposito.data.local.NovedadDepositoEntity
 import com.example.aguardapp.feature.deposito.data.local.PerfilHogarEntity
 import com.example.aguardapp.feature.deposito.data.local.PlanRecortesEntity
+import com.example.aguardapp.feature.familia.data.local.FamiliaDao
 import com.example.aguardapp.feature.represas.data.local.PresaEntity
 import com.example.aguardapp.feature.represas.data.local.PresaDao
 
@@ -34,6 +35,7 @@ abstract class AguardAppDatabase : RoomDatabase() {
     abstract fun usuarioDao(): UsuarioDao
     abstract fun depositoDao(): DepositoDao
     abstract fun presaDao(): PresaDao
+    abstract fun familiaDao(): FamiliaDao
 
     companion object {
         fun crear(context: Context): AguardAppDatabase =
