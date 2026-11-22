@@ -6,6 +6,7 @@ import org.koin.dsl.module
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import com.example.aguardapp.core.util.Reloj
+import com.example.aguardapp.feature.familia.data.PreferenciasFamilia
 import com.example.aguardapp.feature.liga.data.LigaRepositoryImpl
 import com.example.aguardapp.feature.liga.data.PreferenciasLiga
 import com.example.aguardapp.feature.liga.data.RankingRepositoryImpl
@@ -21,7 +22,10 @@ import com.example.aguardapp.feature.liga.presentation.RankingLigaViewModel
 internal fun moduloLiga(context: Context) = module {
     single { LigaDatabase.crear(context).ligaDao() }
     single<LigaRepository> { LigaRepositoryImpl(get()) }
-    single { PreferenciasLiga(context.getSharedPreferences("liga", Context.MODE_PRIVATE)) }
+    single {
+        val familia = get<PreferenciasFamilia>()
+        PreferenciasLiga(context.getSharedPreferences("liga", Context.MODE_PRIVATE), familia::tokenLiga)
+    }
     single { ResumenDelHogar(get(), get(), get(), get(), get<Reloj>()::ahora) }
     single<RankingRepository> { RankingRepositoryImpl(crearSupabaseApi()) }
     viewModel { LigaViewModel(get(), get(), get(), get<Reloj>()::ahora) }

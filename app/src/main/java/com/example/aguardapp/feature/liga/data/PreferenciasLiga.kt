@@ -3,12 +3,19 @@ package com.example.aguardapp.feature.liga.data
 import android.content.SharedPreferences
 import java.util.UUID
 
-class PreferenciasLiga(private val preferencias: SharedPreferences) {
+/**
+ * Participación en la Liga. En modo familia, [tokenCompartido] da el mismo código anónimo a todos los
+ * teléfonos del hogar, para que la casa cuente una sola vez en el ranking y en los reportes de vecinos.
+ */
+class PreferenciasLiga(
+    private val preferencias: SharedPreferences,
+    private val tokenCompartido: () -> String? = { null }
+) {
     val participa: Boolean get() = preferencias.getBoolean(CLAVE_PARTICIPA, false)
 
     val ubigeo: String? get() = preferencias.getString(CLAVE_UBIGEO, null)
 
-    fun token(): String = preferencias.getString(CLAVE_TOKEN, null)
+    fun token(): String = tokenCompartido() ?: preferencias.getString(CLAVE_TOKEN, null)
         ?: UUID.randomUUID().toString().also { preferencias.edit().putString(CLAVE_TOKEN, it).apply() }
 
     fun aceptar(ubigeo: String) {

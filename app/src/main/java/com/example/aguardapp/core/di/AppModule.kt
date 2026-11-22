@@ -53,7 +53,12 @@ fun iniciarAplicacion(context: Context) {
     if (KoinPlatform.getKoinOrNull() != null) return
     val base = AguardAppDatabase.crear(context)
     val usuarioId = runBlocking(Dispatchers.IO) { obtenerOCrearUsuario(base) }
-    startKoin { modules(moduloApp(context, base, usuarioId), moduloRed(context), moduloViewModels, moduloLiga(context), moduloRecibos(context), moduloReportes()) }
+    startKoin {
+        modules(
+            moduloApp(context, base, usuarioId), moduloRed(context), moduloViewModels, moduloLiga(context),
+            moduloRecibos(context), moduloReportes(), moduloFamilia(context, base, usuarioId)
+        )
+    }
 }
 
 private suspend fun obtenerOCrearUsuario(base: AguardAppDatabase): String {
