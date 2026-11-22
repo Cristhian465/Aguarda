@@ -60,8 +60,6 @@ import com.example.aguardapp.feature.eps.domain.periodosDeEvolucion
 import java.io.File
 import java.io.IOException
 import java.text.NumberFormat
-import java.time.Month
-import java.time.format.TextStyle
 import java.util.Locale
 import kotlin.math.abs
 import kotlinx.coroutines.launch
@@ -284,9 +282,14 @@ private fun FilaPeriodo(periodo: PeriodoEvolucion, hoy: LocalDate, forma: Rounde
     }
 }
 
+// Lista propia en lugar de java.time.Month, que no existe antes de Android 8 (API 26).
+private val NOMBRES_DE_MES = listOf(
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Setiembre", "Octubre", "Noviembre", "Diciembre"
+)
+
 internal fun MesRecibo.nombreCompleto(): String =
-    Month.of(mes).getDisplayName(TextStyle.FULL, localeRecibos)
-        .replaceFirstChar { it.titlecase(localeRecibos) } + " $anio"
+    "${NOMBRES_DE_MES.getOrElse(mes - 1) { mes.toString() }} $anio"
 
 internal fun describirCambio(valor: Double, prefijo: String = "", unidad: String = "", decimales: Int = 2): String {
     val magnitud = decimal(abs(valor), minimo = if (prefijo.isEmpty()) 0 else decimales, maximo = decimales)
