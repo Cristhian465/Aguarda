@@ -56,7 +56,7 @@ fun iniciarAplicacion(context: Context) {
     startKoin {
         modules(
             moduloApp(context, base, usuarioId), moduloRed(context), moduloViewModels, moduloLiga(context),
-            moduloRecibos(context), moduloReportes(), moduloFamilia(context, base, usuarioId)
+            moduloRecibos(context), moduloReportes(), moduloFamilia(context, base, usuarioId), moduloCortes(context)
         )
     }
 }

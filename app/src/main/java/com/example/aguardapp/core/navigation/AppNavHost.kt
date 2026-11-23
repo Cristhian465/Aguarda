@@ -15,6 +15,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.aguardapp.feature.ahorro.presentation.AhorroScreen
 import com.example.aguardapp.feature.bienvenida.presentation.BienvenidaScreen
+import com.example.aguardapp.feature.cortes.presentation.CortesScreen
 import com.example.aguardapp.feature.deposito.presentation.AvisosScreen
 import com.example.aguardapp.feature.deposito.presentation.ConfiguracionScreen
 import com.example.aguardapp.feature.deposito.presentation.DepositoScreen
@@ -57,6 +58,10 @@ fun AppNavHost(rutaInicial: String, hayConfiguracion: Boolean) {
 
         composable(Rutas.RECIBOS_EPS) {
             ConBarraDelSistema { RecibosEpsScreen(onVolver = { navController.popBackStack() }) }
+        }
+
+        composable(Rutas.CORTES) {
+            ConBarraDelSistema { CortesScreen(onVolver = { navController.popBackStack() }) }
         }
 
         composable(Rutas.FAMILIA) {

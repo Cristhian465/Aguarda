@@ -96,6 +96,7 @@ El documento se organiza en cuatro secciones: introducción; objetivos y restric
 | RF-10 | Consultar el mapa de cisternas | Media |
 | RF-11 | Consultar el nivel del sensor del tanque | Media |
 | RF-12 | Registrar retos y consultar el progreso de ahorro | Media |
+| RF-14 | Consultar avisos de agua y saneamiento | Media |
 
 ### 2.1.2. Requerimientos no funcionales — atributos de calidad
 
@@ -893,6 +894,23 @@ flowchart TB
 La aplicación se distribuye como un único APK y no requiere servidor propio ni cuenta de usuario. La gestión del depósito funciona sin internet; el mapa necesita conexión para cargar las calles y el sensor para leer su último dato. El prototipo del sensor es un ESP32 con un sensor ultrasónico HC-SR04, simulado en Wokwi, que mide la distancia hasta el agua, calcula el porcentaje de llenado y lo publica en un canal de ThingSpeak (campo 1: porcentaje; campo 2: distancia en cm).
 
 ---
+
+## 3.6. Notificaciones de agua y saneamiento
+
+La campana de Inicio navega a `CortesScreen`. `CortesViewModel` guarda el sector elegido y consulta `GET /avisos` mediante Retrofit con ámbito de provincia de Tacna, filtros y paginación. Android y `GET /sectores` comparten un catálogo de siete sectores. `GET /distritos` conserva los 28 distritos del departamento. SQLite añade las columnas de categoría y descripción al consultar una base existente. El importador actualiza la misma base y se ejecuta como proceso independiente. Para Facebook, recibe la URL RSS de EPSTacna o las credenciales de Meta Graph en su entorno. Tesseract reconoce el texto de las fotos disponibles y el importador conserva una copia local del resultado para evitar repetir el OCR.
+
+```mermaid
+flowchart LR
+    Pantalla[Notificaciones en Android] -->|Retrofit| API[FastAPI]
+    API -->|Consulta| Base[(SQLite)]
+    Fuentes[EPS Tacna, SUNASS, Facebook y Radio Uno] -->|Comunicados, Graph, CSV y feeds RSS| Importador[Importador Python]
+    Importador -->|Reconoce fotos de Facebook| OCR[Tesseract]
+    Importador -->|Importa y actualiza| Base
+```
+
+En desarrollo, `backend/iniciar.ps1` inicia el servidor local y conecta el teléfono por USB con `adb reverse`. El emulador de Android Studio usa la dirección `10.0.2.2`. La variante de distribución usa una URL HTTPS. El archivo SQLite se mantiene en el equipo que ejecuta la API.
+
+El importador puede consumir un RSS de EPSTacna configurado en el servidor. Extrae fecha, texto, enlace original y URLs de imágenes para el OCR. El servidor sigue acumulando los avisos de cada consulta en SQLite.
 
 # 4. Atributos de calidad del software
 

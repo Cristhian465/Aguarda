@@ -1,0 +1,12 @@
+{
+  "distritos": ["Tacna", "Alto de la Alianza", "Calana", "Ciudad Nueva", "Coronel Gregorio Albarracín Lanchipa", "Inclán", "La Yarada-Los Palos", "Pachía", "Palca", "Pocollay", "Sama"],
+  "sectores": [
+    {"id": "I", "nombre": "Ciudad Nueva", "distritos": ["Ciudad Nueva"], "subsectores": [10, 11, 12, 15, 31], "zonas": ["AAPITAC", "Ampliación Ciudad Nueva", "Asoc. Independencia", "Asoc. 28 de Agosto"]},
+    {"id": "II", "nombre": "Pocollay", "distritos": ["Pocollay"], "subsectores": [17, 18], "zonas": ["Las Peañas", "Villa El Salvador", "Las Casuarinas", "Villa Capanique", "Las Américas", "Las Dunas", "Las Artes", "Los Virreyes"]},
+    {"id": "III", "nombre": "Alto de la Alianza", "distritos": ["Alto de la Alianza", "Tacna"], "subsectores": [9, 13, 14, 16], "zonas": ["P.J. La Esperanza", "P.J. San Martín", "P.J. Miguel Grau", "Ramón Castilla", "CPM Bolognesi", "Parque Industrial", "Urb. Tacna", "Urb. Capanique", "La Natividad"]},
+    {"id": "IV", "nombre": "Cono Norte", "distritos": ["Alto de la Alianza", "Ciudad Nueva"], "subsectores": [5, 6, 7, 8], "zonas": ["Asoc. La Florida", "Copaja", "Los Milagros", "San Pedro", "Balconcillos", "Asoc. 27 de Agosto", "Santa Bárbara", "Mirador Intiorko", "Virgen de la Asunta", "Túpac Amaru", "Asoc. Miller", "José Gálvez"]},
+    {"id": "V", "nombre": "Casco Urbano", "distritos": ["Tacna"], "subsectores": [1, 2, 3, 4, 29], "zonas": ["Barrio Callao", "Villa Hermosa", "San Pedro", "Cacique Rosa Ara", "Los Cedros", "Pago Aymara", "Leoncio Prado", "La Victoria", "O'Donovan", "P.J. Jesús María", "Santa Teresa", "Los Delfines"]},
+    {"id": "VI", "nombre": "Augusto B. Leguía", "distritos": ["Tacna"], "subsectores": [19, 20, 21, 22, 28], "zonas": ["Augusto B. Leguía", "Ciudad de Dios", "Hábitat", "Techo Propio", "San José Obrero", "Hijos de Leguía", "Para Chico", "Para Grande"]},
+    {"id": "VII", "nombre": "Gregorio Albarracín", "distritos": ["Coronel Gregorio Albarracín Lanchipa"], "subsectores": [23, 24, 25, 26, 27, 30], "zonas": ["Pampas de Viñani", "Viñani", "Alfonso Ugarte", "Promuvi La Unión"]}
+  ]
+}
