@@ -223,6 +223,12 @@ Durante la implementación se tomaron estas decisiones:
 
 Al cierre de esta versión se cuenta con una aplicación funcional que permite configurar el hogar, registrar llenados, consultar el depósito y el déficit, ver qué recortar, declarar que se quedó sin agua y consultar los avisos del depósito, todo sin conexión; además, muestra el mapa de cisternas y toma el nivel real del tanque desde el sensor IoT cuando hay internet.
 
+### 5.4. Notificaciones de agua y saneamiento
+
+La campana de Inicio abre la bandeja de avisos de la provincia de Tacna. El usuario puede elegir sector EPS, tipo de aviso y periodo, buscar una calle o asociación y consultar la guía de distritos y subsectores. Las coincidencias geográficas por nombre se muestran como referencias. Cada tarjeta enlaza a la publicación original y distingue los horarios de inicio, reposición y restablecimiento cuando están disponibles.
+
+La API con FastAPI y SQLite incorpora comunicados públicos de EPS Tacna, avisos y noticias de SUNASS y el RSS de Radio Uno. El importador también puede consultar EPSTacna mediante un RSS configurado o mediante Meta Graph con un token autorizado. Tesseract extrae automáticamente el texto de las imágenes disponibles. Dos comunicados históricos de EPS Tacna están disponibles para la demostración. [Guía de la API](../backend/README.md)
+
 ## 6. Cronograma
 
 Cronograma del Proyecto AguardApp (agosto – diciembre 2026). Comienzo: mar 25/08/26 · Fin: jue 26/11/26.

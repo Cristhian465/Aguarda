@@ -81,6 +81,7 @@ flowchart TD
 | 🗺️ **Mapa de cisternas** | Puntos de reparto de agua en Tacna sobre Google Maps, con su horario y estado, la lista de los más cercanos a tu ubicación el aviso "Antes de que se acabe", que te dice a qué cisterna ir antes de quedarte sin agua, y los límites reales de los distritos |
 | 📶 **Sensor IoT del tanque** | Lee el nivel real del tanque (ESP32 + sensor ultrasónico, simulado en Wokwi) desde ThingSpeak y lo aplica como nivel actual |
 | 🔔 **Avisos** | Alerta dentro de la app si el agua no alcanza, si queda menos del 20 % o si falta registrar un llenado |
+| **Notificaciones de agua y saneamiento** | La campana de Inicio muestra avisos de la provincia de Tacna con filtros por sector EPS, tipo y periodo. Incluye búsqueda por calle o asociación, guía de sectores y enlace a la publicación original. |
 | 🧾 **Consulta integrada EPS (en validación)** | Vincula la cuenta, conserva la sesión cifrada y consulta el PDF del recibo mediante HTTP en la oficina virtual; extrae consumo, periodo y total con ML Kit dentro del teléfono. Validado con cuenta y recibo reales en el Samsung conectado. |
 | 📡 **Datos del hogar locales** | El depósito se guarda en el teléfono; mapa, sensor, ranking opcional y consulta EPS requieren internet. La clave EPS se envía únicamente a su portal HTTP (sin cifrado en tránsito) y no se guarda |
 
@@ -120,6 +121,7 @@ Según el Informe de Factibilidad **(FD01, Versión 1.0)**, el proyecto es viabl
 | **Mapas** | ![Google Maps](https://img.shields.io/badge/Google_Maps_Compose-4285F4?style=flat-square&logo=googlemaps&logoColor=white) |
 | **Red / HTML** | jsoup 1.24.1 · ![Retrofit](https://img.shields.io/badge/Retrofit-48B983?style=flat-square&logo=square&logoColor=white) ![ThingSpeak](https://img.shields.io/badge/ThingSpeak-1D6FA5?style=flat-square) |
 | **DI** | ![Koin](https://img.shields.io/badge/Koin-F5A623?style=flat-square) |
+| **API de cortes** | Python 3.11+, FastAPI, SQLite y lxml. Tesseract es opcional para avisos en imagen. |
 | **Fechas** | ![kotlinx.datetime](https://img.shields.io/badge/kotlinx.datetime-7F52FF?style=flat-square) |
 | **Arquitectura** | ![MVVM](https://img.shields.io/badge/MVVM-purple?style=flat-square) ![DDD](https://img.shields.io/badge/DDD-darkblue?style=flat-square) ![Clean Architecture](https://img.shields.io/badge/Clean_Architecture-teal?style=flat-square) |
 
@@ -155,6 +157,7 @@ AguardApp/
 │           └── 📁 feature/
 │               ├── 📁 bienvenida/         Pantalla de entrada (solo el primer uso)
 │               ├── 📁 deposito/           Depósito de agua del hogar (MVVM + DDD)
+│               ├── 📁 cortes/             Notificaciones de interrupciones consultadas por Retrofit
 │               ├── 📁 liga/               Liga del Agua: medición del consumo y puntaje del hogar
 │               ├── 📁 mapa/               Mapa de puntos de cisterna, distritos y reportes de vecinos (Google Maps)
 │               ├── 📁 sensor/             Nivel del tanque y detector de fugas desde el sensor IoT (HTTP directo a ThingSpeak)
@@ -162,6 +165,7 @@ AguardApp/
 │               ├── 📁 eps/                Consulta del portal, sesión cifrada y OCR del PDF
 │               └── 📁 widget/             Widget 2x1 de pantalla de inicio con el nivel del tanque (Glance)
 │
+├── 📁 backend/                            API de cortes, importadores y pruebas
 ├── 📁 iot/wokwi/                          Simulación del sensor: ESP32 + HC-SR04 (diagram.json, sketch.ino)
 │
 └── 📁 informes/                           📋 Documentación académica
@@ -206,6 +210,11 @@ C4Container
     title Sistema AguardApp — Diagrama de Contenedores
 
     Person(user, "Vecino de Tacna")
+    Container(cortesApi, "API de avisos", "FastAPI", "Filtra avisos por tipo, sector y periodo")
+    ContainerDb(cortesDb, "Registro de avisos", "SQLite", "Publicaciones y avisos de interrupción")
+    System_Ext(fuentesCortes, "EPS Tacna, SUNASS, Meta y Radio Uno", "Comunicados, datos abiertos y RSS")
+    Rel(cortesApi, cortesDb, "Consulta avisos")
+    Rel(cortesApi, fuentesCortes, "Importa mediante un proceso independiente")
 
     Container_Boundary(mobile, "App Android") {
         Container(ui, "Presentation Layer", "Jetpack Compose", "Screens, ViewModels y UiStates con MVVM")
@@ -221,6 +230,7 @@ C4Container
     Rel(data, domain, "Implementa interfaces")
     Rel(data, roomdb, "Lee/Escribe")
     Rel(ui, ahorro, "Consulta y guarda a través de AhorroLocal")
+    Rel(ui, cortesApi, "Consulta avisos de la provincia de Tacna", "Retrofit, JSON")
 ```
 
 ## 🏗️ Diagrama C4 — Nivel de Componentes (Feature Depósito)
@@ -318,6 +328,7 @@ git clone https://github.com/tu-usuario/AguardApp.git
 | RF-05 | Calcular el déficit hasta el próximo llenado | 🔴 Alta |
 | RF-08 | Operar sin conexión | 🔴 Alta |
 | RF-12 | Registrar y consultar el progreso de ahorro | Media |
+| RF-14 | Consultar avisos de agua y saneamiento de la provincia de Tacna | Media |
 
 > 📄 Ver documentación completa en [`informes/FD03-SRS.md`](./informes/FD03-SRS.md)
 
@@ -377,6 +388,14 @@ flowchart LR
 ## 📝 Changelog
 
 ### 2026-11-22
+- [Agregado] Importación de publicaciones recientes de EPSTacna mediante RSS generado por FetchRSS o RSS.app, con OCR de las imágenes incluidas.
+- [Corregido] El importador también acepta los enlaces `.rss` vigentes de FetchRSS.
+- [Corregido] Los filtros reconocen menciones en singular como «Sector IV» y «Subsector 05» en el texto de los avisos.
+- [Agregado] Lectura automática de fotos y álbumes de Facebook por OCR con acceso autorizado a Meta Graph. La campana permite ampliar el texto del aviso.
+- [Cambiado] Notificaciones con sectores EPS, filtros por fecha y tipo y búsqueda por calles o asociaciones. El importador admite Facebook de EPS Tacna mediante Meta Graph, noticias de SUNASS y el RSS de Radio Uno. [Guía del módulo](backend/README.md)
+- [Corregido] La API valida los filtros de distrito con el catálogo de Tacna. Se agregó la [guía de despliegue en un VPS](backend/DESPLIEGUE.md).
+- [Corregido] La bandeja ofrece los 28 distritos de Tacna aun sin conexión. El script `backend/iniciar.ps1` inicia la API local y conecta su puerto para Android por USB.
+- [Agregado] Campana de notificaciones en Inicio y API de cortes de agua con importación de SUNASS y EPS Tacna. Ver [cómo probar la API](backend/README.md).
 - [Agregado] Visor del PDF del último recibo en la tarjeta principal de Recibos EPS.
 
 ### 2026-11-21

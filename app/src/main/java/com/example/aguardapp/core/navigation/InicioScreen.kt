@@ -21,6 +21,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
@@ -86,7 +87,20 @@ fun InicioScreen(
                 Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(AguaSuave), contentAlignment = Alignment.Center) {
                     Icon(painterResource(R.drawable.ic_gota), null, tint = Blanco)
                 }
-                Text("Aguarda", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = Blanco)
+                Text(
+                    "Aguarda",
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Blanco
+                )
+                IconButton(onClick = { onAbrir(Rutas.CORTES) }) {
+                    Icon(
+                        painterResource(R.drawable.ic_campana),
+                        contentDescription = "Notificaciones de cortes de agua",
+                        tint = Blanco
+                    )
+                }
             }
         }
         Column(
