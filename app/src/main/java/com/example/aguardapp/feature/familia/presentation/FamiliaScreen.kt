@@ -42,10 +42,9 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 import org.koin.compose.viewmodel.koinViewModel
 import com.example.aguardapp.core.ui.theme.AguaMedia
 import com.example.aguardapp.core.ui.theme.Coral
-import com.example.aguardapp.core.ui.theme.IconosClarosEnBarraDeEstado
 import com.example.aguardapp.core.ui.theme.Tinta
 import com.example.aguardapp.core.ui.theme.TintaSuave
-import com.example.aguardapp.feature.deposito.presentation.componentes.BarraSuperior
+import com.example.aguardapp.feature.deposito.presentation.CabeceraAzul
 import com.example.aguardapp.feature.deposito.presentation.componentes.BotonPrincipal
 import com.example.aguardapp.feature.deposito.presentation.componentes.TarjetaBlanca
 import com.example.aguardapp.feature.familia.domain.model.Invitacion
@@ -60,9 +59,12 @@ fun FamiliaScreen(onVolver: () -> Unit, viewModel: FamiliaViewModel = koinViewMo
     var confirmarSalida by rememberSaveable { mutableStateOf(false) }
     var confirmarReinicio by rememberSaveable { mutableStateOf(false) }
 
-    IconosClarosEnBarraDeEstado(claros = false)
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        BarraSuperior("Mi familia", "Un tanque para todos los teléfonos de la casa", onVolver)
+        CabeceraAzul(
+            titulo = "Mi familia",
+            contexto = "Un tanque para todos los teléfonos de la casa",
+            onVolver = onVolver
+        )
         Column(
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)

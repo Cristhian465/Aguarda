@@ -33,7 +33,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -74,7 +73,6 @@ fun DepositoScreen(
         return
     }
     val vista = uiState.vista
-    IconosClarosEnBarraDeEstado(claros = vista != null)
     Column(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).verticalScroll(rememberScrollState()).padding(bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -106,6 +104,7 @@ fun DepositoScreen(
 
 @Composable
 private fun SinDatos(onEditarHogar: () -> Unit, onVolver: () -> Unit) {
+    IconosClarosEnBarraDeEstado(claros = false)
     Column(Modifier.fillMaxWidth().statusBarsPadding().padding(24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         VolverAlInicio(onVolver, tint = Tinta)
         Text("Mi depósito", fontFamily = FuenteTexto, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold)
@@ -116,19 +115,12 @@ private fun SinDatos(onEditarHogar: () -> Unit, onVolver: () -> Unit) {
 
 @Composable
 private fun Encabezado(vista: DepositoVista, onEditarHogar: () -> Unit, onVolver: () -> Unit) {
-    Column(
-        Modifier.fillMaxWidth()
-            .clip(RoundedCornerShape(bottomStart = 36.dp, bottomEnd = 36.dp))
-            .background(AguaMedia)
-            .statusBarsPadding()
-            .padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 40.dp)
-    ) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            VolverAlInicio(onVolver)
-            Column(Modifier.weight(1f).padding(end = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(vista.saludo, fontFamily = FuenteTexto, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Blanco)
-                Text(vista.subtituloHogar, fontFamily = FuenteTexto, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Blanco, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            }
+    CabeceraAzul(
+        titulo = vista.subtituloHogar,
+        contexto = vista.saludo,
+        onVolver = onVolver,
+        espacioInferior = 40.dp,
+        accion = {
             Box(
                 Modifier.size(40.dp).clip(RoundedCornerShape(14.dp)).background(AguaSuave).clickable(role = Role.Button, onClick = onEditarHogar),
                 contentAlignment = Alignment.Center
@@ -136,6 +128,7 @@ private fun Encabezado(vista: DepositoVista, onEditarHogar: () -> Unit, onVolver
                 Icon(painterResource(R.drawable.ic_ajustes), contentDescription = "Editar mi hogar", modifier = Modifier.size(20.dp), tint = Blanco)
             }
         }
+    ) {
         Spacer(Modifier.height(30.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(22.dp), verticalAlignment = Alignment.CenterVertically) {
             IndicadorNivelReservorio(vista.porcentaje / 100f)

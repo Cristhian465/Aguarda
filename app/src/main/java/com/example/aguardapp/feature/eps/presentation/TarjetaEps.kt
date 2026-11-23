@@ -41,7 +41,7 @@ private val AzulMeta = Color(0xFF102947)
 private val AzulClaro = Color(0xFFB3CFE5)
 
 @Composable
-internal fun TarjetaEps(
+internal fun ResumenUltimoRecibo(
     recibo: ReciboGuardado?,
     historial: List<ReciboGuardado>,
     meta: Double?,
@@ -56,73 +56,75 @@ internal fun TarjetaEps(
             editarMeta = false
         }
     }
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Column(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(AzulRecibo).padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
+    Column(
+        Modifier.fillMaxWidth().padding(top = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text(
+            recibo?.let { "Último recibo · ${it.mes.nombreCompleto()}" } ?: "Último recibo",
+            color = AzulClaro,
+            style = MaterialTheme.typography.labelLarge
+        )
+        if (recibo != null) {
+            Text("Total a pagar", color = AzulClaro, style = MaterialTheme.typography.bodySmall)
             Text(
-                recibo?.let { "Último recibo · ${it.mes.nombreCompleto()}" } ?: "Último recibo",
-                color = AzulClaro,
-                style = MaterialTheme.typography.labelLarge
+                recibo.totalPagar?.let(::soles) ?: "No registrado",
+                color = Color.White,
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold
             )
-            if (recibo != null) {
-                Text("Total a pagar", color = AzulClaro, style = MaterialTheme.typography.bodySmall)
-                Text(
-                    recibo.totalPagar?.let(::soles) ?: "No registrado",
-                    color = Color.White,
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold
-                )
-                MetaIntegrada(recibo.metrosCubicos, meta, onEditar = { editarMeta = true })
-            } else {
-                Text("Aún no tienes recibos guardados.", color = Color.White)
+            MetaIntegrada(recibo.metrosCubicos, meta, onEditar = { editarMeta = true })
+        } else {
+            Text("Aún no tienes recibos guardados.", color = Color.White)
+        }
+        if (!estado.formulario) {
+            Button(
+                onClick = {
+                    if (estado.cuenta != null) viewModel.actualizar() else viewModel.mostrarFormulario(true)
+                },
+                enabled = !estado.trabajando,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = AzulClaro, contentColor = AzulRecibo)
+            ) {
+                Text(when {
+                    estado.cuenta != null -> "Actualizar recibo EPS"
+                    estado.reconectar != null -> "Volver a vincular"
+                    else -> "Vincular cuenta EPS"
+                })
             }
-            if (!estado.formulario) {
-                Button(
-                    onClick = {
-                        if (estado.cuenta != null) viewModel.actualizar() else viewModel.mostrarFormulario(true)
-                    },
-                    enabled = !estado.trabajando,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = AzulClaro, contentColor = AzulRecibo)
-                ) {
-                    Text(when {
-                        estado.cuenta != null -> "Actualizar recibo EPS"
-                        estado.reconectar != null -> "Volver a vincular"
-                        else -> "Vincular cuenta EPS"
-                    })
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                val habilitado = !estado.trabajando && !estado.elegirDestinoPdf
+                TextButton(onClick = viewModel::verPdf, enabled = habilitado, modifier = Modifier.weight(1f)) {
+                    Text(AccionRecibos.VER_PDF.boton, color = AzulClaro)
                 }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    val habilitado = !estado.trabajando && !estado.elegirDestinoPdf
-                    TextButton(onClick = viewModel::verPdf, enabled = habilitado, modifier = Modifier.weight(1f)) {
-                        Text(AccionRecibos.VER_PDF.boton, color = AzulClaro)
-                    }
-                    TextButton(onClick = viewModel::descargarPdf, enabled = habilitado, modifier = Modifier.weight(1f)) {
-                        Text(AccionRecibos.PDF.boton, color = AzulClaro)
-                    }
+                TextButton(onClick = viewModel::descargarPdf, enabled = habilitado, modifier = Modifier.weight(1f)) {
+                    Text(AccionRecibos.PDF.boton, color = AzulClaro)
                 }
             }
         }
-        if (estado.formulario || estado.trabajando || estado.mensaje != null || estado.error != null) {
-            TarjetaBlanca {
-                estado.error?.let { Text(it, color = Coral) }
-                if (estado.formulario) {
-                    FormularioEps(
-                        usuarioInicial = estado.reconectar?.usuario ?: estado.usuarioRecordado,
-                        accionPendiente = estado.accionPendiente,
-                        trabajando = estado.trabajando,
-                        onVincular = viewModel::vincular,
-                        onCancelar = { viewModel.mostrarFormulario(false) }
-                    )
-                }
-                if (estado.trabajando) {
-                    CircularProgressIndicator()
-                    Text("Consultando EPS Tacna…")
-                }
-                estado.mensaje?.let { Text(it) }
+    }
+}
+
+@Composable
+internal fun EstadoConsultaEps(estado: EpsUiState, viewModel: EpsViewModel, modifier: Modifier) {
+    if (estado.formulario || estado.trabajando || estado.mensaje != null || estado.error != null) {
+        TarjetaBlanca(modifier) {
+            estado.error?.let { Text(it, color = Coral) }
+            if (estado.formulario) {
+                FormularioEps(
+                    usuarioInicial = estado.reconectar?.usuario ?: estado.usuarioRecordado,
+                    accionPendiente = estado.accionPendiente,
+                    trabajando = estado.trabajando,
+                    onVincular = viewModel::vincular,
+                    onCancelar = { viewModel.mostrarFormulario(false) }
+                )
             }
+            if (estado.trabajando) {
+                CircularProgressIndicator()
+                Text("Consultando EPS Tacna…")
+            }
+            estado.mensaje?.let { Text(it) }
         }
     }
 }
