@@ -9,6 +9,7 @@ object Rutas {
     const val ME_QUEDE_SIN_AGUA = "me_quede_sin_agua"
     const val AVISOS = "avisos"
     const val CORTES = "cortes"
+    const val NOTIFICACIONES = "notificaciones"
     const val QUE_RECORTAR = "que_recortar"
     const val MAPA = "mapa"
     const val REPRESAS = "represas"

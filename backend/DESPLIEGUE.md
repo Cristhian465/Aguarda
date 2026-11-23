@@ -149,7 +149,7 @@ Nginx recibe el desafío por `80/TCP`. Android entra por `61873/TCP`. Caddy y Fa
 
 Compila y ejecuta la app. La URL HTTPS del VPS está configurada en `app/build.gradle.kts`. Si despliegas la API en otro servidor, puedes seleccionar su dirección al compilar con la propiedad de Gradle `-PCORTES_API_URL=https://IP_PUBLICA_VPS:61873/`.
 
-En la campanita, selecciona **Todos los sectores → Todo el historial** para comprobar los dos comunicados de ejemplo. Para incorporar avisos nuevos, ejecuta el sincronizador en el VPS desde `~/aguarda-api` y verifica su salida. Puedes habilitar Facebook con las credenciales autorizadas de Meta en el proceso que ejecuta el importador. [Importación y sincronización](README.md#importar-avisos)
+En **Inicio → Avisos EPS**, selecciona **Todos los sectores → Todo el historial** para comprobar los dos comunicados de ejemplo. Para incorporar avisos nuevos, ejecuta el sincronizador en el VPS desde `~/aguarda-api` y verifica su salida. Puedes habilitar Facebook con las credenciales autorizadas de Meta en el proceso que ejecuta el importador. [Importación y sincronización](README.md#importar-avisos)
 
 ```bash
 .venv/bin/python -m backend.importar sincronizar
@@ -199,7 +199,7 @@ cd /root/aguarda-api
 ) && bash backend/activar-sincronizacion.sh && systemctl restart aguarda-fuentes
 ```
 
-La prueba imprime `EPS Tacna · Facebook (RSS)` y el número de registros que guardó. Abre la campanita en **Todos los sectores → Todo el historial** y comprueba que el aviso muestre la fuente y abra la publicación original. El servicio revisa el feed cada 30 minutos y el proveedor determina cuándo lo actualiza.
+La prueba imprime `EPS Tacna · Facebook (RSS)` y el número de registros que guardó. Abre **Avisos EPS** y selecciona **Todos los sectores → Todo el historial**. Comprueba que el aviso muestre la fuente y abra la publicación original. El servicio revisa el feed cada 30 minutos y el proveedor determina cuándo lo actualiza.
 
 ### Opción con Meta Graph
 

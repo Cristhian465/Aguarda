@@ -2,6 +2,7 @@ package com.example.aguardapp.core.navigation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.MaterialTheme
@@ -13,6 +14,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.aguardapp.core.ui.theme.Fondo
 import com.example.aguardapp.feature.ahorro.presentation.AhorroScreen
 import com.example.aguardapp.feature.bienvenida.presentation.BienvenidaScreen
 import com.example.aguardapp.feature.cortes.presentation.CortesScreen
@@ -23,6 +25,7 @@ import com.example.aguardapp.feature.deposito.presentation.QueRecortarScreen
 import com.example.aguardapp.feature.deposito.presentation.RegistrarLlenadoScreen
 import com.example.aguardapp.feature.deposito.presentation.SinAguaScreen
 import com.example.aguardapp.feature.deposito.presentation.TipoLlenado
+import com.example.aguardapp.feature.deposito.presentation.componentes.BarraSuperior
 import com.example.aguardapp.feature.eps.presentation.RecibosEpsScreen
 import com.example.aguardapp.feature.familia.presentation.FamiliaScreen
 import com.example.aguardapp.feature.liga.presentation.LigaScreen
@@ -62,6 +65,18 @@ fun AppNavHost(rutaInicial: String, hayConfiguracion: Boolean) {
 
         composable(Rutas.CORTES) {
             ConBarraDelSistema { CortesScreen(onVolver = { navController.popBackStack() }) }
+        }
+
+        composable(Rutas.NOTIFICACIONES) {
+            ConBarraDelSistema {
+                Column(Modifier.fillMaxSize().background(Fondo)) {
+                    BarraSuperior(
+                        "Notificaciones",
+                        "No hay notificaciones",
+                        onVolver = { navController.popBackStack() }
+                    )
+                }
+            }
         }
 
         composable(Rutas.FAMILIA) {

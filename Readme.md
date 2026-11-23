@@ -81,7 +81,7 @@ flowchart TD
 | 🗺️ **Mapa de cisternas** | Puntos de reparto de agua en Tacna sobre Google Maps, con su horario y estado, la lista de los más cercanos a tu ubicación el aviso "Antes de que se acabe", que te dice a qué cisterna ir antes de quedarte sin agua, y los límites reales de los distritos |
 | 📶 **Sensor IoT del tanque** | Lee el nivel real del tanque (ESP32 + sensor ultrasónico, simulado en Wokwi) desde ThingSpeak y lo aplica como nivel actual |
 | 🔔 **Avisos** | Alerta dentro de la app si el agua no alcanza, si queda menos del 20 % o si falta registrar un llenado |
-| **Notificaciones de agua y saneamiento** | La campana de Inicio muestra avisos de la provincia de Tacna con filtros por sector EPS, tipo y periodo. Incluye búsqueda por calle o asociación, guía de sectores y enlace a la publicación original. |
+| **Avisos EPS** | El módulo de Inicio muestra avisos de la provincia de Tacna con filtros por sector EPS, tipo y periodo. Incluye búsqueda por calle o asociación, guía de sectores y enlace a la publicación original. |
 | 🧾 **Consulta integrada EPS (en validación)** | Vincula la cuenta, conserva la sesión cifrada y consulta el PDF del recibo mediante HTTP en la oficina virtual; extrae consumo, periodo y total con ML Kit dentro del teléfono. Validado con cuenta y recibo reales en el Samsung conectado. |
 | 📡 **Datos del hogar locales** | El depósito se guarda en el teléfono; mapa, sensor, ranking opcional y consulta EPS requieren internet. La clave EPS se envía únicamente a su portal HTTP (sin cifrado en tránsito) y no se guarda |
 

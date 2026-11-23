@@ -897,7 +897,7 @@ La aplicación se distribuye como un único APK y no requiere servidor propio ni
 
 ## 3.6. Notificaciones de agua y saneamiento
 
-La campana de Inicio navega a `CortesScreen`. `CortesViewModel` guarda el sector elegido y consulta `GET /avisos` mediante Retrofit con ámbito de provincia de Tacna, filtros y paginación. Android y `GET /sectores` comparten un catálogo de siete sectores. `GET /distritos` conserva los 28 distritos del departamento. SQLite añade las columnas de categoría y descripción al consultar una base existente. El importador actualiza la misma base y se ejecuta como proceso independiente. Para Facebook, recibe la URL RSS de EPSTacna o las credenciales de Meta Graph en su entorno. Tesseract reconoce el texto de las fotos disponibles y el importador conserva una copia local del resultado para evitar repetir el OCR.
+El módulo Avisos EPS de Inicio navega a `CortesScreen`. `CortesViewModel` guarda el sector elegido y consulta `GET /avisos` mediante Retrofit con ámbito de provincia de Tacna, filtros y paginación. Android y `GET /sectores` comparten un catálogo de siete sectores. `GET /distritos` conserva los 28 distritos del departamento. SQLite añade las columnas de categoría y descripción al consultar una base existente. El importador actualiza la misma base y se ejecuta como proceso independiente. Para Facebook, recibe la URL RSS de EPSTacna o las credenciales de Meta Graph en su entorno. Tesseract reconoce el texto de las fotos disponibles y el importador conserva una copia local del resultado para evitar repetir el OCR.
 
 ```mermaid
 flowchart LR
