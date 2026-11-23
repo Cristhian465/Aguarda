@@ -147,11 +147,7 @@ Nginx recibe el desafío por `80/TCP`. Android entra por `61873/TCP`. Caddy y Fa
 
 ## 4. Conectar Android y cargar nuevos avisos
 
-En `local.properties`, en la raíz de Aguarda, agrega esta línea. Después recompila y ejecuta la app.
-
-```properties
-CORTES_API_URL=https://IP_PUBLICA_VPS:61873/
-```
+Compila y ejecuta la app. La URL HTTPS del VPS está configurada en `app/build.gradle.kts`. Si despliegas la API en otro servidor, puedes seleccionar su dirección al compilar con la propiedad de Gradle `-PCORTES_API_URL=https://IP_PUBLICA_VPS:61873/`.
 
 En la campanita, selecciona **Todos los sectores → Todo el historial** para comprobar los dos comunicados de ejemplo. Para incorporar avisos nuevos, ejecuta el sincronizador en el VPS desde `~/aguarda-api` y verifica su salida. Puedes habilitar Facebook con las credenciales autorizadas de Meta en el proceso que ejecuta el importador. [Importación y sincronización](README.md#importar-avisos)
 

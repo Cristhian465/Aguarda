@@ -1,5 +1,3 @@
-import java.util.Properties
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -7,10 +5,9 @@ plugins {
     alias(libs.plugins.androidx.room)
 }
 
-val urlApiCortes = providers.gradleProperty("CORTES_API_URL").orNull
-    ?: rootProject.file("local.properties").takeIf { it.isFile }?.inputStream()?.use { entrada ->
-        Properties().apply { load(entrada) }.getProperty("CORTES_API_URL")
-    }
+val urlApiCortes = providers.gradleProperty("CORTES_API_URL")
+    .orElse("https://169.58.234.123:61873/")
+    .get()
 
 fun literalUrlApi(valor: String): String = "\"" + valor.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
@@ -26,7 +23,7 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
-        buildConfigField("String", "CORTES_API_URL", literalUrlApi(urlApiCortes.orEmpty()))
+        buildConfigField("String", "CORTES_API_URL", literalUrlApi(urlApiCortes))
     }
 
     buildTypes {
