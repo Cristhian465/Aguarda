@@ -63,7 +63,8 @@ private val accesos = listOf(
     Acceso(Rutas.AHORRO, "Ahorro", "Retos y hábitos diarios", R.drawable.ic_ahorro),
     Acceso(Rutas.LIGA, "Liga del Agua", "Puntaje, ranking y duelos", R.drawable.ic_ahorro_trofeo),
     Acceso(Rutas.RECIBOS_EPS, "Recibos EPS", "Consulta tu recibo de agua", R.drawable.ic_recibo),
-    Acceso(Rutas.FAMILIA, "Mi familia", "Comparte el tanque con tu casa", R.drawable.ic_familia)
+    Acceso(Rutas.FAMILIA, "Mi familia", "Comparte el tanque con tu casa", R.drawable.ic_familia),
+    Acceso(Rutas.CORTES, "Avisos EPS", "Cortes y comunicados de agua", R.drawable.ic_avisos_eps)
 )
 
 @Composable
@@ -94,10 +95,10 @@ fun InicioScreen(
                     fontWeight = FontWeight.ExtraBold,
                     color = Blanco
                 )
-                IconButton(onClick = { onAbrir(Rutas.CORTES) }) {
+                IconButton(onClick = { onAbrir(Rutas.NOTIFICACIONES) }) {
                     Icon(
                         painterResource(R.drawable.ic_campana),
-                        contentDescription = "Notificaciones de cortes de agua",
+                        contentDescription = "Notificaciones",
                         tint = Blanco
                     )
                 }

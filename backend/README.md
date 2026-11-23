@@ -16,7 +16,7 @@ Las compilaciones normales consultan el VPS. Para probar esta API local, genera 
 
 1. Si usas un teléfono, conéctalo por USB, habilita la depuración USB y acepta la autorización en el teléfono. Luego ejecuta `.\backend\iniciar.ps1`. El script conecta el puerto con `adb reverse` e inicia la API. Déjalo abierto mientras usas la app.
 2. Instala y abre el APK generado en `app/build/outputs/apk/debug/`. Si usas el emulador oficial de Android Studio, la app se conecta a la PC por `10.0.2.2`.
-3. Pulsa la campana de Inicio. Para ver los ejemplos elige **Todos los sectores** y **Todo el historial**. Busca `Las Américas` o `Los Cedros` para comprobar el filtro por zona.
+3. Abre **Avisos EPS** en Inicio. Para ver los ejemplos elige **Todos los sectores** y **Todo el historial**. Busca `Las Américas` o `Los Cedros` para comprobar el filtro por zona.
 
 Si PowerShell no permite ejecutar el script, puedes iniciar la API con `python -m uvicorn backend.api:app --port 8000`. Para el teléfono, en otra terminal ejecuta `adb reverse tcp:8000 tcp:8000` o `& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" reverse tcp:8000 tcp:8000` si `adb` no está en el PATH. Si sale un error de conexión, abre [Swagger en la PC](http://127.0.0.1:8000/docs) para comprobar que la API está iniciada.
 

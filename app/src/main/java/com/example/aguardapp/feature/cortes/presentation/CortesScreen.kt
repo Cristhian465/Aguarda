@@ -56,7 +56,7 @@ fun CortesScreen(onVolver: () -> Unit, viewModel: CortesViewModel = koinViewMode
     var mostrarAyuda by rememberSaveable { mutableStateOf(false) }
     if (mostrarAyuda) GuiaSectores(estado.catalogo) { mostrarAyuda = false }
     Column(Modifier.fillMaxSize().background(Fondo)) {
-        BarraSuperior("Notificaciones", "Avisos de agua y saneamiento", onVolver)
+        BarraSuperior("Avisos EPS", "Avisos de agua y saneamiento", onVolver)
         LazyColumn(
             modifier = Modifier.weight(1f),
             contentPadding = PaddingValues(20.dp),
