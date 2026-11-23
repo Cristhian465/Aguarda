@@ -10,15 +10,17 @@ python -m backend.importar ejemplos
 
 En el navegador abre [la documentación de la API](http://127.0.0.1:8000/docs). La ruta [avisos con historial](http://127.0.0.1:8000/avisos?periodo=todos) muestra dos comunicados históricos de EPS Tacna adaptados desde sus textos publicados.
 
-## Ver los avisos en el celular
+## Probar la API local desde Android
+
+Las compilaciones normales consultan el VPS. Para probar esta API local, genera un APK de depuración con `.\gradlew.bat :app:assembleDebug '-PCORTES_API_URL='`.
 
 1. Si usas un teléfono, conéctalo por USB, habilita la depuración USB y acepta la autorización en el teléfono. Luego ejecuta `.\backend\iniciar.ps1`. El script conecta el puerto con `adb reverse` e inicia la API. Déjalo abierto mientras usas la app.
-2. Ejecuta la variante **debug** de Aguarda desde Android Studio. Si usas el emulador oficial de Android Studio, la app se conecta a la PC por `10.0.2.2`.
+2. Instala y abre el APK generado en `app/build/outputs/apk/debug/`. Si usas el emulador oficial de Android Studio, la app se conecta a la PC por `10.0.2.2`.
 3. Pulsa la campana de Inicio. Para ver los ejemplos elige **Todos los sectores** y **Todo el historial**. Busca `Las Américas` o `Los Cedros` para comprobar el filtro por zona.
 
 Si PowerShell no permite ejecutar el script, puedes iniciar la API con `python -m uvicorn backend.api:app --port 8000`. Para el teléfono, en otra terminal ejecuta `adb reverse tcp:8000 tcp:8000` o `& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" reverse tcp:8000 tcp:8000` si `adb` no está en el PATH. Si sale un error de conexión, abre [Swagger en la PC](http://127.0.0.1:8000/docs) para comprobar que la API está iniciada.
 
-Para usar otra dirección, define `CORTES_API_URL=https://tu-servidor/` en `local.properties` y vuelve a compilar. Una compilación de distribución requiere una URL HTTPS.
+Para apuntar a otro servidor, compila con la propiedad de Gradle `-PCORTES_API_URL=https://tu-servidor/`. Una compilación de distribución requiere una URL HTTPS.
 
 Para ejecutar la API en Linux con HTTPS y un puerto dedicado, sigue la [guía de despliegue en un VPS](DESPLIEGUE.md).
 
