@@ -90,7 +90,8 @@ private fun ListaDesplazable(
         item(key = "encabezado") {
             Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 6.dp)) {
                 Texto(if (conDistancia) "Cisternas cercanas" else "Puntos de reparto", 15, Tinta, FontWeight.ExtraBold)
-                avisoDeUbicacion(estado.ubicacion, encontrada && !conDistancia)?.let { Texto(it, 12.5, TintaSuave) }
+                val aviso = avisoSinPuntos(estado) ?: avisoDeUbicacion(estado.ubicacion, encontrada && !conDistancia)
+                aviso?.let { Texto(it, 12.5, TintaSuave) }
             }
         }
         items(filas, key = { it.punto.id }) { candidata ->
@@ -101,6 +102,12 @@ private fun ListaDesplazable(
             HorizontalDivider(color = Divisor)
         }
     }
+}
+
+fun avisoSinPuntos(estado: MapaUiState): String? = when {
+    estado.puntos.isNotEmpty() -> null
+    estado.sinConexion -> "Sin conexión: no pudimos cargar los puntos de reparto. Vuelve a abrir el mapa con internet."
+    else -> "Por ahora no hay puntos de reparto registrados."
 }
 
 private fun avisoDeUbicacion(estado: EstadoUbicacion, sinCercanas: Boolean): String? = when {

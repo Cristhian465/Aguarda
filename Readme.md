@@ -78,7 +78,7 @@ flowchart TD
 | 📉 **Aprender el consumo** | Ajusta la proyección cuando el agua se acaba antes de lo previsto |
 | ✂️ **Qué recortar** | Sugerencias de ahorro cuando el agua no alcanza hasta el próximo llenado |
 | 🏅 **Ahorro** | Marca los retos de hoy y consulta tu racha, calendario e insignias. El progreso se guarda en el teléfono. |
-| 🗺️ **Mapa de cisternas** | Puntos de reparto de agua en Tacna sobre Google Maps, con su horario y estado, la lista de los más cercanos a tu ubicación el aviso "Antes de que se acabe", que te dice a qué cisterna ir antes de quedarte sin agua, y los límites reales de los distritos |
+| 🗺️ **Mapa de cisternas** | Puntos de reparto de agua en Tacna sobre Google Maps, con su horario y estado leídos de Supabase (tabla `punto_cisterna`), la lista de los más cercanos a tu ubicación el aviso "Antes de que se acabe", que te dice a qué cisterna ir antes de quedarte sin agua, y los límites reales de los distritos |
 | 📶 **Sensor IoT del tanque** | Lee el nivel real del tanque (ESP32 + sensor ultrasónico, simulado en Wokwi) desde ThingSpeak y lo aplica como nivel actual |
 | 🔔 **Avisos** | Alerta dentro de la app si el agua no alcanza, si queda menos del 20 % o si falta registrar un llenado |
 | **Avisos EPS** | El módulo de Inicio muestra avisos de la provincia de Tacna con filtros por sector EPS, tipo y periodo. Incluye búsqueda por calle o asociación, guía de sectores y enlace a la publicación original. |
@@ -386,6 +386,9 @@ flowchart LR
 ---
 
 ## 📝 Changelog
+
+### 2026-11-27
+- [Cambiado] Mapa, puntos de cisterna reales: los puntos ya no están escritos en el código. `MapaRepositoryImpl` los lee de la tabla `punto_cisterna` de Supabase (`id`, `nombre`, `latitud`, `longitud`, `horario_inicio`, `horario_fin`, `estado`) cada vez que se abre el mapa, así que un cambio de ubicación, horario o estado hecho en Supabase se ve al volver a entrar. El estado acepta `ACTIVO`, `EN_RUTA` o `TERMINADO` (también en minúsculas o con espacio); las filas incompletas o con datos inválidos se descartan. La última lista descargada se guarda en el teléfono (`CopiaCisternasLocal`, SharedPreferences `mapa`) y se usa sin internet; si no hay internet ni copia, la lista dice "Sin conexión", y si la tabla está vacía, "Por ahora no hay puntos de reparto registrados". Código nuevo: `CisternasApi.kt` y `CopiaCisternas.kt`; `CisternasApi` se registra en `ModuloReportes.kt`. 9 pruebas unitarias nuevas en `CisternasSupabaseTest.kt`.
 
 ### 2026-11-22
 - [Agregado] Importación de publicaciones recientes de EPSTacna mediante RSS generado por FetchRSS o RSS.app, con OCR de las imágenes incluidas.
