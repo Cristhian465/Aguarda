@@ -47,6 +47,7 @@ import com.example.aguardapp.feature.cortes.domain.CorteAgua
 import com.example.aguardapp.feature.cortes.domain.PeriodoAviso
 import com.example.aguardapp.feature.cortes.domain.SectorEps
 import com.example.aguardapp.feature.deposito.presentation.componentes.BarraSuperior
+import com.example.aguardapp.feature.notificaciones.presentation.TarjetaNotificaciones
 import com.example.aguardapp.feature.deposito.presentation.componentes.TarjetaBlanca
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -62,6 +63,7 @@ fun CortesScreen(onVolver: () -> Unit, viewModel: CortesViewModel = koinViewMode
             contentPadding = PaddingValues(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            item { TarjetaNotificaciones() }
             item {
                 FiltrosCortes(
                     estado, viewModel::elegirSector, viewModel::elegirCategoria, viewModel::elegirPeriodo,

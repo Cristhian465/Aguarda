@@ -116,7 +116,7 @@ Según el Informe de Factibilidad **(FD01, Versión 1.0)**, el proyecto es viabl
 | Categoría | Tecnologías |
 |---|---|
 | **Lenguaje** | ![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?style=flat-square&logo=kotlin&logoColor=white) |
-| **UI** | ![Jetpack Compose](https://img.shields.io/badge/Jetpack_Compose-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white) ![Material 3](https://img.shields.io/badge/Material_3-757575?style=flat-square&logo=materialdesign&logoColor=white) · Jetpack Glance 1.1.1 (widget) |
+| **UI** | ![Jetpack Compose](https://img.shields.io/badge/Jetpack_Compose-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white) ![Material 3](https://img.shields.io/badge/Material_3-757575?style=flat-square&logo=materialdesign&logoColor=white) · Jetpack Glance 1.1.1 (widget) · WorkManager 2.10.0 (notificaciones) |
 | **Base de datos** | ![Room](https://img.shields.io/badge/Room_(SQLite)-003B57?style=flat-square&logo=sqlite&logoColor=white) |
 | **Mapas** | ![Google Maps](https://img.shields.io/badge/Google_Maps_Compose-4285F4?style=flat-square&logo=googlemaps&logoColor=white) |
 | **Red / HTML** | jsoup 1.24.1 · ![Retrofit](https://img.shields.io/badge/Retrofit-48B983?style=flat-square&logo=square&logoColor=white) ![ThingSpeak](https://img.shields.io/badge/ThingSpeak-1D6FA5?style=flat-square) |
@@ -163,7 +163,8 @@ AguardApp/
 │               ├── 📁 sensor/             Nivel del tanque y detector de fugas desde el sensor IoT (HTTP directo a ThingSpeak)
 │               ├── 📁 ahorro/             Retos, racha, calendario e insignias (SharedPreferences)
 │               ├── 📁 eps/                Consulta del portal, sesión cifrada y OCR del PDF
-│               └── 📁 widget/             Widget 2x1 de pantalla de inicio con el nivel del tanque (Glance)
+│               ├── 📁 widget/             Widget 2x1 del nivel del tanque (Glance): domain · presentation
+│               └── 📁 notificaciones/     Notificaciones fuera de la app (WorkManager): domain · data · presentation
 │
 ├── 📁 backend/                            API de cortes, importadores y pruebas
 ├── 📁 iot/wokwi/                          Simulación del sensor: ESP32 + HC-SR04 (diagram.json, sketch.ino)
@@ -388,7 +389,14 @@ flowchart LR
 ## 📝 Changelog
 
 ### 2026-11-27
+- [Cambiado] Widget del tanque separado en capas: `domain` (`EstadoTanque` y caso de uso `ObtenerEstadoTanque`, con las reglas puras `estadoTanque` y `estaConectado`) y `presentation` (`NivelTanqueReceiver`, `NivelTanqueWidget`, `ContenidoWidget` e `ImagenTanque`). El caso de uso se inyecta con Koin (`core/di/ModuloWidget.kt`). Fondo azul `#1B3554` liso con esquinas redondeadas, sin ondas. Pruebas en `EstadoTanqueTest`.
 - [Cambiado] Mapa, puntos de cisterna reales: los puntos ya no están escritos en el código. `MapaRepositoryImpl` los lee de la tabla `punto_cisterna` de Supabase (`id`, `nombre`, `latitud`, `longitud`, `horario_inicio`, `horario_fin`, `estado`) cada vez que se abre el mapa, así que un cambio de ubicación, horario o estado hecho en Supabase se ve al volver a entrar. El estado acepta `ACTIVO`, `EN_RUTA` o `TERMINADO` (también en minúsculas o con espacio); las filas incompletas o con datos inválidos se descartan. La última lista descargada se guarda en el teléfono (`CopiaCisternasLocal`, SharedPreferences `mapa`) y se usa sin internet; si no hay internet ni copia, la lista dice "Sin conexión", y si la tabla está vacía, "Por ahora no hay puntos de reparto registrados". Código nuevo: `CisternasApi.kt` y `CopiaCisternas.kt`; `CisternasApi` se registra en `ModuloReportes.kt`. 9 pruebas unitarias nuevas en `CisternasSupabaseTest.kt`.
+
+### 2026-11-23
+- [Agregado] Módulo `feature/notificaciones` con notificaciones reales aunque la app esté cerrada. Una revisión periódica de WorkManager (`RevisarNotificacionesWorker`, cada 30 min) avisa cuando vuelve el agua (el sensor ve subir el nivel), cuando el tanque se llena (≥ 95 %), cuando baja al 20 %, cuando sale un aviso de agua nuevo (solo los publicados después de la última revisión, filtrados por el sector EPS elegido) y, desde las 7 p. m., para no perder la racha de Ahorro.
+- [Agregado] Arquitectura del módulo: `domain` (modelo, puertos `FuentesNotificaciones` / `EstadoNotificacionesRepository` / `Notificador`, reglas puras `evaluarNotificaciones` y caso de uso `RevisarNotificaciones`), `data` (`PreferenciasNotificaciones`, `FuentesNotificacionesImpl`, `NotificadorAndroid` con canales y `RevisarNotificacionesWorker`) y `presentation` (`EstadoPermiso`, `NotificacionesViewModel`, `TarjetaNotificaciones`). Inyección en `core/di/ModuloNotificaciones.kt`.
+- [Agregado] Permiso `POST_NOTIFICATIONS` (Android 13+) pedido en tiempo de ejecución desde la tarjeta "Avisos en tu teléfono" de la campana, con estados concedido / sin activar / explicación / bloqueado, botón "Abrir ajustes" y "Probar notificación". Tres canales: Mi tanque, Avisos de agua y Ahorro.
+- [Agregado] Dependencia `androidx.work:work-runtime-ktx` 2.10.0 y pruebas `EvaluarNotificacionesTest` y `EstadoPermisoTest`.
 
 ### 2026-11-22
 - [Agregado] Importación de publicaciones recientes de EPSTacna mediante RSS generado por FetchRSS o RSS.app, con OCR de las imágenes incluidas.

@@ -151,6 +151,7 @@ La solución se construye con un conjunto de tecnologías gratuitas, en su mayor
 | Estado y asincronía | Corrutinas, Flow y Lifecycle (ViewModel) | Las pantallas observan un `StateFlow` y Room avisa de cada cambio con `Flow`. |
 | Fechas y horas | kotlinx-datetime | Cálculo del nivel, del agotamiento y del próximo llenado. |
 | Mapas | Google Maps Compose (maps-compose) | Mapa de los puntos de cisterna con marcadores por estado y la ubicación del usuario. |
+| Segundo plano y notificaciones | WorkManager (work-runtime-ktx) y NotificationCompat | Revisión periódica cada 30 min que publica notificaciones aunque la app esté cerrada, en tres canales (Mi tanque, Avisos de agua, Ahorro). |
 | Widget | Jetpack Glance (glance-appwidget) | Widget 2x1 de pantalla de inicio con el nivel del tanque. |
 | Red | HttpURLConnection + org.json; Retrofit + Gson | El último dato del sensor se lee con un GET directo a ThingSpeak; Retrofit se usa para la ANA y Supabase. |
 | IoT | ESP32 + sensor ultrasónico HC-SR04 (simulado en Wokwi) y ThingSpeak | El ESP32 mide el nivel del tanque y lo publica cada 20 s en un canal de ThingSpeak. |
@@ -219,7 +220,8 @@ Durante la implementación se tomaron estas decisiones:
 10. **Sensor IoT del tanque:** se construyó un prototipo con un ESP32 y un sensor ultrasónico HC-SR04, simulado en Wokwi, que publica el nivel en ThingSpeak cada 20 s. La aplicación lo lee con un GET directo a la URL del canal (funcionalidad `sensor`) y registra cada lectura nueva como el nivel actual del depósito, sin agregar tablas.
 11. **Inyección completa con Koin:** todos los ViewModels se registran en Koin y cada pantalla los obtiene con `koinViewModel()`.
 12. **Estimación más robusta:** un "me quedé sin agua" registrado menos de 1 hora después del llenado ya no se usa para estimar el consumo, porque se considera un error al registrar.
-13. **Widget del tanque:** widget 2x1 hecho con Jetpack Glance que muestra el nivel del sensor y si el tanque está conectado. Se actualiza cada hora para ahorrar batería y reutiliza el dibujo del tanque de Mi depósito.
+13. **Widget del tanque:** widget 2x1 hecho con Jetpack Glance que muestra el nivel del sensor y si el tanque está conectado. Sigue la misma arquitectura por capas: el dominio decide el estado del tanque (caso de uso `ObtenerEstadoTanque`) y la presentación solo lo dibuja, sobre un fondo azul liso. Se actualiza cada hora para ahorrar batería y reutiliza el dibujo del tanque de Mi depósito.
+14. **Notificaciones fuera de la app:** módulo `notificaciones` con dominio, datos y presentación. WorkManager revisa cada 30 minutos el nivel del tanque, los avisos de agua y la racha de ahorro, y notifica cuando vuelve el agua, cuando el tanque se llena o baja al 20 %, cuando sale un aviso nuevo y para continuar la racha. El permiso de notificaciones se pide en tiempo de ejecución con explicación y acceso a ajustes si se bloquea.
 
 Al cierre de esta versión se cuenta con una aplicación funcional que permite configurar el hogar, registrar llenados, consultar el depósito y el déficit, ver qué recortar, declarar que se quedó sin agua y consultar los avisos del depósito, todo sin conexión; además, muestra el mapa de cisternas y toma el nivel real del tanque desde el sensor IoT cuando hay internet.
 
