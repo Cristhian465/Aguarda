@@ -27,6 +27,7 @@ import com.example.aguardapp.feature.deposito.presentation.QueRecortarViewModel
 import com.example.aguardapp.feature.deposito.presentation.RegistrarLlenadoViewModel
 import com.example.aguardapp.feature.deposito.presentation.SinAguaViewModel
 import com.example.aguardapp.feature.deposito.presentation.TipoLlenado
+import com.example.aguardapp.feature.mapa.data.CopiaCisternasLocal
 import com.example.aguardapp.feature.mapa.data.DistritosRepositoryImpl
 import com.example.aguardapp.feature.mapa.data.MapaRepositoryImpl
 import com.example.aguardapp.feature.mapa.data.UbicacionRepositoryImpl
@@ -77,7 +78,7 @@ private fun moduloApp(context: Context, base: AguardAppDatabase, usuarioId: Stri
     single<DepositoRepository> {
         DepositoRepositoryImpl(base.depositoDao(), usuarioId, get<Reloj>()::ahora, ::nuevoUuid)
     }
-    single<MapaRepository> { MapaRepositoryImpl() }
+    single<MapaRepository> { MapaRepositoryImpl(get(), CopiaCisternasLocal(context.getSharedPreferences("mapa", Context.MODE_PRIVATE))) }
     single<UbicacionRepository> { UbicacionRepositoryImpl(context) }
     single<DistritosRepository> { DistritosRepositoryImpl(context) }
     single { base.presaDao() }

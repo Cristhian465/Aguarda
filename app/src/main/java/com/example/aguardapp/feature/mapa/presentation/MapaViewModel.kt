@@ -48,6 +48,7 @@ data class MapaUiState(
     val cargando: Boolean = true,
     val centro: Coordenada? = null,
     val puntos: List<PuntoCisterna> = emptyList(),
+    val sinConexion: Boolean = false,
     val ubicacion: EstadoUbicacion = EstadoUbicacion.SIN_PERMISO,
     val cercanas: List<CisternaCercana> = emptyList(),
     val aviso: AvisoDeAgua? = null,
@@ -83,9 +84,17 @@ class MapaViewModel(
     private var proximoLlenado: LocalDateTime? = null
 
     private val carga: Job = viewModelScope.launch {
-        val puntos = repositorio.obtenerPuntosCisterna()
+        val puntos = runCatching { repositorio.obtenerPuntosCisterna() }
         val limites = runCatching { distritos.obtenerDistritos() }.getOrDefault(emptyList())
-        actualizar { it.copy(cargando = false, centro = repositorio.centroDelMapa(), puntos = puntos, distritos = limites) }
+        actualizar {
+            it.copy(
+                cargando = false,
+                centro = repositorio.centroDelMapa(),
+                puntos = puntos.getOrDefault(emptyList()),
+                sinConexion = puntos.isFailure,
+                distritos = limites
+            )
+        }
     }
 
     init {
