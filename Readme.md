@@ -163,7 +163,7 @@ AguardApp/
 │               ├── 📁 sensor/             Nivel del tanque y detector de fugas desde el sensor IoT (HTTP directo a ThingSpeak)
 │               ├── 📁 ahorro/             Retos, racha, calendario e insignias (SharedPreferences)
 │               ├── 📁 eps/                Consulta del portal, sesión cifrada y OCR del PDF
-│               ├── 📁 widget/             Widget 2x1 de pantalla de inicio con el nivel del tanque (Glance)
+│               ├── 📁 widget/             Widget 2x1 del nivel del tanque (Glance): domain · presentation
 │               └── 📁 notificaciones/     Notificaciones fuera de la app (WorkManager): domain · data · presentation
 │
 ├── 📁 backend/                            API de cortes, importadores y pruebas
@@ -389,6 +389,7 @@ flowchart LR
 ## 📝 Changelog
 
 ### 2026-11-27
+- [Cambiado] Widget del tanque separado en capas: `domain` (`EstadoTanque` y caso de uso `ObtenerEstadoTanque`, con las reglas puras `estadoTanque` y `estaConectado`) y `presentation` (`NivelTanqueReceiver`, `NivelTanqueWidget`, `ContenidoWidget` e `ImagenTanque`). El caso de uso se inyecta con Koin (`core/di/ModuloWidget.kt`). Fondo azul `#1B3554` liso con esquinas redondeadas, sin ondas. Pruebas en `EstadoTanqueTest`.
 - [Cambiado] Mapa, puntos de cisterna reales: los puntos ya no están escritos en el código. `MapaRepositoryImpl` los lee de la tabla `punto_cisterna` de Supabase (`id`, `nombre`, `latitud`, `longitud`, `horario_inicio`, `horario_fin`, `estado`) cada vez que se abre el mapa, así que un cambio de ubicación, horario o estado hecho en Supabase se ve al volver a entrar. El estado acepta `ACTIVO`, `EN_RUTA` o `TERMINADO` (también en minúsculas o con espacio); las filas incompletas o con datos inválidos se descartan. La última lista descargada se guarda en el teléfono (`CopiaCisternasLocal`, SharedPreferences `mapa`) y se usa sin internet; si no hay internet ni copia, la lista dice "Sin conexión", y si la tabla está vacía, "Por ahora no hay puntos de reparto registrados". Código nuevo: `CisternasApi.kt` y `CopiaCisternas.kt`; `CisternasApi` se registra en `ModuloReportes.kt`. 9 pruebas unitarias nuevas en `CisternasSupabaseTest.kt`.
 
 ### 2026-11-23

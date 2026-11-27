@@ -189,9 +189,11 @@ flowchart TB
       SDAT[data: HTTP directo]
     end
     subgraph WID[feature/widget]
-      WPRES[presentation: NivelTanqueWidget + Receiver con Glance]
+      WPRES[presentation: NivelTanqueWidget + ContenidoWidget con Glance]
+      WDOM[domain: EstadoTanque + ObtenerEstadoTanque]
     end
-    WPRES --> SDAT
+    WPRES --> WDOM
+    WDOM --> SDOM
     subgraph NOT[feature/notificaciones]
       NPRES[presentation: TarjetaNotificaciones + EstadoPermiso]
       NDOM[domain: evaluarNotificaciones + RevisarNotificaciones]

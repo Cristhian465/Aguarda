@@ -58,7 +58,7 @@ fun iniciarAplicacion(context: Context) {
         modules(
             moduloApp(context, base, usuarioId), moduloRed(context), moduloViewModels, moduloLiga(context),
             moduloRecibos(context), moduloReportes(), moduloFamilia(context, base, usuarioId), moduloCortes(context),
-            moduloNotificaciones(context)
+            moduloNotificaciones(context), moduloWidget
         )
     }
 }
