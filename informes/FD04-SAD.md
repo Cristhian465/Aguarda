@@ -192,6 +192,14 @@ flowchart TB
       WPRES[presentation: NivelTanqueWidget + Receiver con Glance]
     end
     WPRES --> SDAT
+    subgraph NOT[feature/notificaciones]
+      NPRES[presentation: TarjetaNotificaciones + EstadoPermiso]
+      NDOM[domain: evaluarNotificaciones + RevisarNotificaciones]
+      NDAT[data: RevisarNotificacionesWorker + NotificadorAndroid]
+    end
+    NPRES --> NDOM
+    NDAT -. implementa .-> NDOM
+    NDAT --> SDAT
 
     MAIN --> NAV
     MAIN --> DI

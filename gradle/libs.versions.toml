@@ -17,6 +17,7 @@ mlkitTextRecognition = "16.0.1"
 jsoup = "1.24.1"
 pdfboxAndroid = "2.0.27.0"
 glance = "1.1.1"
+work = "2.10.0"
 zxing = "3.5.3"
 codeScanner = "16.1.0"
 
@@ -47,6 +48,7 @@ pdfbox-android = { group = "com.tom-roush", name = "pdfbox-android", version.ref
 
 # Widget de pantalla de inicio
 androidx-glance-appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "glance" }
+androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
 
 # Modo familia: QR de invitación (generar y leer)
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
